@@ -28,42 +28,24 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
       />
     </div>
 
-    <div id="search-actions-single" class="mt-4 grid grid-cols-2 gap-3">
-      <button type="submit" class="btn-primary justify-center py-3 text-sm sm:text-base">
+    <div id="search-actions-single" class="mt-4 flex justify-center">
+      <button type="submit" class="btn-primary w-full max-w-xs justify-center py-3 text-sm sm:text-base">
         Search
       </button>
-      <a
-        href="https://github.com/zx50416"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="btn-rename-nav justify-center py-3 text-sm sm:text-base"
-      >
-        GitHub
-      </a>
     </div>
 
     <div id="search-actions-logged" class="mt-4 hidden grid grid-cols-2 gap-3">
       <button type="submit" class="btn-primary justify-center py-3 text-sm sm:text-base">
         Search
       </button>
-      <a
-        href={`${base}add-note`}
-        class="btn-rename-nav justify-center py-3 text-sm sm:text-base"
-      >
-        新增 MD
+      <a href={`${base}add-note`} class="btn-chroma justify-center py-3 text-sm sm:text-base">
+        <span class="btn-chroma-label">+ md.</span>
       </a>
-      <a
-        href={`${base}rename`}
-        class="btn-rename-nav justify-center py-3 text-sm sm:text-base"
-      >
+      <a href={`${base}rename`} class="btn-rename-nav justify-center py-3 text-sm sm:text-base">
         管理
       </a>
-      <a
-        id="codex-launch-btn"
-        href={`${base}codex`}
-        class="btn-dark justify-center py-3 text-sm sm:text-base"
-      >
-        Codex
+      <a id="codex-launch-btn" href={`${base}codex`} class="btn-chroma justify-center py-3 text-sm sm:text-base">
+        <span class="btn-chroma-label">Codex</span>
       </a>
     </div>
   </form>
@@ -89,7 +71,55 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
     @apply inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 px-6 py-2.5 font-display font-semibold text-white shadow-[0_0_20px_rgba(45,212,191,0.35)] transition-all duration-300 hover:scale-[1.02] hover:from-teal-300 hover:to-cyan-400;
   }
 
-  .btn-dark {
-    @apply inline-flex items-center gap-2 rounded-full bg-zinc-900 px-6 py-2.5 font-display font-semibold text-white shadow-[0_0_16px_rgba(0,0,0,0.2)] transition-all duration-300 hover:scale-[1.02] hover:bg-black;
+  .btn-chroma {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    padding: 0.75rem 1.5rem;
+    font-weight: 800;
+    text-decoration: none;
+    background:
+      linear-gradient(#111111, #111111) padding-box,
+      linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .btn-chroma::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      120deg,
+      rgba(66, 133, 244, 0.12),
+      rgba(155, 114, 203, 0.14),
+      rgba(217, 101, 112, 0.1),
+      rgba(251, 188, 5, 0.1),
+      rgba(52, 168, 83, 0.1)
+    );
+  }
+
+  .btn-chroma-label {
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.02em;
+    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .btn-chroma:hover,
+  .btn-chroma:focus-visible {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(123, 97, 255, 0.25);
+    outline: none;
   }
 </style>

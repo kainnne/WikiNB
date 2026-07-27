@@ -4,16 +4,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="新增 MD" description="上傳 Markdown 到 wiki 並自動推上 GitHub">
+<BaseLayout title="+ md." description="上傳 Markdown 到 wiki 並自動推上 GitHub">
   <div class="animate-fadeIn mx-auto max-w-2xl">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">新增 MD</h1>
-        <p class="mt-2 text-sm text-berry-700/80 md:text-base">
-          選好資料夾（可新建），拖入整理好的 <code class="rounded bg-pink-50 px-1">.md</code>。
-          會寫入本機 <code class="rounded bg-pink-50 px-1">wiki/</code> 並<strong>自動推上 GitHub</strong>，約 1–2 分鐘後網站更新。
-        </p>
-      </div>
+      <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">+ md.</h1>
       <a href={`${base}rename`} class="btn-ghost shrink-0 text-sm">管理筆記 →</a>
     </div>
 
@@ -60,15 +54,11 @@ const base = import.meta.env.BASE_URL;
         aria-label="拖入或點擊上傳 Markdown"
       >
         <p class="font-display text-lg font-bold text-berry-800">拖入 .md 檔案</p>
-        <p class="mt-2 text-sm text-berry-700/75">或點這裡選擇檔案 · 放開後自動上線</p>
+        <p class="mt-2 text-sm text-berry-700/75">或點這裡選擇檔案上傳</p>
         <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" multiple />
       </section>
 
       <p id="add-status" class="text-sm text-berry-600/80"></p>
-      <p class="text-center text-xs text-berry-600/60">
-        不上傳編輯器：請在 Obsidian／Cursor 寫好再拖進來。刪改請用
-        <a href={`${base}rename`} class="font-semibold text-pink-600">管理筆記</a>。
-      </p>
     </div>
   </div>
 </BaseLayout>
@@ -96,9 +86,7 @@ const base = import.meta.env.BASE_URL;
   function setStatus(text: string, isError = false) {
     if (!statusEl) return;
     statusEl.textContent = text;
-    statusEl.className = isError
-      ? 'text-sm text-red-600'
-      : 'text-sm text-emerald-700';
+    statusEl.className = isError ? 'text-sm text-red-600' : 'text-sm text-emerald-700';
   }
 
   function setFolderMsg(text: string, isError = false) {

@@ -240,12 +240,19 @@ export function mountNavAuth() {
   const loginLink = document.getElementById('nav-login');
   const logoutBtn = document.getElementById('nav-logout');
   const addNoteLink = document.getElementById('nav-add-note');
+  const codexLink = document.getElementById('nav-codex');
+  const aboutLink = document.getElementById('nav-about');
+  const githubLink = document.getElementById('nav-github');
 
   const update = () => {
     const loggedIn = isLoggedIn();
     if (loginLink) loginLink.classList.toggle('hidden', loggedIn);
     if (logoutBtn) logoutBtn.classList.toggle('hidden', !loggedIn);
     if (addNoteLink) addNoteLink.classList.toggle('hidden', !loggedIn);
+    if (codexLink) codexLink.classList.toggle('hidden', !loggedIn);
+    // 登入後進入工作模式：隱藏 About Me / GitHub
+    if (aboutLink) aboutLink.classList.toggle('hidden', loggedIn);
+    if (githubLink) githubLink.classList.toggle('hidden', loggedIn);
     document.dispatchEvent(new CustomEvent('wikinb:auth-change', { detail: { loggedIn } }));
   };
 
