@@ -246,26 +246,29 @@ export function mountNavAuth() {
   const brandLink = document.getElementById('brand-link');
   const wikiLink = document.getElementById('nav-wikinb');
 
+  const setAuthCta = (el, visible) => {
+    if (!el) return;
+    el.hidden = !visible;
+    el.classList.toggle('is-auth-visible', visible);
+    el.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    if (visible) el.removeAttribute('tabindex');
+    else el.setAttribute('tabindex', '-1');
+  };
+
   const update = () => {
     const loggedIn = isLoggedIn();
     if (loginLink) loginLink.classList.toggle('hidden', loggedIn);
     if (logoutBtn) logoutBtn.classList.toggle('hidden', !loggedIn);
 
     // + md. / Codex：登入前隱藏，登入後顯示
-    if (addNoteLink) {
-      addNoteLink.classList.toggle('hidden', !loggedIn);
-      addNoteLink.setAttribute('aria-hidden', loggedIn ? 'false' : 'true');
-    }
-    if (codexLink) {
-      codexLink.classList.toggle('hidden', !loggedIn);
-      codexLink.setAttribute('aria-hidden', loggedIn ? 'false' : 'true');
-    }
+    setAuthCta(addNoteLink, loggedIn);
+    setAuthCta(codexLink, loggedIn);
 
     // 登入後進入工作模式：隱藏 About Me / GitHub
     if (aboutLink) aboutLink.classList.toggle('hidden', loggedIn);
     if (githubLink) githubLink.classList.toggle('hidden', loggedIn);
 
-    // 登入後：品牌與 WikiNB 切換成黑底彩字
+    // 登入後：品牌與 WikiNB 切換成工作模式樣式
     brandLink?.classList.toggle('is-logged', loggedIn);
     wikiLink?.classList.toggle('is-logged', loggedIn);
 
