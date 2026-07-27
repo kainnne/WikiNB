@@ -13,6 +13,25 @@ const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 
+// GUI / 某些終端啟動時 PATH 可能不含 Homebrew，導致 spawn git/npm ENOENT
+for (const dir of ['/opt/homebrew/bin', '/usr/local/bin']) {
+  const parts = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+  if (!parts.includes(dir) && fs.existsSync(dir)) {
+    process.env.PATH = `${dir}${path.delimiter}${process.env.PATH || ''}`;
+  }
+}
+
+function resolveBin(name) {
+  for (const dir of ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/bin']) {
+    const full = path.join(dir, name);
+    if (fs.existsSync(full)) return full;
+  }
+  return name;
+}
+
+const GIT_BIN = resolveBin('git');
+const NPM_BIN = resolveBin('npm');
+
 const PORT = Number(process.env.PORT || 8787);
 const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(__dirname, '..');
 const AUTH_USER = process.env.WIKINB_AUTH_USER || '';
@@ -287,15 +306,46 @@ app.post('/api/sync', authMiddleware, async (_req, res) => {
     res.json(result);
   } catch (err) {
     console.error('sync error:', err);
-    res.status(500).json({ error: '同步失敗', detail: String(err.message || err) });
+    res.status(500).json({ error: '同步失敗', detail: String(err.message || err).slice(0, 600) });
   }
 });
+
+/** 僅本機 loopback：方便診斷同步，不需登入。預設關閉。 */
+app.post('/api/dev/sync', async (req, res) => {
+  if (process.env.ALLOW_LOCAL_SYNC_TEST !== 'true') {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  const ip = req.socket.remoteAddress || '';
+  const local = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+  if (!local) {
+    res.status(403).json({ error: '僅允許本機呼叫' });
+    return;
+  }
+  try {
+    const result = await runWikiSync();
+    res.json(result);
+  } catch (err) {
+    console.error('dev sync error:', err);
+    res.status(500).json({ error: '同步失敗', detail: String(err.message || err).slice(0, 600) });
+  }
+});
+
+function gitExecErrorDetail(err) {
+  return String(err?.stderr || err?.stdout || err?.message || err || '')
+    .trim()
+    .slice(0, 500);
+}
 
 async function runWikiSync() {
   const autoPush = process.env.AUTO_GIT_PUSH === 'true';
 
   if (!autoPush) {
-    await execFileAsync('npm', ['run', 'build'], { cwd: PROJECT_ROOT, timeout: 120000 });
+    try {
+      await execFileAsync(NPM_BIN, ['run', 'build'], { cwd: PROJECT_ROOT, timeout: 120000 });
+    } catch (err) {
+      throw new Error(`本機 build 失敗：${gitExecErrorDetail(err)}`);
+    }
     return {
       ok: true,
       message:
@@ -305,49 +355,57 @@ async function runWikiSync() {
   }
 
   // -A 才能把「已刪除」的 wiki 檔一併 staging，避免雲端還留著舊頁／搜尋幽靈連結
-  await execFileAsync('git', ['add', '-A', '--', 'wiki/'], { cwd: PROJECT_ROOT });
+  try {
+    await execFileAsync(GIT_BIN, ['add', '-A', '--', 'wiki/'], { cwd: PROJECT_ROOT });
+  } catch (err) {
+    throw new Error(`git add 失敗（${GIT_BIN}）：${gitExecErrorDetail(err)}`);
+  }
+
   const commitEnv = { ...process.env };
   let committed = false;
   try {
-    await execFileAsync('git', ['commit', '-m', 'sync: update wiki from Bridge'], {
+    await execFileAsync(GIT_BIN, ['commit', '-m', 'sync: update wiki from Bridge'], {
       cwd: PROJECT_ROOT,
       env: commitEnv,
     });
     committed = true;
   } catch (err) {
-    const msg = String(err.stdout || err.stderr || err.message || '');
+    const msg = gitExecErrorDetail(err);
     if (!/nothing to commit|no changes added|clean working tree/i.test(msg)) {
-      // 真正的 commit 失敗（例如缺 user.email）不可假裝同步成功
-      const detail = msg.slice(0, 400);
-      console.error('git commit failed:', detail);
-      const error = new Error(`git commit 失敗：${detail}`);
-      throw error;
+      console.error('git commit failed:', msg);
+      throw new Error(`git commit 失敗：${msg}`);
     }
   }
 
-  const pushEnv = { ...process.env };
+  const pushEnv = { ...process.env, GIT_TERMINAL_PROMPT: '0' };
   const token = process.env.GITHUB_TOKEN?.trim();
-  if (token) {
-    // Prefer token when provided; otherwise use Mac 既有 git 憑證
-    pushEnv.GIT_ASKPASS = 'echo';
-    pushEnv.GIT_TERMINAL_PROMPT = '0';
-    const remote = `https://x-access-token:${token}@github.com/zx50416/WikiNB.git`;
-    await execFileAsync('git', ['push', remote, 'HEAD:main'], {
-      cwd: PROJECT_ROOT,
-      env: pushEnv,
-      timeout: 120000,
-    });
-  } else {
-    await execFileAsync('git', ['push', 'origin', 'HEAD'], {
-      cwd: PROJECT_ROOT,
-      env: pushEnv,
-      timeout: 120000,
-    });
+  try {
+    if (token) {
+      // Prefer token when provided; otherwise use Mac 既有 git 憑證
+      pushEnv.GIT_ASKPASS = 'echo';
+      const remote = `https://x-access-token:${token}@github.com/zx50416/WikiNB.git`;
+      await execFileAsync(GIT_BIN, ['push', remote, 'HEAD:main'], {
+        cwd: PROJECT_ROOT,
+        env: pushEnv,
+        timeout: 120000,
+      });
+    } else {
+      await execFileAsync(GIT_BIN, ['push', 'origin', 'HEAD'], {
+        cwd: PROJECT_ROOT,
+        env: pushEnv,
+        timeout: 120000,
+      });
+    }
+  } catch (err) {
+    const detail = gitExecErrorDetail(err);
+    throw new Error(
+      `git push 失敗。請在 bridge/.env 設定有效的 GITHUB_TOKEN（repo 權限）後重啟 Bridge。細節：${detail}`,
+    );
   }
 
   // 確認 wiki/ 工作樹乾淨，避免「看似成功、檔案其實沒推上去」
   const { stdout: porcelain } = await execFileAsync(
-    'git',
+    GIT_BIN,
     ['status', '--porcelain', '--', 'wiki/'],
     { cwd: PROJECT_ROOT },
   );
@@ -1177,5 +1235,8 @@ app.listen(PORT, () => {
   console.log(`   Auth user: ${AUTH_USER ? 'set' : 'MISSING'}`);
   console.log(`   Auth emails: ${AUTH_EMAILS.join(', ')}`);
   console.log(`   SMTP: ${process.env.SMTP_USER && process.env.SMTP_PASS ? 'configured' : 'DEV (codes in terminal)'}`);
+  console.log(`   AUTO_GIT_PUSH: ${process.env.AUTO_GIT_PUSH === 'true'}`);
+  console.log(`   GITHUB_TOKEN: ${process.env.GITHUB_TOKEN?.trim() ? 'set' : 'missing (用本機 git 憑證)'}`);
+  console.log(`   git: ${GIT_BIN}`);
   console.log(`   CORS: ${CORS_ORIGINS.join(', ')}\n`);
 });

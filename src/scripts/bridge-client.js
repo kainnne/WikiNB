@@ -59,7 +59,10 @@ async function bridgeFetch(path, options = {}) {
 
   const res = await fetch(`${base}${path}`, { ...options, headers });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.detail || `HTTP ${res.status}`);
+  if (!res.ok) {
+    const parts = [data.error, data.detail].filter(Boolean);
+    throw new Error(parts.join(' — ') || `HTTP ${res.status}`);
+  }
   return data;
 }
 
