@@ -7,14 +7,14 @@ const meUrl = sites.sites.me.url;
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
-    <a href={base} class="group shrink-0">
-      <span class="font-display text-xl font-bold bg-gradient-to-r from-pink-500 to-lavender-400 bg-clip-text text-transparent transition-opacity group-hover:opacity-80">
-        Kainnne
-      </span>
+    <a id="brand-link" href={base} class="brand-link group shrink-0">
+      <span id="brand-label" class="brand-label">Kainnne</span>
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
-      <a href={`${base}search`} class="nav-wikinb">WikiNB</a>
+      <a id="nav-wikinb" href={`${base}search`} class="nav-wikinb">
+        <span class="nav-wikinb-label">WikiNB</span>
+      </a>
       <a
         id="nav-about"
         href={meUrl}
@@ -33,10 +33,10 @@ const meUrl = sites.sites.me.url;
       >
         GitHub
       </a>
-      <a id="nav-add-note" href={`${base}add-note`} class="nav-chroma hidden">
+      <a id="nav-add-note" href={`${base}add-note`} class="nav-chroma hidden" aria-hidden="true">
         <span class="nav-chroma-label">+ md.</span>
       </a>
-      <a id="nav-codex" href={`${base}codex`} class="nav-chroma hidden">
+      <a id="nav-codex" href={`${base}codex`} class="nav-chroma hidden" aria-hidden="true">
         <span class="nav-chroma-label">Codex</span>
       </a>
       <a id="nav-login" href={`${base}login`} class="nav-link">登入</a>
@@ -55,8 +55,115 @@ const meUrl = sites.sites.me.url;
     @apply rounded-full px-2.5 py-1.5 text-xs font-semibold text-berry-700 transition-colors hover:bg-pink-100/60 hover:text-pink-700 sm:px-3 sm:py-2 sm:text-sm md:px-4;
   }
 
+  /* 未登入：漸層字；登入後：黑底粉彩字 */
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border-radius: 9999px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, padding 0.2s ease;
+  }
+
+  .brand-label {
+    font-family: Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(90deg, #ec407a, #ce93d8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    transition: background 0.2s ease;
+  }
+
+  .brand-link.is-logged {
+    padding: 0.35rem 0.85rem;
+    background: #111111;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  }
+
+  .brand-link.is-logged .brand-label {
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background: linear-gradient(105deg, #ffd6e7 0%, #ffb7c5 35%, #e8b4f8 70%, #f8bbd9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .brand-link.is-logged:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 10px 22px rgba(236, 64, 122, 0.25);
+  }
+
+  /* 未登入：粉紅實心；登入後：黑底彩字 */
   .nav-wikinb {
-    @apply rounded-full bg-gradient-to-r from-pink-400 to-lavender-400 px-3 py-1.5 text-xs font-bold text-white shadow-glow transition-all hover:scale-105 hover:shadow-glass-lg sm:px-4 sm:py-2 sm:text-sm md:px-5;
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 9999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-decoration: none;
+    color: #fff;
+    background: linear-gradient(90deg, #f48fb1, #ce93d8);
+    box-shadow: 0 0 24px rgba(255, 183, 197, 0.5);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  @media (min-width: 640px) {
+    .nav-wikinb {
+      padding: 0.45rem 1.1rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  .nav-wikinb-label {
+    position: relative;
+    z-index: 2;
+  }
+
+  .nav-wikinb.is-logged {
+    border: 1px solid transparent;
+    color: transparent;
+    background:
+      linear-gradient(#111111, #111111) padding-box,
+      linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  }
+
+  .nav-wikinb.is-logged::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      120deg,
+      rgba(66, 133, 244, 0.12),
+      rgba(155, 114, 203, 0.14),
+      rgba(217, 101, 112, 0.1),
+      rgba(251, 188, 5, 0.1),
+      rgba(52, 168, 83, 0.1)
+    );
+  }
+
+  .nav-wikinb.is-logged .nav-wikinb-label {
+    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .nav-wikinb:hover,
+  .nav-wikinb:focus-visible {
+    transform: scale(1.05);
   }
 
   .nav-about,
@@ -64,7 +171,6 @@ const meUrl = sites.sites.me.url;
     @apply rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 px-3 py-1.5 text-xs font-bold text-white shadow-[0_0_20px_rgba(45,212,191,0.35)] transition-all hover:scale-105 hover:shadow-[0_0_28px_rgba(34,211,238,0.45)] sm:px-4 sm:py-2 sm:text-sm md:px-5;
   }
 
-  /* 黑底 + 彩色字（對齊 KCIS Gemini CTA 精神） */
   .nav-chroma {
     position: relative;
     isolation: isolate;

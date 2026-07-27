@@ -38,11 +38,11 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
       <button type="submit" class="btn-primary justify-center py-3 text-sm sm:text-base">
         Search
       </button>
+      <a href={`${base}rename`} class="btn-rename-nav justify-center py-3 text-sm sm:text-base">
+        Management
+      </a>
       <a href={`${base}add-note`} class="btn-chroma justify-center py-3 text-sm sm:text-base">
         <span class="btn-chroma-label">+ md.</span>
-      </a>
-      <a href={`${base}rename`} class="btn-rename-nav justify-center py-3 text-sm sm:text-base">
-        管理
       </a>
       <a id="codex-launch-btn" href={`${base}codex`} class="btn-chroma justify-center py-3 text-sm sm:text-base">
         <span class="btn-chroma-label">Codex</span>
