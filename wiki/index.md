@@ -1,12 +1,12 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-07-17
+> 最後更新：2026-07-28
 
 ## 筆記
 
-- [[welcomekaine]] — 歡迎
-
-- [[about_kaine]] — about_kaine
+- [[AboutMe/welcomekaine]] — 歡迎
+- [[AboutMe/about_kaine]] — 關於我
+- [[LLM/folder-smoke-test]] — LLM 資料夾測試
 
 ## 學習中
 

@@ -4,13 +4,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="Rename" description="重新命名 wiki 筆記檔名">
+<BaseLayout title="管理筆記" description="建立資料夾、重新命名與刪除 wiki 筆記">
   <div class="animate-fadeIn mx-auto max-w-2xl">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">Rename</h1>
+        <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">管理筆記</h1>
         <p class="mt-2 text-sm text-berry-700/80 md:text-base">
-          重新命名 <code class="rounded bg-pink-50 px-1">wiki/*.md</code> 檔名。可使用中文、英文、數字、底線 <code>_</code> 與連字號 <code>-</code>；不可空白或其他符號。
+          建立資料夾、重新命名或刪除 <code class="rounded bg-pink-50 px-1">wiki/</code> 內的筆記。
+          路徑可用 <code class="rounded bg-pink-50 px-1">/</code> 表示巢狀，例如
+          <code class="rounded bg-pink-50 px-1">專案/筆記名</code>。
+          變更後會<strong>自動推上 GitHub</strong>。
         </p>
       </div>
       <a href={base} class="btn-ghost shrink-0 text-sm">← 首頁</a>
@@ -24,11 +27,33 @@ const base = import.meta.env.BASE_URL;
       本機 Bridge 未連線。請確認 Mac 已開機且 Bridge 正在執行。
     </div>
 
-    <div id="rename-panel" class="hidden">
-      <p id="rename-status" class="mb-4 text-sm text-berry-600/80"></p>
-      <div id="rename-list" class="space-y-3"></div>
-      <p class="mt-6 text-center text-sm text-berry-600/70">
-        改完後請按右上角「同步 Wiki」推上線。
+    <div id="rename-panel" class="hidden space-y-6">
+      <section class="glass-card p-4">
+        <h2 class="mb-3 font-display text-lg font-bold text-berry-800">新增資料夾</h2>
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            id="mkdir-input"
+            type="text"
+            class="search-input flex-1 py-2 text-sm"
+            placeholder="例如：專案/demo"
+            spellcheck="false"
+            autocomplete="off"
+          />
+          <button id="mkdir-btn" type="button" class="btn-primary justify-center px-4 py-2 text-sm">
+            建立
+          </button>
+        </div>
+        <p id="mkdir-msg" class="mt-2 text-sm text-berry-600/80"></p>
+      </section>
+
+      <div>
+        <p id="rename-status" class="mb-4 text-sm text-berry-600/80"></p>
+        <div id="rename-list" class="space-y-3"></div>
+      </div>
+
+      <p class="text-center text-sm text-berry-600/70">
+        改完後會自動推上線（含刪除）。也可到
+        <a href={`${base}add-note`} class="font-semibold text-pink-600">新增 MD</a> 上傳筆記。
       </p>
     </div>
   </div>
@@ -39,7 +64,10 @@ const base = import.meta.env.BASE_URL;
     isLoggedIn,
     checkHealth,
     listWikiFiles,
+    listWikiTree,
     renameWikiFile,
+    deleteWikiFile,
+    createWikiFolder,
   } from '../scripts/bridge-client.js';
 
   const gate = document.getElementById('rename-gate');
@@ -47,6 +75,9 @@ const base = import.meta.env.BASE_URL;
   const panel = document.getElementById('rename-panel');
   const listEl = document.getElementById('rename-list');
   const statusEl = document.getElementById('rename-status');
+  const mkdirInput = document.getElementById('mkdir-input') as HTMLInputElement | null;
+  const mkdirBtn = document.getElementById('mkdir-btn') as HTMLButtonElement | null;
+  const mkdirMsg = document.getElementById('mkdir-msg');
 
   function escapeHtml(text) {
     return String(text ?? '')
@@ -59,13 +90,16 @@ const base = import.meta.env.BASE_URL;
   function normalizeInput(value) {
     return String(value || '')
       .trim()
-      .replace(/\.md$/i, '');
+      .replace(/\.md$/i, '')
+      .replace(/^\/+|\/+$/g, '');
   }
 
   function isValidSlug(slug) {
     if (!slug || slug === 'index' || slug === '.' || slug === '..') return false;
-    if (slug.includes('/') || slug.includes('\\') || slug.includes('..')) return false;
-    return /^[\u4e00-\u9fffA-Za-z0-9_-]+$/.test(slug);
+    if (slug.includes('\\') || slug.includes('..')) return false;
+    const parts = slug.split('/').filter(Boolean);
+    if (!parts.length) return false;
+    return parts.every((p) => /^[\u4e00-\u9fffA-Za-z0-9_-]+$/.test(p));
   }
 
   function setStatus(text, isError = false) {
@@ -75,11 +109,19 @@ const base = import.meta.env.BASE_URL;
     statusEl.classList.toggle('text-berry-600/80', !isError);
   }
 
+  function flattenFiles(nodes, out = []) {
+    for (const node of nodes || []) {
+      if (node.type === 'dir') flattenFiles(node.children || [], out);
+      else if (node.type === 'file') out.push(node);
+    }
+    return out;
+  }
+
   function renderFiles(files) {
     if (!listEl) return;
     if (!files.length) {
       listEl.innerHTML =
-        '<div class="glass-card p-6 text-center text-berry-700/80">目前沒有可重新命名的筆記。</div>';
+        '<div class="glass-card p-6 text-center text-berry-700/80">目前沒有可管理的筆記。</div>';
       return;
     }
 
@@ -87,8 +129,9 @@ const base = import.meta.env.BASE_URL;
       .map((f) => {
         const slug = escapeHtml(f.slug);
         const title = escapeHtml(f.title || '');
+        const pathAttr = escapeHtml(f.path || `${f.slug}.md`);
         return `
-          <div class="glass-card rename-row p-4" data-slug="${slug}">
+          <div class="glass-card rename-row p-4" data-slug="${slug}" data-path="${pathAttr}">
             <div class="mb-2 flex flex-wrap items-center gap-2">
               <span class="tag-badge">${slug}.md</span>
               <span class="text-sm text-berry-700/75">${title}</span>
@@ -100,10 +143,13 @@ const base = import.meta.env.BASE_URL;
                 value="${slug}"
                 spellcheck="false"
                 autocomplete="off"
-                aria-label="新檔名：${slug}"
+                aria-label="新路徑：${slug}"
               />
               <button type="button" class="btn-rename rename-save shrink-0 justify-center px-4 py-2 text-sm">
                 儲存檔名
+              </button>
+              <button type="button" class="btn-delete rename-delete shrink-0 justify-center px-4 py-2 text-sm">
+                刪除
               </button>
             </div>
             <p class="rename-msg mt-2 hidden text-sm"></p>
@@ -114,16 +160,18 @@ const base = import.meta.env.BASE_URL;
 
     listEl.querySelectorAll('.rename-row').forEach((row) => {
       const oldSlug = row.getAttribute('data-slug');
-      const input = row.querySelector('.rename-input');
-      const btn = row.querySelector('.rename-save');
+      const filePath = row.getAttribute('data-path');
+      const input = row.querySelector('.rename-input') as HTMLInputElement | null;
+      const saveBtn = row.querySelector('.rename-save') as HTMLButtonElement | null;
+      const delBtn = row.querySelector('.rename-delete') as HTMLButtonElement | null;
       const msg = row.querySelector('.rename-msg');
 
-      btn?.addEventListener('click', async () => {
+      saveBtn?.addEventListener('click', async () => {
         const newSlug = normalizeInput(input?.value);
         msg?.classList.remove('hidden');
         if (!isValidSlug(newSlug)) {
           if (msg) {
-            msg.textContent = '無效：不可空白；可用中文、英文、數字、_ 與 -';
+            msg.textContent = '無效：可用中文、英文、數字、_、-，以及 / 表示資料夾';
             msg.className = 'rename-msg mt-2 text-sm text-red-600';
           }
           return;
@@ -136,34 +184,96 @@ const base = import.meta.env.BASE_URL;
           return;
         }
 
-        btn.disabled = true;
-        btn.textContent = '儲存中…';
+        saveBtn.disabled = true;
+        saveBtn.textContent = '儲存中…';
         try {
-          const result = await renameWikiFile({ oldSlug, newSlug });
+          const result = await renameWikiFile({ oldSlug, newSlug, autoSync: true });
           if (msg) {
             msg.textContent = result.message || '已重新命名';
             msg.className = 'rename-msg mt-2 text-sm text-emerald-700';
           }
-          setStatus(`剛更新：${oldSlug} → ${newSlug}。記得同步 Wiki。`);
+          setStatus(`剛更新：${oldSlug} → ${newSlug}（已自動推送）。`);
           await loadList();
         } catch (err) {
           if (msg) {
-            msg.textContent = err.message || '重新命名失敗';
+            msg.textContent = (err as Error).message || '重新命名失敗';
             msg.className = 'rename-msg mt-2 text-sm text-red-600';
           }
         } finally {
-          btn.disabled = false;
-          btn.textContent = '儲存檔名';
+          saveBtn.disabled = false;
+          saveBtn.textContent = '儲存檔名';
+        }
+      });
+
+      delBtn?.addEventListener('click', async () => {
+        if (!confirm(`確定刪除 wiki/${filePath}？將自動推上 GitHub。`)) return;
+        msg?.classList.remove('hidden');
+        delBtn.disabled = true;
+        delBtn.textContent = '刪除中…';
+        try {
+          const result = await deleteWikiFile({ path: filePath || oldSlug, autoSync: true });
+          if (msg) {
+            msg.textContent = result.message || '已刪除';
+            msg.className = 'rename-msg mt-2 text-sm text-emerald-700';
+          }
+          setStatus(`已刪除 ${oldSlug}（已自動推送）。`);
+          await loadList();
+        } catch (err) {
+          if (msg) {
+            msg.textContent = (err as Error).message || '刪除失敗';
+            msg.className = 'rename-msg mt-2 text-sm text-red-600';
+          }
+        } finally {
+          delBtn.disabled = false;
+          delBtn.textContent = '刪除';
         }
       });
     });
   }
 
   async function loadList() {
-    const data = await listWikiFiles();
-    renderFiles(data.files || []);
-    setStatus(`共 ${(data.files || []).length} 個檔案`);
+    try {
+      const data = await listWikiTree();
+      const files = flattenFiles(data.tree || []);
+      renderFiles(files);
+      setStatus(`共 ${files.length} 個檔案`);
+    } catch {
+      const data = await listWikiFiles();
+      renderFiles(data.files || []);
+      setStatus(`共 ${(data.files || []).length} 個檔案`);
+    }
   }
+
+  mkdirBtn?.addEventListener('click', async () => {
+    const path = normalizeInput(mkdirInput?.value);
+    if (!isValidSlug(path)) {
+      if (mkdirMsg) {
+        mkdirMsg.textContent = '資料夾名稱無效';
+        mkdirMsg.className = 'mt-2 text-sm text-red-600';
+      }
+      return;
+    }
+    mkdirBtn.disabled = true;
+    mkdirBtn.textContent = '建立中…';
+    try {
+      const result = await createWikiFolder({ path, autoSync: true });
+      if (mkdirMsg) {
+        mkdirMsg.textContent = result.message || '已建立';
+        mkdirMsg.className = 'mt-2 text-sm text-emerald-700';
+      }
+      if (mkdirInput) mkdirInput.value = '';
+      setStatus(`已建立資料夾 ${path}（已自動推送）。`);
+      await loadList();
+    } catch (err) {
+      if (mkdirMsg) {
+        mkdirMsg.textContent = (err as Error).message || '建立失敗';
+        mkdirMsg.className = 'mt-2 text-sm text-red-600';
+      }
+    } finally {
+      mkdirBtn.disabled = false;
+      mkdirBtn.textContent = '建立';
+    }
+  });
 
   async function init() {
     if (!isLoggedIn()) {
@@ -179,7 +289,7 @@ const base = import.meta.env.BASE_URL;
     try {
       await loadList();
     } catch (err) {
-      setStatus(err.message || '無法載入列表', true);
+      setStatus((err as Error).message || '無法載入列表', true);
     }
   }
 
@@ -187,7 +297,12 @@ const base = import.meta.env.BASE_URL;
 </script>
 
 <style>
-  .btn-rename {
+  /* 檔案列由 JS 產生，拿不到 scoped 屬性，一律用 :global */
+  :global(#rename-list .btn-rename) {
     @apply inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-2 font-display font-semibold text-white shadow-[0_0_16px_rgba(45,212,191,0.3)] transition-all hover:scale-[1.02] hover:from-teal-300 hover:to-cyan-400 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  :global(#rename-list .btn-delete) {
+    @apply inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-5 py-2 font-display font-semibold text-red-700 transition-all hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50;
   }
 </style>

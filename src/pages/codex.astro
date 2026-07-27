@@ -42,7 +42,7 @@ const base = import.meta.env.BASE_URL;
 
       <div id="codex-drop" class="codex-drop" tabindex="0">
         <p class="codex-drop-title">拖入 wiki 筆記（.md）</p>
-        <p class="codex-drop-sub">放開後存到本機 wiki/，再按「同步 Wiki」上線</p>
+        <p class="codex-drop-sub">放開後存到 wiki/ 並自動推上 GitHub</p>
         <input id="codex-file" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" />
       </div>
 
@@ -245,7 +245,7 @@ const base = import.meta.env.BASE_URL;
     const timer = startElapsedTimer();
 
     try {
-      const result = await uploadWikiNote({ filename: name, content });
+      const result = await uploadWikiNote({ filename: name, content, autoSync: true });
       timer.stop();
       appendLine(result.message || `已存到 wiki/${result.filename}`, 'assistant');
     } catch (err) {

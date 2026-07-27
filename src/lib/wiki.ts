@@ -23,6 +23,61 @@ export interface WikiPage {
   excerpt: string;
 }
 
+export interface WikiTreeFileNode {
+  type: 'file';
+  name: string;
+  path: string;
+  slug: string;
+  title: string;
+}
+
+export interface WikiTreeDirNode {
+  type: 'dir';
+  name: string;
+  path: string;
+  children: WikiTreeNode[];
+}
+
+export type WikiTreeNode = WikiTreeDirNode | WikiTreeFileNode;
+
+/** wiki/foo bar/note.md → "foo%20bar/note"，讓巢狀路徑能安全放進 URL。 */
+export function encodeWikiSlug(slug: string): string {
+  return String(slug)
+    .split('/')
+    .filter(Boolean)
+    .map(encodeURIComponent)
+    .join('/');
+}
+
+/**
+ * 把外部傳入的 slug 收斂成 `folder/note` 形式，並擋掉跳出 wiki/ 的路徑。
+ * 無效時回傳 undefined。
+ */
+export function normalizeWikiSlug(slug: string | string[] | undefined): string | undefined {
+  const raw = Array.isArray(slug) ? slug.join('/') : slug;
+  if (!raw) return undefined;
+
+  const segments = String(raw)
+    .replace(/\\/g, '/')
+    .split('/')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (segments.length === 0) return undefined;
+  if (segments.some((s) => s === '.' || s === '..')) return undefined;
+
+  const last = segments[segments.length - 1].replace(/\.md$/i, '');
+  if (!last) return undefined;
+  segments[segments.length - 1] = last;
+
+  return segments.join('/');
+}
+
+function parentFolder(slug: string): string {
+  const idx = slug.lastIndexOf('/');
+  return idx === -1 ? '' : slug.slice(0, idx);
+}
+
 function stripMarkdown(text: string): string {
   return text
     .replace(/```[\s\S]*?```/g, '')
@@ -38,8 +93,10 @@ function linkifyWikiLinks(html: string): string {
   return html.replace(
     /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
     (_match, slug: string, label?: string) => {
-      const text = label || slug.replace(/-/g, ' ');
-      return `<a href="${base}wiki/${slug.trim()}" class="wiki-link">${text.trim()}</a>`;
+      const target = normalizeWikiSlug(slug);
+      const text = (label || slug.replace(/-/g, ' ')).trim();
+      if (!target) return text;
+      return `<a href="${base}wiki/${encodeWikiSlug(target)}" class="wiki-link">${text}</a>`;
     },
   );
 }
@@ -93,6 +150,7 @@ export function getAllWikiPages(): WikiPage[] {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     const files: string[] = [];
     for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
         files.push(...collectFiles(path.join(dir, entry.name), rel));
@@ -118,10 +176,123 @@ export function getAllWikiPages(): WikiPage[] {
     });
 }
 
-export function getWikiPage(slug: string): WikiPage | undefined {
-  const filePath = path.join(WIKI_DIR, `${slug}.md`);
-  if (!fs.existsSync(filePath)) return undefined;
-  return parseWikiFile(filePath, slug);
+export function getWikiPage(slug: string | string[] | undefined): WikiPage | undefined {
+  const normalized = normalizeWikiSlug(slug);
+  if (!normalized) return undefined;
+
+  const root = path.resolve(WIKI_DIR);
+  const filePath = path.resolve(root, `${normalized}.md`);
+  if (filePath !== root && !filePath.startsWith(root + path.sep)) return undefined;
+
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(filePath);
+  } catch {
+    return undefined;
+  }
+  if (!stat.isFile()) return undefined;
+
+  return parseWikiFile(filePath, normalized);
+}
+
+/**
+ * 由 page slug 組出巢狀資料夾樹（資料夾在前、檔案沿用傳入順序＝預設最新在上）。
+ */
+export function getWikiFolderTree(pages: WikiPage[]): WikiTreeNode[] {
+  interface DirBuild {
+    node: WikiTreeDirNode;
+    dirs: Map<string, DirBuild>;
+    files: WikiTreeFileNode[];
+  }
+
+  const makeDir = (name: string, dirPath: string): DirBuild => ({
+    node: { type: 'dir', name, path: dirPath, children: [] },
+    dirs: new Map(),
+    files: [],
+  });
+
+  const root = makeDir('', '');
+
+  for (const page of pages) {
+    const segments = page.slug.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    if (!fileName) continue;
+
+    let cursor = root;
+    const walked: string[] = [];
+    for (const segment of segments) {
+      walked.push(segment);
+      let next = cursor.dirs.get(segment);
+      if (!next) {
+        next = makeDir(segment, walked.join('/'));
+        cursor.dirs.set(segment, next);
+      }
+      cursor = next;
+    }
+
+    cursor.files.push({
+      type: 'file',
+      name: `${fileName}.md`,
+      path: `${page.slug}.md`,
+      slug: page.slug,
+      title: page.title,
+    });
+  }
+
+  const collator = new Intl.Collator('zh-Hant', { numeric: true, sensitivity: 'base' });
+
+  const flatten = (dir: DirBuild): WikiTreeNode[] => {
+    const dirs = [...dir.dirs.values()].sort((a, b) => collator.compare(a.node.name, b.node.name));
+    for (const child of dirs) {
+      child.node.children = flatten(child);
+    }
+    return [...dirs.map((d) => d.node), ...dir.files];
+  };
+
+  return flatten(root);
+}
+
+/**
+ * 直接掃描 wiki/ 磁碟樹（含尚無筆記的空資料夾），供 WikiNB 瀏覽頁使用。
+ */
+export function getWikiDiskTree(dir = WIKI_DIR, prefix = ''): WikiTreeNode[] {
+  if (!fs.existsSync(dir)) return [];
+  const collator = new Intl.Collator('zh-Hant', { numeric: true, sensitivity: 'base' });
+  const dirs: WikiTreeDirNode[] = [];
+  const files: WikiTreeFileNode[] = [];
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith('.')) continue;
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const abs = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      dirs.push({
+        type: 'dir',
+        name: entry.name,
+        path: rel,
+        children: getWikiDiskTree(abs, rel),
+      });
+    } else if (entry.name.endsWith('.md') && entry.name !== 'index.md') {
+      const slug = rel.replace(/\.md$/i, '');
+      let title = slug;
+      try {
+        title = parseWikiFile(abs, slug).title;
+      } catch {
+        /* ignore */
+      }
+      files.push({
+        type: 'file',
+        name: entry.name,
+        path: rel,
+        slug,
+        title,
+      });
+    }
+  }
+
+  dirs.sort((a, b) => collator.compare(a.name, b.name));
+  files.sort((a, b) => collator.compare(a.name, b.name));
+  return [...dirs, ...files];
 }
 
 export function getAllTags(pages: WikiPage[]): { tag: string; count: number }[] {
@@ -140,6 +311,7 @@ export function getSearchIndex(pages: WikiPage[]) {
   // 維持呼叫端排序（預設最新在上）
   return pages.map((p) => ({
     slug: p.slug,
+    folder: parentFolder(p.slug),
     title: p.title,
     description: p.description,
     type: p.type,

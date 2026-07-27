@@ -28,10 +28,18 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
       />
     </div>
 
-    <div id="search-actions-single" class="mt-4">
-      <button type="submit" class="btn-primary w-full justify-center py-3 text-base md:text-lg">
+    <div id="search-actions-single" class="mt-4 grid grid-cols-2 gap-3">
+      <button type="submit" class="btn-primary justify-center py-3 text-sm sm:text-base">
         Search
       </button>
+      <a
+        href="https://github.com/zx50416"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn-rename-nav justify-center py-3 text-sm sm:text-base"
+      >
+        GitHub
+      </a>
     </div>
 
     <div id="search-actions-logged" class="mt-4 hidden grid grid-cols-2 gap-3">
@@ -39,18 +47,16 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
         Search
       </button>
       <a
+        href={`${base}add-note`}
+        class="btn-rename-nav justify-center py-3 text-sm sm:text-base"
+      >
+        新增 MD
+      </a>
+      <a
         href={`${base}rename`}
         class="btn-rename-nav justify-center py-3 text-sm sm:text-base"
       >
-        Rename
-      </a>
-      <a
-        href="https://chatgpt.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="btn-dark justify-center py-3 text-sm sm:text-base"
-      >
-        ChatGPT
+        管理
       </a>
       <a
         id="codex-launch-btn"

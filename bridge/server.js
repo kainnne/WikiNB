@@ -17,7 +17,7 @@ const PORT = Number(process.env.PORT || 8787);
 const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(__dirname, '..');
 const AUTH_USER = process.env.WIKINB_AUTH_USER || '';
 const AUTH_PASS = process.env.WIKINB_AUTH_PASS || '';
-const AUTH_EMAILS = (process.env.WIKINB_AUTH_EMAILS || 'chaos60649@gmail.com,st101031616@gmail.com')
+const AUTH_EMAILS = (process.env.WIKINB_AUTH_EMAILS || 'chaos60649@gmail.com')
   .split(',')
   .map((e) => e.trim())
   .filter(Boolean);
@@ -304,17 +304,24 @@ async function runWikiSync() {
     };
   }
 
-  await execFileAsync('git', ['add', 'wiki/'], { cwd: PROJECT_ROOT });
+  // -A 才能把「已刪除」的 wiki 檔一併 staging，避免雲端還留著舊頁／搜尋幽靈連結
+  await execFileAsync('git', ['add', '-A', '--', 'wiki/'], { cwd: PROJECT_ROOT });
   const commitEnv = { ...process.env };
+  let committed = false;
   try {
     await execFileAsync('git', ['commit', '-m', 'sync: update wiki from Bridge'], {
       cwd: PROJECT_ROOT,
       env: commitEnv,
     });
+    committed = true;
   } catch (err) {
     const msg = String(err.stdout || err.stderr || err.message || '');
     if (!/nothing to commit|no changes added|clean working tree/i.test(msg)) {
-      console.warn('git commit:', msg.slice(0, 300));
+      // 真正的 commit 失敗（例如缺 user.email）不可假裝同步成功
+      const detail = msg.slice(0, 400);
+      console.error('git commit failed:', detail);
+      const error = new Error(`git commit 失敗：${detail}`);
+      throw error;
     }
   }
 
@@ -338,17 +345,70 @@ async function runWikiSync() {
     });
   }
 
+  // 確認 wiki/ 工作樹乾淨，避免「看似成功、檔案其實沒推上去」
+  const { stdout: porcelain } = await execFileAsync(
+    'git',
+    ['status', '--porcelain', '--', 'wiki/'],
+    { cwd: PROJECT_ROOT },
+  );
+  const dirty = String(porcelain || '').trim();
+  if (dirty) {
+    throw new Error(`同步後 wiki/ 仍有未提交變更：\n${dirty.slice(0, 400)}`);
+  }
+
   return {
     ok: true,
-    message: 'Wiki 已推送至 GitHub，Pages 將自動重新部署（約 1–2 分鐘）',
+    message: committed
+      ? 'Wiki 已推送至 GitHub，Pages 將自動重新部署（約 1–2 分鐘）'
+      : '沒有新的 wiki 變更可提交；遠端已是最新',
     gitPush: true,
+    committed,
   };
 }
 
+function wikiRoot() {
+  return path.join(PROJECT_ROOT, 'wiki');
+}
+
+/** 允許巢狀路徑：folder/note；擋 traversal */
+function normalizeWikiRelPath(input, { allowMdSuffix = true } = {}) {
+  let raw = String(input || '').trim().replace(/\\/g, '/');
+  if (allowMdSuffix) raw = raw.replace(/\.md$/i, '');
+  if (!raw || raw === 'index' || raw === '.' || raw === '..') return null;
+  const parts = raw.split('/').filter(Boolean);
+  if (parts.length === 0) return null;
+  if (parts.some((p) => p === '.' || p === '..' || p === 'index')) return null;
+  // 每段：中文、英文、數字、_、-
+  if (!parts.every((p) => /^[\u4e00-\u9fffA-Za-z0-9_-]+$/.test(p))) return null;
+  if (parts.join('/').length > 200) return null;
+  return parts.join('/');
+}
+
+function resolveUnderWiki(relPath) {
+  const root = wikiRoot();
+  const abs = path.resolve(root, relPath);
+  if (abs !== root && !abs.startsWith(root + path.sep)) return null;
+  return abs;
+}
+
 function safeWikiFilename(name) {
-  const base = path.basename(String(name || 'note.md')).replace(/[^\w.\-()\u4e00-\u9fff]+/g, '_');
-  if (!base || base === '.' || base === '..') return `note-${Date.now()}.md`;
-  return base.endsWith('.md') ? base : `${base}.md`;
+  // 支援 folder/sub/note.md
+  const normalized = String(name || 'note.md').replace(/\\/g, '/').trim();
+  const parts = normalized.split('/').filter(Boolean);
+  if (parts.length === 0) return `note-${Date.now()}.md`;
+  const safeParts = parts.map((part, idx) => {
+    const isLast = idx === parts.length - 1;
+    let base = part.replace(/[^\w.\-()\u4e00-\u9fff]+/g, '_');
+    if (!base || base === '.' || base === '..') base = isLast ? `note-${Date.now()}` : 'folder';
+    if (isLast && !base.toLowerCase().endsWith('.md')) base = `${base}.md`;
+    if (!isLast && base.toLowerCase().endsWith('.md')) base = base.slice(0, -3);
+    return base;
+  });
+  const joined = safeParts.join('/');
+  if (safeParts[safeParts.length - 1] === 'index.md') {
+    return null;
+  }
+  return joined;
 }
 
 function extractWikiTitle(content, fallbackSlug) {
@@ -360,7 +420,7 @@ function extractWikiTitle(content, fallbackSlug) {
 }
 
 function upsertWikiIndexLink(slug, label) {
-  const indexPath = path.join(PROJECT_ROOT, 'wiki', 'index.md');
+  const indexPath = path.join(wikiRoot(), 'index.md');
   let text = fs.existsSync(indexPath)
     ? fs.readFileSync(indexPath, 'utf8')
     : '# Kainnne 知識庫索引\n\n## 筆記\n\n';
@@ -371,8 +431,9 @@ function upsertWikiIndexLink(slug, label) {
   }
 
   const link = label ? `- [[${slug}]] — ${label}` : `- [[${slug}]]`;
+  const escaped = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   if (text.includes(`[[${slug}]]`)) {
-    text = text.replace(new RegExp(`^- \\[\\[${slug}\\]\\][^\\n]*$`, 'm'), link);
+    text = text.replace(new RegExp(`^- \\[\\[${escaped}\\]\\][^\\n]*$`, 'm'), link);
     fs.writeFileSync(indexPath, text, 'utf8');
     return;
   }
@@ -396,35 +457,124 @@ function upsertWikiIndexLink(slug, label) {
   fs.writeFileSync(indexPath, `${before}\n${link}\n${after}`, 'utf8');
 }
 
-/** 儲存整理好的筆記到 wiki/（不經 raw） */
+function removeWikiIndexLink(slug) {
+  const indexPath = path.join(wikiRoot(), 'index.md');
+  if (!fs.existsSync(indexPath)) return;
+  const escaped = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let text = fs.readFileSync(indexPath, 'utf8');
+  text = text.replace(new RegExp(`^- \\[\\[${escaped}\\]\\][^\\n]*\\n?`, 'gm'), '');
+  const today = new Date().toISOString().slice(0, 10);
+  if (/> 最後更新：\d{4}-\d{2}-\d{2}/.test(text)) {
+    text = text.replace(/> 最後更新：\d{4}-\d{2}-\d{2}/, `> 最後更新：${today}`);
+  }
+  fs.writeFileSync(indexPath, text, 'utf8');
+}
+
+function collectWikiMdFiles(dir = wikiRoot(), prefix = '') {
+  if (!fs.existsSync(dir)) return [];
+  const out = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith('.')) continue;
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const abs = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      out.push(...collectWikiMdFiles(abs, rel));
+    } else if (entry.name.endsWith('.md') && entry.name !== 'index.md') {
+      out.push(rel);
+    }
+  }
+  return out.sort();
+}
+
+function buildWikiTree(dir = wikiRoot(), prefix = '') {
+  if (!fs.existsSync(dir)) return [];
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const dirs = [];
+  const files = [];
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue;
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const abs = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      dirs.push({
+        type: 'dir',
+        name: entry.name,
+        path: rel,
+        children: buildWikiTree(abs, rel),
+      });
+    } else if (entry.name.endsWith('.md') && entry.name !== 'index.md') {
+      const slug = rel.replace(/\.md$/i, '');
+      const content = fs.readFileSync(abs, 'utf8');
+      files.push({
+        type: 'file',
+        name: entry.name,
+        path: rel,
+        slug,
+        title: extractWikiTitle(content, slug),
+      });
+    }
+  }
+  dirs.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+  files.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+  return [...dirs, ...files];
+}
+
+/** 儲存整理好的筆記到 wiki/（支援子資料夾；可 autoSync 直接上線） */
 async function handleWikiUpload(req, res) {
-  const { filename, content } = req.body || {};
+  const { filename, content, folder, autoSync } = req.body || {};
   if (!content || !String(content).trim()) {
     res.status(400).json({ error: '請提供筆記內容' });
     return;
   }
 
   try {
-    const wikiDir = path.join(PROJECT_ROOT, 'wiki');
-    fs.mkdirSync(wikiDir, { recursive: true });
-    const safeName = safeWikiFilename(filename);
-    if (safeName === 'index.md') {
+    fs.mkdirSync(wikiRoot(), { recursive: true });
+
+    let relName = String(filename || 'note.md').trim();
+    const folderNorm = folder
+      ? normalizeWikiRelPath(folder, { allowMdSuffix: false })
+      : null;
+    if (folder && !folderNorm) {
+      res.status(400).json({ error: '目標資料夾路徑無效' });
+      return;
+    }
+    // 若 filename 本身不含路徑，且有指定 folder，則拼成 folder/file.md
+    if (folderNorm && !relName.includes('/') && !relName.includes('\\')) {
+      relName = `${folderNorm}/${relName}`;
+    }
+
+    const safeName = safeWikiFilename(relName);
+    if (!safeName) {
       res.status(400).json({ error: '請勿上傳 index.md，請用其他檔名' });
       return;
     }
-    const targetPath = path.join(wikiDir, safeName);
+    const targetPath = resolveUnderWiki(safeName);
+    if (!targetPath) {
+      res.status(400).json({ error: '檔名路徑無效' });
+      return;
+    }
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
     fs.writeFileSync(targetPath, String(content), 'utf8');
 
     const slug = safeName.replace(/\.md$/i, '');
     const title = extractWikiTitle(content, slug);
     upsertWikiIndexLink(slug, title);
 
+    let syncResult = null;
+    if (autoSync) {
+      syncResult = await runWikiSync();
+    }
+
     res.json({
       ok: true,
       filename: safeName,
       slug,
       path: `wiki/${safeName}`,
-      message: `已存到 wiki/${safeName}，並更新 index。請按「同步 Wiki」上線。`,
+      synced: Boolean(autoSync),
+      sync: syncResult,
+      message: autoSync
+        ? `已存到 wiki/${safeName} 並推上 GitHub（Pages 約 1–2 分鐘更新）。`
+        : `已存到 wiki/${safeName}。`,
     });
   } catch (err) {
     console.error('wiki upload error:', err);
@@ -441,43 +591,29 @@ app.post('/api/raw/upload', authMiddleware, handleWikiUpload);
 app.post('/api/ingest', authMiddleware, handleWikiUpload);
 
 function normalizeWikiSlug(input) {
-  const raw = String(input || '')
-    .trim()
-    .replace(/\.md$/i, '');
-  if (!raw) return null;
-  if (raw === 'index' || raw === '.' || raw === '..') return null;
-  if (raw.includes('/') || raw.includes('\\') || raw.includes('..')) return null;
-  // 允許中文、英文、數字、底線、連字號；不可空白或其他符號
-  if (!/^[\u4e00-\u9fffA-Za-z0-9_-]+$/.test(raw)) return null;
-  return raw.slice(0, 80);
+  return normalizeWikiRelPath(input, { allowMdSuffix: true });
 }
 
 function rewriteWikiLinks(text, oldSlug, newSlug) {
-  // [[old]] / [[old|label]]
-  const re = new RegExp(`\\[\\[${oldSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\|[^\\]]*)?\\]\\]`, 'g');
+  // [[old]] / [[old|label]]（含巢狀路徑）
+  const re = new RegExp(
+    `\\[\\[${oldSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\|[^\\]]*)?\\]\\]`,
+    'g',
+  );
   return text.replace(re, (_m, label) => `[[${newSlug}${label || ''}]]`);
 }
 
 app.get('/api/wiki/list', authMiddleware, (_req, res) => {
   try {
-    const wikiDir = path.join(PROJECT_ROOT, 'wiki');
-    if (!fs.existsSync(wikiDir)) {
-      res.json({ ok: true, files: [] });
-      return;
-    }
-    const files = fs
-      .readdirSync(wikiDir)
-      .filter((f) => f.endsWith('.md') && f !== 'index.md')
-      .sort()
-      .map((filename) => {
-        const slug = filename.replace(/\.md$/i, '');
-        const content = fs.readFileSync(path.join(wikiDir, filename), 'utf8');
-        return {
-          filename,
-          slug,
-          title: extractWikiTitle(content, slug),
-        };
-      });
+    const files = collectWikiMdFiles().map((rel) => {
+      const slug = rel.replace(/\.md$/i, '');
+      const content = fs.readFileSync(path.join(wikiRoot(), rel), 'utf8');
+      return {
+        filename: rel,
+        slug,
+        title: extractWikiTitle(content, slug),
+      };
+    });
     res.json({ ok: true, files });
   } catch (err) {
     console.error('wiki list error:', err);
@@ -485,7 +621,136 @@ app.get('/api/wiki/list', authMiddleware, (_req, res) => {
   }
 });
 
-app.post('/api/wiki/rename', authMiddleware, (req, res) => {
+app.get('/api/wiki/tree', authMiddleware, (_req, res) => {
+  try {
+    res.json({ ok: true, tree: buildWikiTree() });
+  } catch (err) {
+    console.error('wiki tree error:', err);
+    res.status(500).json({ error: '無法讀取 wiki 樹', detail: String(err.message || err).slice(0, 300) });
+  }
+});
+
+app.post('/api/wiki/mkdir', authMiddleware, async (req, res) => {
+  const folder = normalizeWikiRelPath(req.body?.path || req.body?.folder || req.body?.name, {
+    allowMdSuffix: false,
+  });
+  if (!folder) {
+    res.status(400).json({
+      error: '資料夾名稱無效。可用中文、英文、數字、_、-，可用 / 表示巢狀；不可空白。',
+    });
+    return;
+  }
+  const abs = resolveUnderWiki(folder);
+  if (!abs) {
+    res.status(400).json({ error: '資料夾路徑無效' });
+    return;
+  }
+  try {
+    let created = false;
+    if (fs.existsSync(abs)) {
+      const st = fs.statSync(abs);
+      if (!st.isDirectory()) {
+        res.status(409).json({ error: `已有同名檔案 wiki/${folder}` });
+        return;
+      }
+    } else {
+      fs.mkdirSync(abs, { recursive: true });
+      fs.writeFileSync(path.join(abs, '.gitkeep'), '', 'utf8');
+      created = true;
+    }
+
+    let syncResult = null;
+    if (req.body?.autoSync) {
+      syncResult = await runWikiSync();
+    }
+
+    res.json({
+      ok: true,
+      path: folder,
+      created,
+      synced: Boolean(req.body?.autoSync),
+      sync: syncResult,
+      message: req.body?.autoSync
+        ? created
+          ? `已建立 wiki/${folder}/ 並推上 GitHub。`
+          : `資料夾已存在：wiki/${folder}（已嘗試同步）。`
+        : created
+          ? `已建立 wiki/${folder}/。`
+          : `資料夾已存在：wiki/${folder}`,
+    });
+  } catch (err) {
+    console.error('wiki mkdir error:', err);
+    res.status(500).json({ error: '建立資料夾失敗', detail: String(err.message || err).slice(0, 400) });
+  }
+});
+
+app.post('/api/wiki/delete', authMiddleware, async (req, res) => {
+  const rel = normalizeWikiRelPath(req.body?.path || req.body?.slug || req.body?.filename);
+  if (!rel) {
+    res.status(400).json({ error: '要刪除的路徑無效' });
+    return;
+  }
+  const mdRel = rel.endsWith('.md') ? rel : `${rel}.md`;
+  const slug = mdRel.replace(/\.md$/i, '');
+  const abs = resolveUnderWiki(mdRel);
+  if (!abs) {
+    res.status(400).json({ error: '路徑無效' });
+    return;
+  }
+  try {
+    let deletedPath = mdRel;
+    let kind = 'file';
+
+    if (!fs.existsSync(abs)) {
+      const dirAbs = resolveUnderWiki(rel);
+      if (dirAbs && fs.existsSync(dirAbs) && fs.statSync(dirAbs).isDirectory()) {
+        fs.rmSync(dirAbs, { recursive: true, force: true });
+        deletedPath = rel;
+        kind = 'dir';
+      } else {
+        res.status(404).json({ error: `找不到 wiki/${mdRel}` });
+        return;
+      }
+    } else {
+      fs.unlinkSync(abs);
+      removeWikiIndexLink(slug);
+
+      let dir = path.dirname(abs);
+      const root = wikiRoot();
+      while (dir.startsWith(root + path.sep) && dir !== root) {
+        const left = fs.readdirSync(dir).filter((f) => f !== '.gitkeep' && !f.startsWith('.'));
+        if (left.length > 0) break;
+        fs.rmSync(dir, { recursive: true, force: true });
+        dir = path.dirname(dir);
+      }
+    }
+
+    let syncResult = null;
+    if (req.body?.autoSync) {
+      syncResult = await runWikiSync();
+    }
+
+    res.json({
+      ok: true,
+      slug: kind === 'file' ? slug : undefined,
+      path: deletedPath,
+      synced: Boolean(req.body?.autoSync),
+      sync: syncResult,
+      message: req.body?.autoSync
+        ? kind === 'dir'
+          ? `已刪除資料夾 wiki/${deletedPath}/ 並推上 GitHub。`
+          : `已刪除 wiki/${deletedPath} 並推上 GitHub。`
+        : kind === 'dir'
+          ? `已刪除資料夾 wiki/${deletedPath}/。`
+          : `已刪除 wiki/${deletedPath}。`,
+    });
+  } catch (err) {
+    console.error('wiki delete error:', err);
+    res.status(500).json({ error: '刪除失敗', detail: String(err.message || err).slice(0, 400) });
+  }
+});
+
+app.post('/api/wiki/rename', authMiddleware, async (req, res) => {
   const oldSlug = normalizeWikiSlug(req.body?.oldSlug || req.body?.from);
   const newSlug = normalizeWikiSlug(req.body?.newSlug || req.body?.to);
 
@@ -495,7 +760,7 @@ app.post('/api/wiki/rename', authMiddleware, (req, res) => {
   }
   if (!newSlug) {
     res.status(400).json({
-      error: '新檔名無效。可用中文、英文、數字、_ 與 -；不可空白或其他符號。',
+      error: '新檔名無效。可用中文、英文、數字、_ 與 -，可用 / 表示資料夾；不可空白或其他符號。',
     });
     return;
   }
@@ -504,9 +769,12 @@ app.post('/api/wiki/rename', authMiddleware, (req, res) => {
     return;
   }
 
-  const wikiDir = path.join(PROJECT_ROOT, 'wiki');
-  const fromPath = path.join(wikiDir, `${oldSlug}.md`);
-  const toPath = path.join(wikiDir, `${newSlug}.md`);
+  const fromPath = resolveUnderWiki(`${oldSlug}.md`);
+  const toPath = resolveUnderWiki(`${newSlug}.md`);
+  if (!fromPath || !toPath) {
+    res.status(400).json({ error: '路徑無效' });
+    return;
+  }
 
   if (!fs.existsSync(fromPath)) {
     res.status(404).json({ error: `找不到 wiki/${oldSlug}.md` });
@@ -518,14 +786,31 @@ app.post('/api/wiki/rename', authMiddleware, (req, res) => {
   }
 
   try {
+    fs.mkdirSync(path.dirname(toPath), { recursive: true });
     fs.renameSync(fromPath, toPath);
 
-    const wikiFiles = fs.readdirSync(wikiDir).filter((f) => f.endsWith('.md'));
-    for (const file of wikiFiles) {
-      const fp = path.join(wikiDir, file);
+    const wikiFiles = collectWikiMdFiles();
+    const allToRewrite = [...wikiFiles, 'index.md'];
+    for (const file of allToRewrite) {
+      const fp = path.join(wikiRoot(), file);
+      if (!fs.existsSync(fp)) continue;
       const before = fs.readFileSync(fp, 'utf8');
       const after = rewriteWikiLinks(before, oldSlug, newSlug);
       if (after !== before) fs.writeFileSync(fp, after, 'utf8');
+    }
+
+    let dir = path.dirname(fromPath);
+    const root = wikiRoot();
+    while (dir.startsWith(root + path.sep) && dir !== root) {
+      const left = fs.readdirSync(dir).filter((f) => f !== '.gitkeep' && !f.startsWith('.'));
+      if (left.length > 0) break;
+      fs.rmSync(dir, { recursive: true, force: true });
+      dir = path.dirname(dir);
+    }
+
+    let syncResult = null;
+    if (req.body?.autoSync) {
+      syncResult = await runWikiSync();
     }
 
     res.json({
@@ -533,7 +818,11 @@ app.post('/api/wiki/rename', authMiddleware, (req, res) => {
       oldSlug,
       newSlug,
       filename: `${newSlug}.md`,
-      message: `已將 ${oldSlug}.md 重新命名為 ${newSlug}.md（含目錄與交叉連結）。請按「同步 Wiki」上線。`,
+      synced: Boolean(req.body?.autoSync),
+      sync: syncResult,
+      message: req.body?.autoSync
+        ? `已將 ${oldSlug}.md 重新命名為 ${newSlug}.md 並推上 GitHub。`
+        : `已將 ${oldSlug}.md 重新命名為 ${newSlug}.md。`,
     });
   } catch (err) {
     console.error('wiki rename error:', err);

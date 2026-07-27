@@ -7,11 +7,10 @@
 流程：
 
 1. 你在外面把筆記整理好（建議含 frontmatter 的 `.md`）
-2. 登入網站 → Codex 頁**拖入 wiki**（存到本機 `wiki/`）
-3. 按**同步 Wiki** → 推上 GitHub Pages
-4. **Codex** 讀 `wiki/`，幫你回想、複習、延伸思考、提醒下一步
+2. 登入網站 → **新增 MD**（選資料夾、拖入檔案）→ **自動推上 GitHub Pages**
+3. **Codex** 讀 `wiki/`，幫你回想、複習、延伸思考、提醒下一步
 
-沒有 `raw/` 流程。AI 以 `wiki/` 為主；可自由發揮，不要過度保守。
+沒有 `raw/` 流程。不上線上編輯器。AI 以 `wiki/` 為主；可自由發揮，不要過度保守。
 
 ## 品牌
 
@@ -22,11 +21,11 @@
 
 ```
 WikiNB/
-├── wiki/          你的筆記（網站顯示與搜尋）
+├── wiki/          你的筆記（可含子資料夾，例如 wiki/專案/筆記.md）
 │   └── index.md   目錄
 ├── config/
 ├── docs/
-├── bridge/        登入 / Codex / 同步 / 上傳 wiki
+├── bridge/        登入 / Codex / 同步 / 上傳 / 建資料夾 / 刪除
 └── src/           網站程式（少動）
 ```
 
@@ -53,20 +52,23 @@ date: YYYY-MM-DD
 
 ### 命名
 
-- 檔名：小寫英文 + 連字號，如 `llm-basics.md`
+- 檔名：小寫英文 + 連字號，如 `llm-basics.md`；也可放在子資料夾 `專案/llm-basics.md`
+- slug 含路徑：`專案/llm-basics`
 - 標題：繁體中文（內容本身是英文除外）
 - 元資料頁可用 `meta-` 前綴
 
 ## 新增／更新筆記
 
-- **網站**：拖檔到 Codex → 寫入 `wiki/`，並嘗試更新 `index.md` → 再按「同步 Wiki」
-- **Cursor**：可直接建立／修改 `wiki/*.md`、更新 `index.md`，再請使用者同步或你協助 commit／說明同步
+- **網站「新增 MD」**：選／建資料夾 → 拖入 `.md` → 寫入 `wiki/` **並自動 git push**
+- **網站「管理」**：重新命名／刪除／建夾，同樣預設自動推送
+- **Codex 拖檔**：同上，自動上線
+- **Cursor**：可直接建立／修改 `wiki/**/*.md`、更新 `index.md`，再請使用者用「新增 MD」上傳或協助 commit
 
 當使用者請你「整理／補目錄／刪頁」時：
 
-1. 維護 `wiki/[slug].md`
+1. 維護 `wiki/**/[slug].md`（可巢狀）
 2. 更新 `wiki/index.md`
-3. 清理失效的 `[[slug]]`
+3. 清理失效的 `[[slug]]`（slug 可含 `/`）
 
 ## Codex 可以幫什麼
 

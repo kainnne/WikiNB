@@ -98,10 +98,10 @@ export async function syncWiki() {
   return bridgeFetch('/api/sync', { method: 'POST', body: '{}' });
 }
 
-export async function uploadWikiNote({ filename, content }) {
+export async function uploadWikiNote({ filename, content, folder, autoSync = false }) {
   return bridgeFetch('/api/wiki/upload', {
     method: 'POST',
-    body: JSON.stringify({ filename, content }),
+    body: JSON.stringify({ filename, content, folder, autoSync }),
   });
 }
 
@@ -109,10 +109,31 @@ export async function listWikiFiles() {
   return bridgeFetch('/api/wiki/list');
 }
 
-export async function renameWikiFile({ oldSlug, newSlug }) {
+export async function renameWikiFile({ oldSlug, newSlug, autoSync = false }) {
   return bridgeFetch('/api/wiki/rename', {
     method: 'POST',
-    body: JSON.stringify({ oldSlug, newSlug }),
+    body: JSON.stringify({ oldSlug, newSlug, autoSync }),
+  });
+}
+
+/** 巢狀樹狀清單：{ ok, tree: [{ type:'dir'|'file', name, path, children?, slug?, title? }] } */
+export async function listWikiTree() {
+  return bridgeFetch('/api/wiki/tree');
+}
+
+/** 建立資料夾，path 可為巢狀，例如 `專案/2026`。 */
+export async function createWikiFolder({ path, autoSync = false }) {
+  return bridgeFetch('/api/wiki/mkdir', {
+    method: 'POST',
+    body: JSON.stringify({ path, autoSync }),
+  });
+}
+
+/** 刪除筆記或資料夾，path 相對於 wiki/，例如 `專案/note.md`。 */
+export async function deleteWikiFile({ path, autoSync = false }) {
+  return bridgeFetch('/api/wiki/delete', {
+    method: 'POST',
+    body: JSON.stringify({ path, autoSync }),
   });
 }
 
@@ -218,13 +239,13 @@ export async function codexChatStream(message, onEvent = () => {}, options = {})
 export function mountNavAuth() {
   const loginLink = document.getElementById('nav-login');
   const logoutBtn = document.getElementById('nav-logout');
-  const syncBtn = document.getElementById('nav-sync');
+  const addNoteLink = document.getElementById('nav-add-note');
 
   const update = () => {
     const loggedIn = isLoggedIn();
     if (loginLink) loginLink.classList.toggle('hidden', loggedIn);
     if (logoutBtn) logoutBtn.classList.toggle('hidden', !loggedIn);
-    if (syncBtn) syncBtn.classList.toggle('hidden', !loggedIn);
+    if (addNoteLink) addNoteLink.classList.toggle('hidden', !loggedIn);
     document.dispatchEvent(new CustomEvent('wikinb:auth-change', { detail: { loggedIn } }));
   };
 
@@ -233,21 +254,6 @@ export function mountNavAuth() {
     await logout();
     update();
     window.location.href = getBase();
-  });
-
-  syncBtn?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    syncBtn.textContent = '同步中…';
-    syncBtn.setAttribute('disabled', 'true');
-    try {
-      const result = await syncWiki();
-      alert(result.message || '同步完成');
-    } catch (err) {
-      alert(err.message || '同步失敗，請確認 Bridge 已啟動');
-    } finally {
-      syncBtn.textContent = '同步 Wiki';
-      syncBtn.removeAttribute('disabled');
-    }
   });
 
   update();

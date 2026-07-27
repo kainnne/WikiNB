@@ -1,10 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SearchBar from '../components/SearchBar.astro';
-import { getAllWikiPages, getSearchIndex } from '../lib/wiki';
+import { getAllWikiPages, getSearchIndex, getWikiDiskTree } from '../lib/wiki';
 
 const pages = getAllWikiPages();
 const searchIndex = getSearchIndex(pages);
+const folderTree = getWikiDiskTree();
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -16,7 +17,9 @@ const base = import.meta.env.BASE_URL;
           WikiNB
         </span>
       </h1>
-      <p class="mt-2 text-berry-700/80">搜尋與瀏覽同一頁 · 最新在上 · 點 ▸ 展開 · 點標題進入專頁</p>
+      <p class="mt-2 text-berry-700/80">
+        先展開資料夾，再看專案與筆記 · 搜尋可即時過濾 · 首頁「最近更新」不變
+      </p>
     </div>
 
     <div class="mx-auto max-w-3xl">
@@ -29,21 +32,44 @@ const base = import.meta.env.BASE_URL;
       />
     </div>
 
+    <div id="folder-create" class="mx-auto mt-4 hidden max-w-3xl">
+      <div class="glass-card flex flex-col gap-2 p-4 sm:flex-row sm:items-center">
+        <input
+          id="folder-path-input"
+          type="text"
+          class="search-input flex-1 py-2 text-sm"
+          placeholder="新資料夾路徑，例如：專案/demo"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="folder-create-btn" type="button" class="btn-primary justify-center px-4 py-2 text-sm">
+          新增資料夾
+        </button>
+      </div>
+      <p id="folder-create-msg" class="mt-2 text-sm text-berry-600/80"></p>
+    </div>
+
     <p id="search-meta" class="mt-4 text-center text-sm text-berry-600/70 md:text-left"></p>
 
     <div
       id="search-results"
       data-search-results
-      class="wiki-scroll glass-card mx-auto mt-6 max-w-3xl divide-y divide-pink-100/80 overflow-hidden"
+      class="wiki-scroll glass-card mx-auto mt-6 max-w-3xl overflow-hidden"
     ></div>
     <div id="search-empty" class="glass-card mx-auto mt-6 hidden max-w-3xl p-8 text-center text-berry-700/80"></div>
   </div>
 
   <script>
     import { createWikiSearch } from '../scripts/wiki-search.js';
+    import {
+      isLoggedIn,
+      checkHealth,
+      createWikiFolder,
+    } from '../scripts/bridge-client.js';
 
     const searchIndex = JSON.parse(document.getElementById('search-data')!.textContent!);
-    const { mount, getQueryFromUrl } = createWikiSearch(searchIndex);
+    const folderTree = JSON.parse(document.getElementById('folder-tree-data')!.textContent!);
+    const { mount, getQueryFromUrl } = createWikiSearch(searchIndex, { folderTree });
 
     const input = document.querySelector('input[name="q"]') as HTMLInputElement;
     const form = input?.closest('form');
@@ -56,9 +82,63 @@ const base = import.meta.env.BASE_URL;
     const q = getQueryFromUrl();
     if (q && input) input.value = q;
     runSearch();
+
+    const folderBox = document.getElementById('folder-create');
+    const folderInput = document.getElementById('folder-path-input') as HTMLInputElement | null;
+    const folderBtn = document.getElementById('folder-create-btn') as HTMLButtonElement | null;
+    const folderMsg = document.getElementById('folder-create-msg');
+
+    async function refreshFolderUi() {
+      if (!folderBox) return;
+      if (!isLoggedIn()) {
+        folderBox.classList.add('hidden');
+        return;
+      }
+      folderBox.classList.remove('hidden');
+      const health = await checkHealth();
+      if (!health.online && folderMsg) {
+        folderMsg.textContent = 'Bridge 未連線：可瀏覽，但暫時無法新增資料夾。';
+        folderMsg.className = 'mt-2 text-sm text-amber-800';
+      }
+    }
+
+    folderBtn?.addEventListener('click', async () => {
+      const path = (folderInput?.value || '').trim().replace(/^\/+|\/+$/g, '');
+      if (!path) {
+        if (folderMsg) {
+          folderMsg.textContent = '請輸入資料夾路徑';
+          folderMsg.className = 'mt-2 text-sm text-red-600';
+        }
+        return;
+      }
+      folderBtn.disabled = true;
+      folderBtn.textContent = '建立中…';
+      try {
+        const result = await createWikiFolder({ path, autoSync: true });
+        if (folderMsg) {
+          folderMsg.textContent = result.message || '已建立資料夾並推上 GitHub。';
+          folderMsg.className = 'mt-2 text-sm text-emerald-700';
+        }
+        if (folderInput) folderInput.value = '';
+      } catch (err) {
+        if (folderMsg) {
+          folderMsg.textContent = (err as Error).message || '建立失敗';
+          folderMsg.className = 'mt-2 text-sm text-red-600';
+        }
+      } finally {
+        folderBtn.disabled = false;
+        folderBtn.textContent = '新增資料夾';
+      }
+    });
+
+    refreshFolderUi();
+    document.addEventListener('wikinb:auth-change', () => {
+      void refreshFolderUi();
+    });
   </script>
 
   <script id="search-data" type="application/json" set:html={JSON.stringify(searchIndex)} />
+  <script id="folder-tree-data" type="application/json" set:html={JSON.stringify(folderTree)} />
 </BaseLayout>
 
 <style>
@@ -77,9 +157,70 @@ const base = import.meta.env.BASE_URL;
     border-radius: 9999px;
   }
 
-  .wiki-title-link:hover {
+  /* 樹狀列由 JS 產生，拿不到 scoped 屬性，一律用 :global */
+  :global(#search-results .wiki-title-link:hover) {
     text-decoration: underline;
     text-decoration-color: rgba(236, 64, 122, 0.35);
     text-underline-offset: 4px;
+  }
+
+  :global(.wiki-tree .folder-row) {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: #5c2a4a;
+    border-bottom: 1px solid rgba(252, 231, 243, 0.9);
+    background: linear-gradient(90deg, rgba(252, 231, 243, 0.45), transparent);
+    transition: background 0.2s ease;
+  }
+
+  :global(.wiki-tree .folder-row:hover) {
+    background: rgba(252, 231, 243, 0.7);
+  }
+
+  :global(.wiki-tree .folder-chevron) {
+    display: inline-block;
+    width: 1rem;
+    color: #ec407a;
+    transition: transform 0.2s ease;
+  }
+
+  :global(.wiki-tree .folder-chevron.is-open) {
+    transform: rotate(90deg);
+  }
+
+  :global(.wiki-tree .folder-name) {
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 1rem;
+  }
+
+  :global(.wiki-tree .folder-count) {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(107, 58, 107, 0.55);
+  }
+
+  :global(.wiki-tree .folder-children) {
+    border-left: 2px solid rgba(244, 143, 177, 0.35);
+    margin-left: 1.25rem;
+  }
+
+  :global(.wiki-tree .root-group-label) {
+    padding: 0.65rem 1.25rem 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: rgba(107, 58, 107, 0.55);
+    text-transform: uppercase;
+  }
+
+  :global(.wiki-tree .wiki-item) {
+    border-bottom: 1px solid rgba(252, 231, 243, 0.85);
   }
 </style>

@@ -1,0 +1,242 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title="新增 MD" description="上傳 Markdown 到 wiki 並自動推上 GitHub">
+  <div class="animate-fadeIn mx-auto max-w-2xl">
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">新增 MD</h1>
+        <p class="mt-2 text-sm text-berry-700/80 md:text-base">
+          選好資料夾（可新建），拖入整理好的 <code class="rounded bg-pink-50 px-1">.md</code>。
+          會寫入本機 <code class="rounded bg-pink-50 px-1">wiki/</code> 並<strong>自動推上 GitHub</strong>，約 1–2 分鐘後網站更新。
+        </p>
+      </div>
+      <a href={`${base}rename`} class="btn-ghost shrink-0 text-sm">管理筆記 →</a>
+    </div>
+
+    <div id="add-gate" class="glass-card hidden p-6 text-center text-berry-700/80">
+      請先 <a href={`${base}login`} class="font-semibold text-pink-600">登入</a> 後使用。
+    </div>
+
+    <div id="add-offline" class="glass-card hidden border border-amber-200 bg-amber-50/50 p-6 text-center text-amber-900">
+      本機 Bridge 未連線。請確認 Mac 已開機且已執行 <code class="rounded bg-amber-100 px-1">npm run bridge</code>。
+    </div>
+
+    <div id="add-panel" class="hidden space-y-4">
+      <section class="glass-card space-y-3 p-4 sm:p-5">
+        <label class="block text-sm font-semibold text-berry-800">
+          放到哪個資料夾？
+          <select id="folder-select" class="search-input mt-2 py-2 text-sm">
+            <option value="">根目錄（wiki/）</option>
+          </select>
+        </label>
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <label class="block flex-1 text-sm font-semibold text-berry-800">
+            或新建資料夾
+            <input
+              id="folder-new"
+              type="text"
+              class="search-input mt-2 py-2 text-sm"
+              placeholder="例如：專案/demo"
+              spellcheck="false"
+              autocomplete="off"
+            />
+          </label>
+          <button id="folder-create-btn" type="button" class="btn-ghost justify-center px-4 py-2 text-sm">
+            建立並選取
+          </button>
+        </div>
+        <p id="folder-msg" class="text-sm text-berry-600/80"></p>
+      </section>
+
+      <section
+        id="drop-zone"
+        class="drop-zone glass-card cursor-pointer p-8 text-center transition"
+        tabindex="0"
+        role="button"
+        aria-label="拖入或點擊上傳 Markdown"
+      >
+        <p class="font-display text-lg font-bold text-berry-800">拖入 .md 檔案</p>
+        <p class="mt-2 text-sm text-berry-700/75">或點這裡選擇檔案 · 放開後自動上線</p>
+        <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" multiple />
+      </section>
+
+      <p id="add-status" class="text-sm text-berry-600/80"></p>
+      <p class="text-center text-xs text-berry-600/60">
+        不上傳編輯器：請在 Obsidian／Cursor 寫好再拖進來。刪改請用
+        <a href={`${base}rename`} class="font-semibold text-pink-600">管理筆記</a>。
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import {
+    isLoggedIn,
+    checkHealth,
+    listWikiTree,
+    createWikiFolder,
+    uploadWikiNote,
+  } from '../scripts/bridge-client.js';
+
+  const gate = document.getElementById('add-gate');
+  const offline = document.getElementById('add-offline');
+  const panel = document.getElementById('add-panel');
+  const folderSelect = document.getElementById('folder-select') as HTMLSelectElement | null;
+  const folderNew = document.getElementById('folder-new') as HTMLInputElement | null;
+  const folderBtn = document.getElementById('folder-create-btn') as HTMLButtonElement | null;
+  const folderMsg = document.getElementById('folder-msg');
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+  const statusEl = document.getElementById('add-status');
+
+  function setStatus(text: string, isError = false) {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.className = isError
+      ? 'text-sm text-red-600'
+      : 'text-sm text-emerald-700';
+  }
+
+  function setFolderMsg(text: string, isError = false) {
+    if (!folderMsg) return;
+    folderMsg.textContent = text;
+    folderMsg.className = isError ? 'text-sm text-red-600' : 'text-sm text-berry-600/80';
+  }
+
+  function collectDirs(nodes: any[], out: string[] = []) {
+    for (const node of nodes || []) {
+      if (node.type === 'dir') {
+        out.push(node.path);
+        collectDirs(node.children || [], out);
+      }
+    }
+    return out;
+  }
+
+  function fillFolderSelect(paths: string[], selected = '') {
+    if (!folderSelect) return;
+    const current = selected || folderSelect.value;
+    folderSelect.innerHTML = '<option value="">根目錄（wiki/）</option>';
+    for (const p of paths.sort((a, b) => a.localeCompare(b, 'zh-Hant'))) {
+      const opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = p;
+      folderSelect.appendChild(opt);
+    }
+    if (current) folderSelect.value = current;
+  }
+
+  async function refreshFolders(selectPath = '') {
+    const data = await listWikiTree();
+    fillFolderSelect(collectDirs(data.tree || []), selectPath);
+  }
+
+  async function publishFile(file: File) {
+    const name = file.name || 'note.md';
+    if (!/\.(md|txt)$/i.test(name)) {
+      setStatus('請上傳 .md 或 .txt', true);
+      return;
+    }
+    const content = await file.text();
+    if (!content.trim()) {
+      setStatus('檔案是空的', true);
+      return;
+    }
+    const folder = (folderSelect?.value || '').trim();
+    setStatus(`正在上傳並推送 ${name}…`);
+    dropZone?.classList.add('opacity-60', 'pointer-events-none');
+    try {
+      const result = await uploadWikiNote({
+        filename: name,
+        content,
+        folder: folder || undefined,
+        autoSync: true,
+      });
+      setStatus(result.message || '已上線');
+      await refreshFolders(folder);
+    } catch (err) {
+      setStatus((err as Error).message || '上傳失敗', true);
+    } finally {
+      dropZone?.classList.remove('opacity-60', 'pointer-events-none');
+    }
+  }
+
+  folderBtn?.addEventListener('click', async () => {
+    const path = (folderNew?.value || '').trim().replace(/^\/+|\/+$/g, '');
+    if (!path) {
+      setFolderMsg('請輸入資料夾路徑', true);
+      return;
+    }
+    folderBtn.disabled = true;
+    folderBtn.textContent = '建立中…';
+    try {
+      const result = await createWikiFolder({ path, autoSync: true });
+      setFolderMsg(result.message || '已建立');
+      if (folderNew) folderNew.value = '';
+      await refreshFolders(path);
+      if (folderSelect) folderSelect.value = path;
+    } catch (err) {
+      setFolderMsg((err as Error).message || '建立失敗', true);
+    } finally {
+      folderBtn.disabled = false;
+      folderBtn.textContent = '建立並選取';
+    }
+  });
+
+  dropZone?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', async () => {
+    const files = [...(fileInput.files || [])];
+    fileInput.value = '';
+    for (const f of files) await publishFile(f);
+  });
+
+  ;['dragenter', 'dragover'].forEach((evt) => {
+    dropZone?.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drop-active');
+    });
+  });
+  ;['dragleave', 'drop'].forEach((evt) => {
+    dropZone?.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drop-active');
+    });
+  });
+  dropZone?.addEventListener('drop', async (e) => {
+    const files = [...((e as DragEvent).dataTransfer?.files || [])];
+    for (const f of files) await publishFile(f);
+  });
+
+  async function init() {
+    if (!isLoggedIn()) {
+      gate?.classList.remove('hidden');
+      return;
+    }
+    const health = await checkHealth();
+    if (!health.online) {
+      offline?.classList.remove('hidden');
+      return;
+    }
+    panel?.classList.remove('hidden');
+    try {
+      await refreshFolders();
+    } catch (err) {
+      setStatus((err as Error).message || '無法讀取資料夾', true);
+    }
+  }
+
+  init();
+</script>
+
+<style>
+  .drop-zone.drop-active,
+  :global(#drop-zone.drop-active) {
+    border-color: rgba(236, 64, 122, 0.55);
+    background: rgba(252, 231, 243, 0.65);
+    box-shadow: 0 0 0 2px rgba(236, 64, 122, 0.2);
+  }
+</style>

@@ -2,11 +2,10 @@
 
 本機 API：
 
-- 登入（帳密 + 雙信箱驗證碼）
-- 同步 `wiki/` → GitHub
+- 登入（帳密 + 驗證碼，預設寄到主信箱）
+- **新增 MD**：上傳到 `wiki/`（可選資料夾）並可自動 git push
+- 建立資料夾、重新命名、刪除（可自動推送）
 - Codex 問答（讀 wiki，學習／提醒助理）
-- 拖檔上傳到 `wiki/`
-- 網頁重新命名 `wiki/*.md`（Rename）
 
 ## 快速設定
 
@@ -16,24 +15,26 @@ cp bridge/.env.example bridge/.env
 npm run bridge
 ```
 
-## 拖放 wiki 筆記
+## 新增 MD
 
-拖入整理好的 `.md` → 存到本機 `wiki/`，並更新 `index.md`。  
-再按網站「同步 Wiki」上線。
+網站登入後按「新增 MD」：選／建資料夾 → 拖入 `.md` → 本機寫入 + `git add -A wiki/` + push。  
+Pages 約 1–2 分鐘更新。
 
-## 一鍵同步
+## 自動同步
 
 ```env
 AUTO_GIT_PUSH=true
 # 可選：GITHUB_TOKEN=ghp_…
 ```
 
+上傳／建夾／刪除／重新命名可帶 `autoSync: true`（網站預設如此）。
+
 ## bridge/.env 必填
 
 | 變數 | 說明 |
 |------|------|
 | `WIKINB_AUTH_USER` / `WIKINB_AUTH_PASS` | 登入帳密 |
-| `WIKINB_AUTH_EMAILS` | 驗證碼信箱 |
+| `WIKINB_AUTH_EMAILS` | 驗證碼收件信箱（預設只寄 `chaos60649@gmail.com`） |
 | `SMTP_USER` / `SMTP_PASS` | Gmail 應用程式密碼 |
 | `CORS_ORIGINS` | 含 `https://zx50416.github.io` |
 
