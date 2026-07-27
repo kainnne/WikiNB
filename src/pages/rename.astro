@@ -131,7 +131,6 @@ const base = import.meta.env.BASE_URL;
       <div class="manage-dir" data-dir="${escapeAttr(node.path)}">
         <button type="button" class="folder-row" data-dir-toggle="${escapeAttr(node.path)}" aria-expanded="${open}">
           <span class="folder-chevron${open ? ' is-open' : ''}">▸</span>
-          <span class="folder-emoji" aria-hidden="true">${open ? '📂' : '📁'}</span>
           <span class="folder-name">${escapeHtml(node.name)}</span>
           <span class="folder-count">${notes} 篇</span>
         </button>
@@ -159,14 +158,12 @@ const base = import.meta.env.BASE_URL;
         const dirPath = btn.getAttribute('data-dir-toggle');
         const children = btn.parentElement?.querySelector('.folder-children');
         const chevron = btn.querySelector('.folder-chevron');
-        const emoji = btn.querySelector('.folder-emoji');
         if (!children) return;
         const open = children.hidden;
         children.hidden = !open;
         children.classList.toggle('hidden', !open);
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         chevron?.classList.toggle('is-open', open);
-        if (emoji) emoji.textContent = open ? '📂' : '📁';
         if (open) expandedDirs.add(dirPath);
         else expandedDirs.delete(dirPath);
       });

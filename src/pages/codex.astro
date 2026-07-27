@@ -40,12 +40,6 @@ const base = import.meta.env.BASE_URL;
 
       <div id="codex-tips" class="codex-tips"></div>
 
-      <div id="codex-drop" class="codex-drop" tabindex="0">
-        <p class="codex-drop-title">拖入 wiki 筆記（.md）</p>
-        <p class="codex-drop-sub">放開後存到 wiki/ 並自動推上 GitHub</p>
-        <input id="codex-file" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" />
-      </div>
-
       <div id="codex-output" class="codex-output"></div>
       <form id="codex-form" class="codex-input-row">
         <span class="codex-prompt">›</span>
@@ -71,7 +65,6 @@ const base = import.meta.env.BASE_URL;
     codexChatStream,
     fetchCodexModels,
     stopCodex,
-    uploadWikiNote,
   } from '../scripts/bridge-client.js';
 
   marked.setOptions({ breaks: true, gfm: true });
@@ -87,8 +80,6 @@ const base = import.meta.env.BASE_URL;
   const modelSelect = document.getElementById('codex-model');
   const effortSelect = document.getElementById('codex-effort');
   const tipsEl = document.getElementById('codex-tips');
-  const dropZone = document.getElementById('codex-drop');
-  const fileInput = document.getElementById('codex-file');
 
   let abortController = null;
   let running = false;
@@ -156,7 +147,6 @@ const base = import.meta.env.BASE_URL;
     input?.toggleAttribute('disabled', isRunning);
     modelSelect?.toggleAttribute('disabled', isRunning);
     effortSelect?.toggleAttribute('disabled', isRunning);
-    dropZone?.classList.toggle('codex-drop-disabled', isRunning);
   }
 
   async function loadModels() {
@@ -223,69 +213,6 @@ const base = import.meta.env.BASE_URL;
       /* ignore */
     }
     abortController?.abort();
-  });
-
-  async function handleUploadFile(file) {
-    if (!file || running) return;
-    const name = file.name || 'note.md';
-    if (!/\.(md|txt)$/i.test(name) && !file.type.startsWith('text/')) {
-      appendLine('請拖入 .md 或 .txt 筆記', 'error');
-      return;
-    }
-
-    const content = await file.text();
-    if (!content.trim()) {
-      appendLine('檔案是空的', 'error');
-      return;
-    }
-
-    appendLine(`上傳 wiki：${name}`, 'user');
-    appendLine('正在存到 wiki/…', 'system');
-    setRunning(true);
-    const timer = startElapsedTimer();
-
-    try {
-      const result = await uploadWikiNote({ filename: name, content, autoSync: true });
-      timer.stop();
-      appendLine(result.message || `已存到 wiki/${result.filename}`, 'assistant');
-    } catch (err) {
-      timer.stop();
-      appendLine(err.message || '儲存失敗', 'error');
-    } finally {
-      setRunning(false);
-      input?.focus();
-    }
-  }
-
-  dropZone?.addEventListener('click', () => {
-    if (!running) fileInput?.click();
-  });
-
-  fileInput?.addEventListener('change', async () => {
-    const file = fileInput.files?.[0];
-    fileInput.value = '';
-    await handleUploadFile(file);
-  });
-
-  ;['dragenter', 'dragover'].forEach((evt) => {
-    dropZone?.addEventListener(evt, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!running) dropZone.classList.add('codex-drop-active');
-    });
-  });
-
-  ;['dragleave', 'drop'].forEach((evt) => {
-    dropZone?.addEventListener(evt, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.remove('codex-drop-active');
-    });
-  });
-
-  dropZone?.addEventListener('drop', async (e) => {
-    const file = e.dataTransfer?.files?.[0];
-    await handleUploadFile(file);
   });
 
   form?.addEventListener('submit', async (e) => {
@@ -503,58 +430,6 @@ const base = import.meta.env.BASE_URL;
       font-size: 0.875rem;
       line-height: 1.625;
     }
-  }
-
-  .codex-page .codex-drop {
-    margin: 0.75rem 0.75rem 0;
-    border: 1.5px dashed rgba(244, 114, 182, 0.55);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.45);
-    padding: 0.75rem;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-  }
-
-  @media (min-width: 640px) {
-    .codex-page .codex-drop {
-      margin: 0.75rem 1rem 0;
-      padding: 0.9rem 1rem;
-    }
-  }
-
-  .codex-page .codex-drop-title {
-    margin: 0;
-    font-size: 0.95rem;
-    color: #4a1942;
-  }
-
-  @media (min-width: 640px) {
-    .codex-page .codex-drop-title {
-      font-size: 1rem;
-    }
-  }
-
-  .codex-page .codex-drop-sub {
-    margin: 0.35rem 0 0;
-    font-size: 0.75rem;
-    color: rgba(74, 25, 66, 0.7);
-  }
-
-  @media (min-width: 640px) {
-    .codex-page .codex-drop-sub {
-      font-size: 0.8rem;
-    }
-  }
-
-  .codex-page .codex-drop-active {
-    border-color: #ec4899;
-    background: rgba(252, 231, 243, 0.55);
-  }
-
-  .codex-page .codex-drop-disabled {
-    opacity: 0.45;
-    pointer-events: none;
   }
 
   .codex-page .hidden {

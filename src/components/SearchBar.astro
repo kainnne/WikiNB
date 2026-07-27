@@ -21,9 +21,6 @@ const formAction = action.startsWith('http') ? action : `${base}${action.replace
 
 <form action={formAction} method="get" class="w-full">
   <div class="relative w-full">
-    <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-pink-400">
-      🔍
-    </span>
     <input
       type="search"
       name="q"

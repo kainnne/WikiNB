@@ -22,14 +22,14 @@ const base = import.meta.env.BASE_URL;
     <div id="add-panel" class="hidden space-y-4">
       <section class="glass-card space-y-3 p-4 sm:p-5">
         <label class="block text-sm font-semibold text-berry-800">
-          放到哪個資料夾？
+          資料夾
           <select id="folder-select" class="search-input mt-2 py-2 text-sm">
-            <option value="">根目錄（wiki/）</option>
+            <option value="">未選擇</option>
           </select>
         </label>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label class="block flex-1 text-sm font-semibold text-berry-800">
-            或新建資料夾
+            新建資料夾
             <input
               id="folder-new"
               type="text"
@@ -54,7 +54,6 @@ const base = import.meta.env.BASE_URL;
         aria-label="拖入或點擊上傳 Markdown"
       >
         <p class="font-display text-lg font-bold text-berry-800">拖入 .md 檔案</p>
-        <p class="mt-2 text-sm text-berry-700/75">或點這裡選擇檔案上傳</p>
         <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" multiple />
       </section>
 
@@ -108,7 +107,8 @@ const base = import.meta.env.BASE_URL;
   function fillFolderSelect(paths: string[], selected = '') {
     if (!folderSelect) return;
     const current = selected || folderSelect.value;
-    folderSelect.innerHTML = '<option value="">根目錄（wiki/）</option>';
+    // 沒有「根目錄」選項：筆記一律放進資料夾。
+    folderSelect.innerHTML = '<option value="">未選擇</option>';
     for (const p of paths.sort((a, b) => a.localeCompare(b, 'zh-Hant'))) {
       const opt = document.createElement('option');
       opt.value = p;
@@ -129,19 +129,23 @@ const base = import.meta.env.BASE_URL;
       setStatus('請上傳 .md 或 .txt', true);
       return;
     }
+    const folder = (folderSelect?.value || '').trim().replace(/^\/+|\/+$/g, '');
+    if (!folder) {
+      setStatus('請先選擇資料夾', true);
+      return;
+    }
     const content = await file.text();
     if (!content.trim()) {
       setStatus('檔案是空的', true);
       return;
     }
-    const folder = (folderSelect?.value || '').trim();
     setStatus(`正在上傳並推送 ${name}…`);
     dropZone?.classList.add('opacity-60', 'pointer-events-none');
     try {
       const result = await uploadWikiNote({
         filename: name,
         content,
-        folder: folder || undefined,
+        folder,
         autoSync: true,
       });
       setStatus(result.message || '已上線');

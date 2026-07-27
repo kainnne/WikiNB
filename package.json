@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "test": "node scripts/test-nav-auth-visibility.mjs",
     "bridge:install": "npm install --prefix bridge",
     "bridge": "npm run start --prefix bridge",
     "bridge:dev": "npm run dev --prefix bridge"

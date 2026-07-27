@@ -18,7 +18,6 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
 <div class="home-search w-full" data-dual={dualMode ? 'true' : 'false'}>
   <form action={searchAction} method="get" class="w-full">
     <div class="relative w-full">
-      <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-pink-400">🔍</span>
       <input
         type="search"
         name="q"
@@ -34,17 +33,34 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
       </button>
     </div>
 
-    <div id="search-actions-logged" class="mt-4 hidden grid grid-cols-2 gap-3">
+    <div
+      id="search-actions-logged"
+      class="auth-grid mt-4 gap-3"
+      hidden
+      aria-hidden="true"
+    >
       <button type="submit" class="btn-primary justify-center py-3 text-sm sm:text-base">
         Search
       </button>
       <a href={`${base}rename`} class="btn-rename-nav justify-center py-3 text-sm sm:text-base">
         Management
       </a>
-      <a href={`${base}add-note`} class="btn-chroma justify-center py-3 text-sm sm:text-base">
+      <a
+        id="add-note-launch-btn"
+        href={`${base}add-note`}
+        class="btn-chroma auth-cta justify-center py-3 text-sm sm:text-base"
+        hidden
+        aria-hidden="true"
+      >
         <span class="btn-chroma-label">+ md.</span>
       </a>
-      <a id="codex-launch-btn" href={`${base}codex`} class="btn-chroma justify-center py-3 text-sm sm:text-base">
+      <a
+        id="codex-launch-btn"
+        href={`${base}codex`}
+        class="btn-chroma auth-cta justify-center py-3 text-sm sm:text-base"
+        hidden
+        aria-hidden="true"
+      >
         <span class="btn-chroma-label">Codex</span>
       </a>
     </div>
@@ -52,14 +68,17 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
 </div>
 
 <script>
-  import { isLoggedIn } from '../scripts/bridge-client.js';
+  import { isLoggedIn, setAuthVisibility } from '../scripts/bridge-client.js';
 
   function updateSearchActions() {
     const dual = document.querySelector('.home-search')?.getAttribute('data-dual') === 'true';
     if (!dual) return;
     const loggedIn = isLoggedIn();
-    document.getElementById('search-actions-single')?.classList.toggle('hidden', loggedIn);
-    document.getElementById('search-actions-logged')?.classList.toggle('hidden', !loggedIn);
+    const single = document.getElementById('search-actions-single');
+    if (single) single.hidden = loggedIn;
+    setAuthVisibility(document.getElementById('search-actions-logged'), loggedIn);
+    setAuthVisibility(document.getElementById('add-note-launch-btn'), loggedIn);
+    setAuthVisibility(document.getElementById('codex-launch-btn'), loggedIn);
   }
 
   updateSearchActions();
@@ -121,5 +140,29 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 12px 28px rgba(123, 97, 255, 0.25);
     outline: none;
+  }
+
+  /* 登入專屬 UI：預設 display:none，只有 .is-auth-visible 才給 display，
+     避免 Tailwind 的 hidden / grid 這類同層級 utility 互相蓋掉。 */
+  .auth-grid {
+    display: none;
+  }
+
+  .auth-grid.is-auth-visible {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .auth-cta {
+    display: none;
+  }
+
+  .auth-cta.is-auth-visible {
+    display: inline-flex;
+  }
+
+  .auth-grid[hidden],
+  .auth-cta[hidden] {
+    display: none !important;
   }
 </style>

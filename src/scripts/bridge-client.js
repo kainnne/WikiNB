@@ -236,6 +236,22 @@ export async function codexChatStream(message, onEvent = () => {}, options = {})
   return finalPayload;
 }
 
+/**
+ * 顯示／隱藏「只有登入後才能出現」的元素。
+ *
+ * 同時設定 `hidden` 屬性與 `is-auth-visible` class：CSS 預設 `display: none`，
+ * 只有 `.is-auth-visible` 才會給定實際 display，避免 Tailwind 的 `hidden`
+ * 與 `grid` / `inline-flex` 這類 display utility 互相覆蓋。
+ */
+export function setAuthVisibility(el, visible) {
+  if (!el) return;
+  el.hidden = !visible;
+  el.classList.toggle('is-auth-visible', visible);
+  el.setAttribute('aria-hidden', visible ? 'false' : 'true');
+  if (visible) el.removeAttribute('tabindex');
+  else el.setAttribute('tabindex', '-1');
+}
+
 export function mountNavAuth() {
   const loginLink = document.getElementById('nav-login');
   const logoutBtn = document.getElementById('nav-logout');
@@ -246,23 +262,14 @@ export function mountNavAuth() {
   const brandLink = document.getElementById('brand-link');
   const wikiLink = document.getElementById('nav-wikinb');
 
-  const setAuthCta = (el, visible) => {
-    if (!el) return;
-    el.hidden = !visible;
-    el.classList.toggle('is-auth-visible', visible);
-    el.setAttribute('aria-hidden', visible ? 'false' : 'true');
-    if (visible) el.removeAttribute('tabindex');
-    else el.setAttribute('tabindex', '-1');
-  };
-
   const update = () => {
     const loggedIn = isLoggedIn();
     if (loginLink) loginLink.classList.toggle('hidden', loggedIn);
     if (logoutBtn) logoutBtn.classList.toggle('hidden', !loggedIn);
 
-    // + md. / Codex：登入前隱藏，登入後顯示
-    setAuthCta(addNoteLink, loggedIn);
-    setAuthCta(codexLink, loggedIn);
+    // + md. / Codex：只有 session token 存在時才顯示
+    setAuthVisibility(addNoteLink, loggedIn);
+    setAuthVisibility(codexLink, loggedIn);
 
     // 登入後進入工作模式：隱藏 About Me / GitHub
     if (aboutLink) aboutLink.classList.toggle('hidden', loggedIn);

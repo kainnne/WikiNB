@@ -194,7 +194,6 @@ export function createWikiSearch(searchIndex, options = {}) {
           aria-controls="${escapeAttr(id)}"
         >
           <span class="folder-chevron${open ? ' is-open' : ''}">▸</span>
-          <span class="folder-emoji" aria-hidden="true">${open ? '📂' : '📁'}</span>
           <span class="folder-name">${escapeHtml(node.name)}</span>
           <span class="folder-count">${notes} 篇</span>
         </button>
@@ -272,7 +271,6 @@ export function createWikiSearch(searchIndex, options = {}) {
         const dirPath = btn.getAttribute('data-dir-toggle');
         const children = btn.parentElement?.querySelector('.folder-children');
         const chevron = btn.querySelector('.folder-chevron');
-        const emoji = btn.querySelector('.folder-emoji');
         if (!children) return;
 
         const open = children.hidden;
@@ -280,7 +278,6 @@ export function createWikiSearch(searchIndex, options = {}) {
         children.classList.toggle('hidden', !open);
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         chevron?.classList.toggle('is-open', open);
-        if (emoji) emoji.textContent = open ? '📂' : '📁';
         if (open) expandedDirs.add(dirPath);
         else expandedDirs.delete(dirPath);
       });
@@ -297,12 +294,10 @@ export function createWikiSearch(searchIndex, options = {}) {
     if (metaEl) {
       if (!q) {
         metaEl.textContent = hasTree
-          ? `共 ${results.length} 篇 · ${countDirs(folderTree)} 個資料夾 · 點資料夾展開 · 輸入關鍵字可即時過濾`
-          : '還沒有筆記或資料夾';
+          ? `共 ${results.length} 篇 · ${countDirs(folderTree)} 個資料夾`
+          : '';
       } else {
-        metaEl.textContent = results.length
-          ? `找到 ${results.length} 筆包含「${q}」的筆記`
-          : `沒有找到包含「${q}」的筆記`;
+        metaEl.textContent = results.length ? `找到 ${results.length} 筆` : '沒有結果';
       }
     }
 
@@ -310,9 +305,7 @@ export function createWikiSearch(searchIndex, options = {}) {
       resultsEl.classList.add('hidden');
       resultsEl.innerHTML = '';
       if (emptyEl) {
-        emptyEl.textContent = q
-          ? `沒有符合「${q}」的結果，試試其他關鍵字。`
-          : '還沒有 Wiki 筆記。整理好後拖到 Codex 上傳，或登入後新增資料夾。';
+        emptyEl.textContent = q ? `沒有符合「${q}」的結果` : '還沒有筆記';
         emptyEl.classList.remove('hidden');
       }
       return;
