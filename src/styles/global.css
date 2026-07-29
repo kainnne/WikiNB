@@ -111,6 +111,117 @@
   }
 }
 
+/* 關鍵字 chip 編輯器 */
+.kw-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.kw-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.kw-viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.kw-track {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
+
+.kw-nav {
+  flex-shrink: 0;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 143, 177, 0.55);
+  background: rgba(255, 255, 255, 0.7);
+  color: #9c2d5a;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kw-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.kw-nav.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.kw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 7.5rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: rgba(252, 231, 243, 0.95);
+  color: #be185d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(244, 143, 177, 0.45);
+}
+
+.kw-chip.is-locked {
+  background: rgba(237, 233, 254, 0.9);
+  color: #6b21a8;
+  border-color: rgba(196, 181, 253, 0.7);
+}
+
+.kw-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kw-remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0 0.1rem;
+  opacity: 0.75;
+}
+
+.kw-remove:hover {
+  opacity: 1;
+}
+
+.kw-compose {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.kw-compose .kw-input {
+  flex: 1;
+  min-width: 8rem;
+  padding-left: 1rem;
+}
+
+.kw-add {
+  flex-shrink: 0;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
 /* 背景裝飾光斑 */
 .bg-blobs::before,
 .bg-blobs::after {

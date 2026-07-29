@@ -4,7 +4,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="管理筆記" description="修改標題與刪除 wiki 筆記">
+<BaseLayout title="管理筆記" description="修改標題、關鍵字與刪除 wiki 筆記">
   <div class="animate-fadeIn mx-auto max-w-2xl">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
       <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">管理筆記</h1>
@@ -40,6 +40,7 @@ const base = import.meta.env.BASE_URL;
     deleteWikiFile,
     syncWiki,
   } from '../scripts/bridge-client.js';
+  import { mountKeywordEditor } from '../scripts/keyword-chips.js';
 
   const gate = document.getElementById('rename-gate');
   const offline = document.getElementById('rename-offline');
@@ -48,6 +49,8 @@ const base = import.meta.env.BASE_URL;
   const statusEl = document.getElementById('rename-status');
   const syncBtn = document.getElementById('btn-sync-wiki');
   const expandedDirs = new Set();
+  /** @type {Map<string, ReturnType<typeof mountKeywordEditor>>} */
+  const keywordEditors = new Map();
 
   function escapeHtml(text) {
     return String(text ?? '')
@@ -114,15 +117,15 @@ const base = import.meta.env.BASE_URL;
     const metaBits = [
       folder ? `<span class="text-xs text-berry-600/60">${escapeHtml(folder)}/</span>` : '',
       `<span class="tag-badge">${escapeHtml(stem)}.md</span>`,
-      folderKw ? `<span class="tag-badge">${escapeHtml(folderKw)}</span>` : '',
     ].filter(Boolean).join('');
 
     return `
-      <div class="rename-row border-t border-pink-100/80 p-4" data-slug="${escapeAttr(slug)}" data-path="${pathAttr}">
+      <div class="rename-row border-t border-pink-100/80 p-4" data-slug="${escapeAttr(slug)}" data-path="${pathAttr}" data-folder-kw="${escapeAttr(folderKw)}" data-tags="${escapeAttr(JSON.stringify(node.tags || []))}">
         <div class="mb-2 flex flex-wrap items-center gap-2">
           ${metaBits}
         </div>
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label class="mb-1 block text-xs font-semibold text-berry-600/70">顯示標題</label>
+        <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="text"
             class="search-input rename-input flex-1 py-2 text-sm"
@@ -130,8 +133,12 @@ const base = import.meta.env.BASE_URL;
             autocomplete="off"
             aria-label="標題：${escapeAttr(title)}"
           />
+        </div>
+        <label class="mb-1 block text-xs font-semibold text-berry-600/70">關鍵字</label>
+        <div class="kw-mount mb-3" data-kw-mount="${escapeAttr(slug)}"></div>
+        <div class="flex flex-wrap gap-2">
           <button type="button" class="btn-rename rename-save shrink-0 justify-center px-4 py-2 text-sm">
-            儲存標題
+            儲存
           </button>
           <button type="button" class="btn-delete rename-delete shrink-0 justify-center px-4 py-2 text-sm">
             刪除
@@ -171,6 +178,9 @@ const base = import.meta.env.BASE_URL;
   }
 
   function bindHandlers() {
+    keywordEditors.forEach((ed) => ed?.destroy?.());
+    keywordEditors.clear();
+
     listEl?.querySelectorAll('[data-dir-toggle]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const dirPath = btn.getAttribute('data-dir-toggle');
@@ -190,6 +200,22 @@ const base = import.meta.env.BASE_URL;
     listEl?.querySelectorAll('.rename-row').forEach((row) => {
       const oldSlug = row.getAttribute('data-slug');
       const filePath = row.getAttribute('data-path');
+      const folderKw = row.getAttribute('data-folder-kw') || '';
+      let tags = [];
+      try {
+        tags = JSON.parse(row.getAttribute('data-tags') || '[]');
+      } catch {
+        tags = [];
+      }
+      const mount = row.querySelector('[data-kw-mount]');
+      if (mount && oldSlug) {
+        const editor = mountKeywordEditor(mount, {
+          locked: folderKw ? [folderKw] : [],
+          keywords: tags,
+        });
+        keywordEditors.set(oldSlug, editor);
+      }
+
       const input = row.querySelector('.rename-input');
       const saveBtn = row.querySelector('.rename-save');
       const delBtn = row.querySelector('.rename-delete');
@@ -197,6 +223,7 @@ const base = import.meta.env.BASE_URL;
 
       saveBtn?.addEventListener('click', async () => {
         const title = String(input?.value || '').trim();
+        const keywords = keywordEditors.get(oldSlug)?.getExtras?.() || [];
         msg?.classList.remove('hidden');
         if (!title) {
           if (msg) {
@@ -209,21 +236,26 @@ const base = import.meta.env.BASE_URL;
         saveBtn.disabled = true;
         saveBtn.textContent = '儲存中…';
         try {
-          const result = await updateWikiTitle({ slug: oldSlug, title, autoSync: true });
+          const result = await updateWikiTitle({
+            slug: oldSlug,
+            title,
+            keywords,
+            autoSync: true,
+          });
           if (msg) {
-            msg.textContent = result.message || '已更新標題';
+            msg.textContent = result.message || '已更新';
             msg.className = 'rename-msg mt-2 text-sm text-emerald-700';
           }
-          setStatus(`剛更新標題：${title}`);
+          setStatus(`剛更新：${title}`);
           await loadList();
         } catch (err) {
           if (msg) {
-            msg.textContent = err.message || '更新標題失敗';
+            msg.textContent = err.message || '更新失敗';
             msg.className = 'rename-msg mt-2 text-sm text-red-600';
           }
         } finally {
           saveBtn.disabled = false;
-          saveBtn.textContent = '儲存標題';
+          saveBtn.textContent = '儲存';
         }
       });
 

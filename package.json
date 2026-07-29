@@ -17,6 +17,7 @@
     "astro": "^5.7.10",
     "fuse.js": "^7.1.0",
     "gray-matter": "^4.0.3",
+    "katex": "^0.16.47",
     "marked": "^15.0.7",
     "tailwindcss": "^3.4.17"
   }

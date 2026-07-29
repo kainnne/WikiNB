@@ -69,16 +69,10 @@ const base = import.meta.env.BASE_URL;
             autocomplete="off"
           />
         </label>
-        <label class="block text-sm font-semibold text-berry-800">
-          額外關鍵字
-          <input
-            id="meta-keywords"
-            type="text"
-            class="search-input mt-2 py-2 text-sm"
-            placeholder="用逗號分隔，例如：履歷, 自我介紹"
-            autocomplete="off"
-          />
-        </label>
+        <div>
+          <p class="mb-2 text-sm font-semibold text-berry-800">關鍵字</p>
+          <div id="meta-keywords-editor"></div>
+        </div>
       </section>
 
       <section
@@ -106,6 +100,7 @@ const base = import.meta.env.BASE_URL;
     createWikiFolder,
     uploadWikiNote,
   } from '../scripts/bridge-client.js';
+  import { mountKeywordEditor } from '../scripts/keyword-chips.js';
 
   const gate = document.getElementById('add-gate');
   const offline = document.getElementById('add-offline');
@@ -117,10 +112,14 @@ const base = import.meta.env.BASE_URL;
   const folderHint = document.getElementById('folder-keyword-hint');
   const metaFilename = document.getElementById('meta-filename') as HTMLInputElement | null;
   const metaTitle = document.getElementById('meta-title') as HTMLInputElement | null;
-  const metaKeywords = document.getElementById('meta-keywords') as HTMLInputElement | null;
+  const keywordsRoot = document.getElementById('meta-keywords-editor');
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
   const statusEl = document.getElementById('add-status');
+
+  const keywordEditor = keywordsRoot
+    ? mountKeywordEditor(keywordsRoot, { locked: [], keywords: [] })
+    : null;
 
   function setStatus(text: string, isError = false) {
     if (!statusEl) return;
@@ -156,11 +155,13 @@ const base = import.meta.env.BASE_URL;
     const folder = folderSelect.value.trim();
     if (!folder) {
       folderHint.textContent = '選擇資料夾後，會自動帶入主關鍵字。';
+      keywordEditor?.setLocked([]);
       return;
     }
     const leaf = folder.split('/').filter(Boolean).pop() || folder;
     const kw = formatFolderKeyword(leaf);
     folderHint.textContent = `主關鍵字：${kw}`;
+    keywordEditor?.setLocked(kw ? [kw] : []);
   }
 
   function collectDirs(nodes: any[], out: string[] = []) {
@@ -196,7 +197,7 @@ const base = import.meta.env.BASE_URL;
     const folder = (folderSelect?.value || '').trim().replace(/^\/+|\/+$/g, '');
     const filename = (metaFilename?.value || '').trim();
     const title = (metaTitle?.value || '').trim();
-    const keywords = (metaKeywords?.value || '').trim();
+    const keywords = keywordEditor?.getExtras?.() || [];
     if (!folder) {
       setStatus('請先選擇資料夾', true);
       return null;
@@ -222,7 +223,6 @@ const base = import.meta.env.BASE_URL;
       return;
     }
 
-    // 若檔名欄位還空，用拖入檔名；否則以表單為準
     if (!metaFilename?.value.trim() && droppedName) {
       metaFilename!.value = droppedName.replace(/\.(md|txt)$/i, '');
       meta.filename = metaFilename.value;

@@ -651,13 +651,16 @@ function upsertWikiFrontmatter(raw, patch = {}) {
 
 function parseKeywordList(input) {
   if (Array.isArray(input)) {
-    return uniqueTags(input.map((x) => String(x || '')));
+    return uniqueTags(
+      input.map((x) => Array.from(String(x || '').trim()).slice(0, 8).join('')).filter(Boolean),
+    ).slice(0, 10);
   }
   return uniqueTags(
     String(input || '')
       .split(/[,，、\n]/)
-      .map((s) => s.trim()),
-  );
+      .map((s) => Array.from(s.trim()).slice(0, 8).join(''))
+      .filter(Boolean),
+  ).slice(0, 10);
 }
 
 function upsertWikiIndexLink(slug, label) {
@@ -746,12 +749,17 @@ function buildWikiTree(dir = wikiRoot(), prefix = '') {
     } else if (entry.name.endsWith('.md') && entry.name !== 'index.md') {
       const slug = rel.replace(/\.md$/i, '');
       const content = fs.readFileSync(abs, 'utf8');
+      const { data } = splitWikiFrontmatter(content);
+      const folder = slug.includes('/') ? slug.slice(0, slug.lastIndexOf('/')) : '';
+      const folderKeyword = folderKeywordFromRelPath(folder);
+      const fmTags = Array.isArray(data.tags) ? data.tags : [];
       files.push({
         type: 'file',
         name: entry.name,
         path: rel,
         slug,
         title: extractWikiTitle(content, slug),
+        tags: uniqueTags([folderKeyword, ...fmTags]),
       });
     }
   }
@@ -1098,10 +1106,11 @@ app.post('/api/wiki/rename', authMiddleware, async (req, res) => {
   }
 });
 
-/** 只更新 frontmatter title（不改檔名／路徑） */
+/** 更新 frontmatter 的 title / keywords（不改檔名／路徑） */
 app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
   const slug = normalizeWikiSlug(req.body?.slug);
   const title = String(req.body?.title || '').trim();
+  const hasKeywords = req.body?.keywords !== undefined || req.body?.tags !== undefined;
   if (!slug) {
     res.status(400).json({ error: '筆記路徑無效' });
     return;
@@ -1121,11 +1130,19 @@ app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
     const before = fs.readFileSync(filePath, 'utf8');
     const folder = slug.includes('/') ? slug.slice(0, slug.lastIndexOf('/')) : '';
     const folderKeyword = folderKeywordFromRelPath(folder);
+    const extras = hasKeywords
+      ? parseKeywordList(req.body?.keywords ?? req.body?.tags)
+      : null;
     const { data } = splitWikiFrontmatter(before);
     const existingTags = Array.isArray(data.tags) ? data.tags : [];
+    const nextTags =
+      extras !== null
+        ? uniqueTags([folderKeyword, ...extras]).slice(0, 10)
+        : uniqueTags([folderKeyword, ...existingTags]).slice(0, 10);
+
     const next = upsertWikiFrontmatter(before, {
       title,
-      tags: uniqueTags([folderKeyword, ...existingTags]),
+      tags: nextTags,
       updated: new Date().toISOString().slice(0, 10),
     });
     fs.writeFileSync(filePath, next, 'utf8');
@@ -1140,15 +1157,16 @@ app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
       ok: true,
       slug,
       title,
+      tags: nextTags,
       synced: Boolean(req.body?.autoSync),
       sync: syncResult,
       message: req.body?.autoSync
-        ? `已更新標題並推上 GitHub。`
-        : `已更新標題。`,
+        ? `已更新標題／關鍵字並推上 GitHub。`
+        : `已更新標題／關鍵字。`,
     });
   } catch (err) {
     console.error('wiki update-title error:', err);
-    res.status(500).json({ error: '更新標題失敗', detail: String(err.message || err).slice(0, 400) });
+    res.status(500).json({ error: '更新失敗', detail: String(err.message || err).slice(0, 400) });
   }
 });
 

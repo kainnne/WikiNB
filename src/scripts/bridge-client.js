@@ -126,11 +126,11 @@ export async function renameWikiFile({ oldSlug, newSlug, autoSync = false }) {
   });
 }
 
-/** 更新筆記 frontmatter 標題（不改檔名） */
-export async function updateWikiTitle({ slug, title, autoSync = false }) {
+/** 更新筆記 frontmatter 標題／關鍵字（不改檔名） */
+export async function updateWikiTitle({ slug, title, keywords, autoSync = false }) {
   return bridgeFetch('/api/wiki/update-title', {
     method: 'POST',
-    body: JSON.stringify({ slug, title, autoSync }),
+    body: JSON.stringify({ slug, title, keywords, autoSync }),
   });
 }
 

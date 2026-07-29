@@ -58,7 +58,7 @@ const base = import.meta.env.BASE_URL;
 </BaseLayout>
 
 <script>
-  import { marked } from 'marked';
+  import { renderMarkdownWithMath } from '../scripts/markdown-math.js';
   import {
     isLoggedIn,
     checkHealth,
@@ -66,8 +66,6 @@ const base = import.meta.env.BASE_URL;
     fetchCodexModels,
     stopCodex,
   } from '../scripts/bridge-client.js';
-
-  marked.setOptions({ breaks: true, gfm: true });
 
   const gate = document.getElementById('codex-gate');
   const offline = document.getElementById('codex-offline');
@@ -90,7 +88,7 @@ const base = import.meta.env.BASE_URL;
     if (!bubble) return;
     if (role === 'assistant') {
       bubble.classList.add('codex-md');
-      bubble.innerHTML = marked.parse(String(text ?? ''), { async: false });
+      bubble.innerHTML = renderMarkdownWithMath(String(text ?? ''));
     } else {
       bubble.classList.remove('codex-md');
       bubble.textContent = text;
@@ -594,6 +592,16 @@ const base = import.meta.env.BASE_URL;
 
   .codex-page .codex-md th {
     background: rgba(252, 231, 243, 0.6);
+  }
+
+  .codex-page .codex-md .katex-display {
+    margin: 0.75em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .codex-page .codex-md .katex {
+    font-size: 1.05em;
   }
 
   .codex-page .codex-line-user {
