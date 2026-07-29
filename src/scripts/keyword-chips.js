@@ -1,6 +1,7 @@
 /**
  * 關鍵字 chip 編輯器：最多 max 個、每詞 maxLen 字元；
- * 資料夾主關鍵字不顯示（仍計入上限）；新增時才跳出輸入框。
+ * 資料夾主關鍵字不顯示（仍計入上限）。
+ * simple：+md 用 — 只顯示輸入＋確認／取消，無「新增關鍵字」按鈕。
  */
 
 export const KEYWORD_MAX = 10;
@@ -36,7 +37,8 @@ export function normalizeKeywords(list, { max = KEYWORD_MAX, maxLen = KEYWORD_MA
  * @param {string[]} [options.locked]
  * @param {number} [options.max]
  * @param {number} [options.maxLen]
- * @param {boolean} [options.compact] +md：無關鍵字時只顯示「新增」按鈕
+ * @param {boolean} [options.simple] +md：永遠顯示輸入列，無新增按鈕；關鍵字非必填
+ * @param {boolean} [options.compact] 舊 compact（改用 simple）
  * @param {boolean} [options.composeOpen] 管理頁：預設展開輸入列
  * @param {(keywords: string[]) => void} [options.onChange]
  */
@@ -45,8 +47,8 @@ export function mountKeywordEditor(root, options = {}) {
 
   const max = options.max ?? KEYWORD_MAX;
   const maxLen = options.maxLen ?? KEYWORD_MAX_LEN;
-  const compact = Boolean(options.compact);
-  const stickyCompose = Boolean(options.composeOpen);
+  const simple = Boolean(options.simple || options.compact);
+  const stickyCompose = Boolean(options.composeOpen) || simple;
   let locked = normalizeKeywords(options.locked || [], { max, maxLen: 32 });
   let extras = normalizeKeywords(options.keywords || [], { max, maxLen }).filter(
     (k) => !locked.some((l) => l.toLowerCase() === k.toLowerCase()),
@@ -61,9 +63,9 @@ export function mountKeywordEditor(root, options = {}) {
   ensureCapacity();
 
   root.classList.add('kw-editor');
-  if (compact) root.classList.add('kw-editor-compact');
+  if (simple) root.classList.add('kw-editor-simple');
   root.innerHTML = `
-    <div class="kw-toolbar">
+    <div class="kw-toolbar${simple ? ' hidden' : ''}">
       <button type="button" class="kw-nav kw-prev is-hidden" aria-label="往前一個關鍵字" disabled>&lt;</button>
       <div class="kw-viewport">
         <div class="kw-track"></div>
@@ -71,15 +73,24 @@ export function mountKeywordEditor(root, options = {}) {
       <button type="button" class="kw-nav kw-next is-hidden" aria-label="往後一個關鍵字" disabled>&gt;</button>
       <button type="button" class="kw-add btn-ghost">新增關鍵字</button>
     </div>
+    <div class="kw-chips-simple${simple ? '' : ' hidden'}">
+      <div class="kw-track kw-track-wrap"></div>
+    </div>
     <div class="kw-compose${adding ? '' : ' hidden'}">
-      <input type="text" class="search-input kw-input py-2 text-sm" maxlength="${maxLen}" autocomplete="off" />
+      <input
+        type="text"
+        class="search-input kw-input py-2 text-sm"
+        maxlength="${maxLen}"
+        autocomplete="off"
+        placeholder="${simple ? '選填，輸入後按確認' : ''}"
+      />
       <button type="button" class="kw-confirm btn-ghost text-sm">確認</button>
       <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
     </div>
   `;
 
   const toolbar = root.querySelector('.kw-toolbar');
-  const track = root.querySelector('.kw-track');
+  const track = root.querySelector(simple ? '.kw-chips-simple .kw-track' : '.kw-toolbar .kw-track');
   const viewport = root.querySelector('.kw-viewport');
   const prevBtn = root.querySelector('.kw-prev');
   const nextBtn = root.querySelector('.kw-next');
@@ -88,6 +99,7 @@ export function mountKeywordEditor(root, options = {}) {
   const input = root.querySelector('.kw-input');
   const confirmBtn = root.querySelector('.kw-confirm');
   const cancelBtn = root.querySelector('.kw-cancel');
+  const simpleChips = root.querySelector('.kw-chips-simple');
 
   const allKeywords = () => [...locked, ...extras];
   const visibleKeywords = () => [...extras];
@@ -99,50 +111,60 @@ export function mountKeywordEditor(root, options = {}) {
     return Math.max(1, Math.floor(w / 96));
   };
 
-  const render = () => {
-    ensureCapacity();
-    const items = visibleKeywords();
-    const canShow = visibleCount();
-    const maxOffset = Math.max(0, items.length - canShow);
-    offset = Math.min(offset, maxOffset);
-    const slice = items.slice(offset, offset + canShow);
+  const bindRemove = (container) => {
+    container?.querySelectorAll('.kw-remove').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const chip = btn.closest('.kw-chip');
+        const kw = chip?.getAttribute('data-kw') || '';
+        extras = extras.filter((x) => x.toLowerCase() !== kw.toLowerCase());
+        emit();
+        render();
+      });
+    });
+  };
 
-    const hideChrome = compact && items.length === 0 && !adding;
-    root.classList.toggle('is-empty', hideChrome);
-    viewport?.classList.toggle('hidden', hideChrome);
-    if (hideChrome) {
-      prevBtn?.classList.add('is-hidden');
-      nextBtn?.classList.add('is-hidden');
-    }
-
-    if (track) {
-      track.innerHTML = slice
-        .map((kw) => {
-          const safe = String(kw)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/"/g, '&quot;');
-          return `
+  const chipHtml = (items) =>
+    items
+      .map((kw) => {
+        const safe = String(kw)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/"/g, '&quot;');
+        return `
             <span class="kw-chip" data-kw="${safe}">
               <span class="kw-chip-text">${safe}</span>
               <button type="button" class="kw-remove" aria-label="移除">×</button>
             </span>
           `;
-        })
-        .join('');
+      })
+      .join('');
 
-      track.querySelectorAll('.kw-remove').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const chip = btn.closest('.kw-chip');
-          const kw = chip?.getAttribute('data-kw') || '';
-          extras = extras.filter((x) => x.toLowerCase() !== kw.toLowerCase());
-          emit();
-          render();
-        });
-      });
+  const render = () => {
+    ensureCapacity();
+    const items = visibleKeywords();
+
+    if (simple) {
+      if (track) {
+        track.innerHTML = chipHtml(items);
+        bindRemove(track);
+      }
+      simpleChips?.classList.toggle('hidden', items.length === 0);
+      compose?.classList.remove('hidden');
+      if (confirmBtn) confirmBtn.disabled = allKeywords().length >= max;
+      return;
     }
 
-    const needNav = !hideChrome && items.length > canShow;
+    const canShow = visibleCount();
+    const maxOffset = Math.max(0, items.length - canShow);
+    offset = Math.min(offset, maxOffset);
+    const slice = items.slice(offset, offset + canShow);
+
+    if (track) {
+      track.innerHTML = chipHtml(slice);
+      bindRemove(track);
+    }
+
+    const needNav = items.length > canShow;
     if (prevBtn) {
       prevBtn.disabled = !needNav || offset <= 0;
       prevBtn.classList.toggle('is-hidden', !needNav);
@@ -156,7 +178,7 @@ export function mountKeywordEditor(root, options = {}) {
       addBtn.classList.toggle('hidden', adding);
     }
     compose?.classList.toggle('hidden', !adding);
-    toolbar?.classList.toggle('kw-toolbar-solo', hideChrome);
+    toolbar?.classList.toggle('kw-toolbar-solo', false);
   };
 
   const setAdding = (on) => {
@@ -171,11 +193,8 @@ export function mountKeywordEditor(root, options = {}) {
   const confirmAdd = () => {
     const value = clipKeyword(input?.value || '', maxLen);
     if (!value) {
-      if (stickyCompose) {
-        if (input) input.value = '';
-        return;
-      }
-      setAdding(false);
+      if (input) input.value = '';
+      if (!stickyCompose) setAdding(false);
       return;
     }
     if (allKeywords().length >= max) {
@@ -186,9 +205,10 @@ export function mountKeywordEditor(root, options = {}) {
       extras = [...extras, value];
       emit();
     }
+    if (input) input.value = '';
     if (stickyCompose) {
-      if (input) input.value = '';
       render();
+      input?.focus();
       return;
     }
     setAdding(false);
@@ -208,8 +228,8 @@ export function mountKeywordEditor(root, options = {}) {
   });
   confirmBtn?.addEventListener('click', confirmAdd);
   cancelBtn?.addEventListener('click', () => {
-    if (stickyCompose) {
-      if (input) input.value = '';
+    if (input) input.value = '';
+    if (simple || stickyCompose) {
       input?.focus();
       return;
     }
@@ -221,7 +241,8 @@ export function mountKeywordEditor(root, options = {}) {
       confirmAdd();
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      setAdding(false);
+      if (input) input.value = '';
+      if (!simple && !stickyCompose) setAdding(false);
     }
   });
   input?.addEventListener('input', () => {
@@ -230,14 +251,15 @@ export function mountKeywordEditor(root, options = {}) {
   });
 
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => render()) : null;
-  if (viewport && ro) ro.observe(viewport);
+  if (viewport && ro && !simple) ro.observe(viewport);
 
   render();
 
   return {
     getKeywords: () => allKeywords(),
     getExtras: () => [...extras],
-    isComposing: () => adding,
+    /** simple 模式下輸入中的草稿不算「必須確認」；永遠可直接送出 */
+    isComposing: () => (simple ? false : adding),
     setLocked(nextLocked) {
       locked = normalizeKeywords(nextLocked || [], { max, maxLen: 32 });
       extras = extras.filter((k) => !locked.some((l) => l.toLowerCase() === k.toLowerCase()));

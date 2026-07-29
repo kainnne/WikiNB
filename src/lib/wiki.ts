@@ -4,6 +4,27 @@ import matter from 'gray-matter';
 import { marked } from 'marked';
 
 const WIKI_DIR = path.join(process.cwd(), 'wiki');
+const WIKI_META_PATH = path.join(WIKI_DIR, '_meta.json');
+
+type WikiMetaEntry = {
+  title?: string;
+  description?: string;
+  tags?: string[];
+};
+
+function loadWikiMeta(): Record<string, WikiMetaEntry> {
+  try {
+    if (!fs.existsSync(WIKI_META_PATH)) return {};
+    const raw = JSON.parse(fs.readFileSync(WIKI_META_PATH, 'utf-8'));
+    return raw && typeof raw === 'object' ? raw : {};
+  } catch {
+    return {};
+  }
+}
+
+function getMetaEntry(slug: string): WikiMetaEntry {
+  return loadWikiMeta()[slug] || {};
+}
 
 export interface WikiPage {
   slug: string;
@@ -29,6 +50,8 @@ export interface WikiTreeFileNode {
   path: string;
   slug: string;
   title: string;
+  description?: string;
+  tags?: string[];
 }
 
 export interface WikiTreeDirNode {
@@ -180,19 +203,27 @@ function parseWikiFile(filePath: string, slug: string): WikiPage {
     formatDateField(data.updated) ||
     new Date().toISOString().slice(0, 10);
 
+  const meta = getMetaEntry(slug);
   const folderKeyword = folderKeywordFromSlug(slug);
   const fmTags = Array.isArray(data.tags) ? (data.tags as string[]) : [];
-  const tags = uniqueTags([folderKeyword, ...fmTags]);
+  const metaTags = Array.isArray(meta.tags) ? meta.tags : [];
+  const tags = uniqueTags([folderKeyword, ...metaTags, ...fmTags]);
 
   const title =
+    (typeof meta.title === 'string' && meta.title.trim()) ||
     (typeof data.title === 'string' && data.title.trim()) ||
     extractH1Title(content) ||
     fileStem(slug);
 
+  const description =
+    (typeof meta.description === 'string' && meta.description.trim()) ||
+    (typeof data.description === 'string' && data.description.trim()) ||
+    plain.slice(0, 120);
+
   return {
     slug,
     title,
-    description: (data.description as string) || plain.slice(0, 120),
+    description,
     type: (data.type as WikiPage['type']) || 'note',
     status: (data.status as WikiPage['status']) || 'active',
     tags,

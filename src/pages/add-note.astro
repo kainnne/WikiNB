@@ -70,8 +70,19 @@ const base = import.meta.env.BASE_URL;
             autocomplete="off"
           />
         </label>
+        <label class="block text-sm font-semibold text-berry-800">
+          簡述
+          <input
+            id="meta-description"
+            type="text"
+            class="search-input mt-2 py-2 text-sm"
+            style="padding-left: 1.25rem"
+            placeholder="例如：一個持續把想法做成作品的人。"
+            autocomplete="off"
+          />
+        </label>
         <div>
-          <p class="mb-2 text-sm font-semibold text-berry-800">關鍵字</p>
+          <p class="mb-1 text-sm font-semibold text-berry-800">關鍵字 <span class="font-normal text-berry-600/60">（選填）</span></p>
           <div id="meta-keywords-editor"></div>
         </div>
       </section>
@@ -118,6 +129,7 @@ const base = import.meta.env.BASE_URL;
   const folderMsg = document.getElementById('folder-msg');
   const metaFilename = document.getElementById('meta-filename') as HTMLInputElement | null;
   const metaTitle = document.getElementById('meta-title') as HTMLInputElement | null;
+  const metaDescription = document.getElementById('meta-description') as HTMLInputElement | null;
   const keywordsRoot = document.getElementById('meta-keywords-editor');
   const dropZone = document.getElementById('drop-zone');
   const dropLabel = document.getElementById('drop-label');
@@ -131,7 +143,7 @@ const base = import.meta.env.BASE_URL;
   let stagedFile = null;
 
   const keywordEditor = keywordsRoot
-    ? mountKeywordEditor(keywordsRoot, { locked: [], keywords: [], compact: true })
+    ? mountKeywordEditor(keywordsRoot, { locked: [], keywords: [], simple: true })
     : null;
 
   function setStatus(text: string, isError = false) {
@@ -231,13 +243,10 @@ const base = import.meta.env.BASE_URL;
   }
 
   function validateForPublish() {
-    if (keywordEditor?.isComposing?.()) {
-      setStatus('請先確認或取消關鍵字輸入', true);
-      return null;
-    }
     const folder = (folderSelect?.value || '').trim().replace(/^\/+|\/+$/g, '');
     const filename = (metaFilename?.value || '').trim().replace(/\.md$/i, '');
     const title = (metaTitle?.value || '').trim();
+    const description = (metaDescription?.value || '').trim();
     const keywords = keywordEditor?.getExtras?.() || [];
 
     if (!folder) {
@@ -256,7 +265,7 @@ const base = import.meta.env.BASE_URL;
       setStatus('請拖入或選取 md. 檔案', true);
       return null;
     }
-    return { folder, filename, title, keywords, file: stagedFile };
+    return { folder, filename, title, description, keywords, file: stagedFile };
   }
 
   async function publish() {
@@ -278,6 +287,7 @@ const base = import.meta.env.BASE_URL;
         content,
         folder: meta.folder,
         title: meta.title,
+        description: meta.description,
         keywords: meta.keywords,
         autoSync: true,
       });
@@ -285,6 +295,7 @@ const base = import.meta.env.BASE_URL;
       setStagedFile(null);
       if (metaFilename) metaFilename.value = '';
       if (metaTitle) metaTitle.value = '';
+      if (metaDescription) metaDescription.value = '';
       keywordEditor?.setKeywords([]);
       await refreshFolders(meta.folder);
     } catch (err) {

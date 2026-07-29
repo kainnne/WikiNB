@@ -480,6 +480,77 @@ function wikiRoot() {
   return path.join(PROJECT_ROOT, 'wiki');
 }
 
+const WIKI_META_PATH = () => path.join(wikiRoot(), '_meta.json');
+
+function loadWikiMetaStore() {
+  try {
+    const p = WIKI_META_PATH();
+    if (!fs.existsSync(p)) return {};
+    const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveWikiMetaStore(store) {
+  fs.mkdirSync(wikiRoot(), { recursive: true });
+  fs.writeFileSync(WIKI_META_PATH(), `${JSON.stringify(store, null, 2)}\n`, 'utf8');
+}
+
+function getWikiMetaEntry(slug) {
+  const entry = loadWikiMetaStore()[slug];
+  return entry && typeof entry === 'object' ? entry : {};
+}
+
+/** 寫入顯示標題／簡述／額外關鍵字到 wiki/_meta.json（不改 md 正文） */
+function upsertWikiMetaEntry(slug, patch = {}) {
+  const store = loadWikiMetaStore();
+  const prev = store[slug] && typeof store[slug] === 'object' ? store[slug] : {};
+  const next = { ...prev };
+  if (patch.title !== undefined) next.title = String(patch.title || '').trim();
+  if (patch.description !== undefined) next.description = String(patch.description || '').trim();
+  if (patch.tags !== undefined) {
+    next.tags = parseKeywordList(patch.tags);
+  }
+  if (!next.title && !next.description && !(next.tags && next.tags.length)) {
+    delete store[slug];
+  } else {
+    store[slug] = next;
+  }
+  saveWikiMetaStore(store);
+  return store[slug] || {};
+}
+
+function removeWikiMetaEntry(slug) {
+  const store = loadWikiMetaStore();
+  if (!(slug in store)) return;
+  delete store[slug];
+  saveWikiMetaStore(store);
+}
+
+function removeWikiMetaUnderPrefix(prefix) {
+  const store = loadWikiMetaStore();
+  const p = String(prefix || '').replace(/\/+$/, '');
+  if (!p) return;
+  let changed = false;
+  for (const key of Object.keys(store)) {
+    if (key === p || key.startsWith(`${p}/`)) {
+      delete store[key];
+      changed = true;
+    }
+  }
+  if (changed) saveWikiMetaStore(store);
+}
+
+function moveWikiMetaEntry(oldSlug, newSlug) {
+  const store = loadWikiMetaStore();
+  if (!(oldSlug in store)) return;
+  store[newSlug] = store[oldSlug];
+  delete store[oldSlug];
+  saveWikiMetaStore(store);
+}
+
 /** 允許巢狀路徑：folder/note；擋 traversal */
 function normalizeWikiRelPath(input, { allowMdSuffix = true } = {}) {
   let raw = String(input || '').trim().replace(/\\/g, '/');
@@ -802,16 +873,26 @@ function buildWikiTree(dir = wikiRoot(), prefix = '') {
       const slug = rel.replace(/\.md$/i, '');
       const content = fs.readFileSync(abs, 'utf8');
       const { data } = splitWikiFrontmatter(content);
+      const meta = getWikiMetaEntry(slug);
       const folder = slug.includes('/') ? slug.slice(0, slug.lastIndexOf('/')) : '';
       const folderKeyword = folderKeywordFromRelPath(folder);
       const fmTags = Array.isArray(data.tags) ? data.tags : [];
+      const metaTags = Array.isArray(meta.tags) ? meta.tags : [];
+      const title =
+        (typeof meta.title === 'string' && meta.title.trim()) ||
+        extractWikiTitle(content, slug);
+      const description =
+        (typeof meta.description === 'string' && meta.description.trim()) ||
+        (typeof data.description === 'string' && data.description.trim()) ||
+        '';
       files.push({
         type: 'file',
         name: entry.name,
         path: rel,
         slug,
-        title: extractWikiTitle(content, slug),
-        tags: uniqueTags([folderKeyword, ...fmTags]),
+        title,
+        description,
+        tags: uniqueTags([folderKeyword, ...metaTags, ...fmTags]),
       });
     }
   }
@@ -820,9 +901,9 @@ function buildWikiTree(dir = wikiRoot(), prefix = '') {
   return [...dirs, ...files];
 }
 
-/** 儲存整理好的筆記到 wiki/（支援子資料夾；可 autoSync 直接上線） */
+/** 儲存筆記到 wiki/：md 原文不動；標題／簡述／關鍵字寫入 _meta.json */
 async function handleWikiUpload(req, res) {
-  const { filename, content, folder, title, keywords, tags, autoSync } = req.body || {};
+  const { filename, content, folder, title, description, keywords, tags, autoSync } = req.body || {};
   if (!content || !String(content).trim()) {
     res.status(400).json({ error: '請提供筆記內容' });
     return;
@@ -834,6 +915,7 @@ async function handleWikiUpload(req, res) {
     return;
   }
 
+  const noteDescription = String(description || '').trim();
   const fileLabel = String(filename || '').trim();
   if (!fileLabel) {
     res.status(400).json({ error: '請填寫檔案名稱' });
@@ -873,17 +955,16 @@ async function handleWikiUpload(req, res) {
 
     const folderKeyword = folderKeywordFromRelPath(folderNorm);
     const extraKeywords = parseKeywordList(keywords ?? tags);
-    const finalContent = upsertWikiFrontmatter(String(content), {
-      title: noteTitle,
-      tags: uniqueTags([folderKeyword, ...extraKeywords]),
-      description: undefined, // 保留既有或從正文摘要
-      updated: new Date().toISOString().slice(0, 10),
-    });
 
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, finalContent, 'utf8');
+    fs.writeFileSync(targetPath, String(content), 'utf8');
 
     const slug = safeName.replace(/\.md$/i, '');
+    const meta = upsertWikiMetaEntry(slug, {
+      title: noteTitle,
+      description: noteDescription,
+      tags: extraKeywords,
+    });
     upsertWikiIndexLink(slug, noteTitle);
 
     let syncResult = null;
@@ -896,7 +977,8 @@ async function handleWikiUpload(req, res) {
       filename: safeName,
       slug,
       title: noteTitle,
-      tags: uniqueTags([folderKeyword, ...extraKeywords]),
+      description: noteDescription,
+      tags: uniqueTags([folderKeyword, ...(meta.tags || [])]),
       path: `wiki/${safeName}`,
       synced: Boolean(autoSync),
       sync: syncResult,
@@ -1035,6 +1117,7 @@ app.post('/api/wiki/delete', authMiddleware, async (req, res) => {
         fs.rmSync(dirAbs, { recursive: true, force: true });
         deletedPath = rel;
         kind = 'dir';
+        removeWikiMetaUnderPrefix(rel);
       } else {
         res.status(404).json({ error: `找不到 wiki/${mdRel}` });
         return;
@@ -1042,6 +1125,7 @@ app.post('/api/wiki/delete', authMiddleware, async (req, res) => {
     } else {
       fs.unlinkSync(abs);
       removeWikiIndexLink(slug);
+      removeWikiMetaEntry(slug);
 
       let dir = path.dirname(abs);
       const root = wikiRoot();
@@ -1116,6 +1200,7 @@ app.post('/api/wiki/rename', authMiddleware, async (req, res) => {
   try {
     fs.mkdirSync(path.dirname(toPath), { recursive: true });
     fs.renameSync(fromPath, toPath);
+    moveWikiMetaEntry(oldSlug, newSlug);
 
     const wikiFiles = collectWikiMdFiles();
     const allToRewrite = [...wikiFiles, 'index.md'];
@@ -1158,10 +1243,12 @@ app.post('/api/wiki/rename', authMiddleware, async (req, res) => {
   }
 });
 
-/** 更新 frontmatter 的 title / keywords（不改檔名／路徑） */
+/** 更新顯示標題／簡述／關鍵字（寫入 _meta.json，不改 md） */
 app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
   const slug = normalizeWikiSlug(req.body?.slug);
   const title = String(req.body?.title || '').trim();
+  const hasDescription = req.body?.description !== undefined;
+  const description = hasDescription ? String(req.body?.description || '').trim() : undefined;
   const hasKeywords = req.body?.keywords !== undefined || req.body?.tags !== undefined;
   if (!slug) {
     res.status(400).json({ error: '筆記路徑無效' });
@@ -1179,26 +1266,23 @@ app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
   }
 
   try {
-    const before = fs.readFileSync(filePath, 'utf8');
     const folder = slug.includes('/') ? slug.slice(0, slug.lastIndexOf('/')) : '';
     const folderKeyword = folderKeywordFromRelPath(folder);
+    const prev = getWikiMetaEntry(slug);
     const extras = hasKeywords
       ? parseKeywordList(req.body?.keywords ?? req.body?.tags)
-      : null;
-    const { data } = splitWikiFrontmatter(before);
-    const existingTags = Array.isArray(data.tags) ? data.tags : [];
-    const nextTags =
-      extras !== null
-        ? uniqueTags([folderKeyword, ...extras]).slice(0, 10)
-        : uniqueTags([folderKeyword, ...existingTags]).slice(0, 10);
+      : Array.isArray(prev.tags)
+        ? prev.tags
+        : [];
 
-    const next = upsertWikiFrontmatter(before, {
+    const meta = upsertWikiMetaEntry(slug, {
       title,
-      tags: nextTags,
-      updated: new Date().toISOString().slice(0, 10),
+      description: hasDescription ? description : prev.description || '',
+      tags: extras,
     });
-    fs.writeFileSync(filePath, next, 'utf8');
     upsertWikiIndexLink(slug, title);
+
+    const nextTags = uniqueTags([folderKeyword, ...(meta.tags || [])]).slice(0, 10);
 
     let syncResult = null;
     if (req.body?.autoSync) {
@@ -1209,12 +1293,13 @@ app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
       ok: true,
       slug,
       title,
+      description: meta.description || '',
       tags: nextTags,
       synced: Boolean(req.body?.autoSync),
       sync: syncResult,
       message: req.body?.autoSync
-        ? `已更新標題／關鍵字並推上 GitHub。`
-        : `已更新標題／關鍵字。`,
+        ? `已更新標題／簡述／關鍵字並推上 GitHub。`
+        : `已更新標題／簡述／關鍵字。`,
     });
   } catch (err) {
     console.error('wiki update-title error:', err);

@@ -3,21 +3,13 @@ import sites from '../../config/sites.json';
 
 const base = import.meta.env.BASE_URL;
 const meUrl = sites.sites.me.url;
-
-const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
-const home = (base.replace(/\/+$/, '') || '/') ;
-const isHome =
-  path === home ||
-  path === `${home}/index.html` ||
-  path === '/' ||
-  path === '/index.html';
 ---
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
     <a id="brand-link" href={base} class="brand-link group shrink-0">
       <span id="brand-label" class="brand-label">Kainnne</span>
-      {!isHome && <span class="brand-home">© HOME</span>}
+      <span id="brand-home" class="brand-home is-home-hidden">© HOME</span>
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
@@ -57,6 +49,24 @@ const isHome =
 <script>
   import { mountNavAuth } from '../scripts/bridge-client.js';
   mountNavAuth();
+
+  /** 依實際網址判斷是否在首頁；多一段 /xxx 就顯示 © HOME（不改整站架構） */
+  function syncBrandHome() {
+    const el = document.getElementById('brand-home');
+    if (!el) return;
+    const base = (document.documentElement.dataset.base || '/').replace(/\/+$/, '');
+    let path = window.location.pathname.replace(/\/+$/, '');
+    if (path.endsWith('/index.html')) {
+      path = path.slice(0, -'/index.html'.length).replace(/\/+$/, '');
+    }
+    const home = base || '';
+    const isHome = path === home || path === '' || path === '/';
+    el.classList.toggle('is-home-hidden', isHome);
+    el.setAttribute('aria-hidden', isHome ? 'true' : 'false');
+  }
+
+  syncBrandHome();
+  window.addEventListener('pageshow', syncBrandHome);
 </script>
 
 <style>
@@ -96,6 +106,10 @@ const isHome =
     line-height: 1.2;
     padding-bottom: 0.12rem;
     white-space: nowrap;
+  }
+
+  .brand-home.is-home-hidden {
+    display: none;
   }
 
   @media (min-width: 640px) {

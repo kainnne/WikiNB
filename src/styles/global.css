@@ -230,6 +230,14 @@
   font-size: 0.8rem;
 }
 
+.kw-editor-simple .kw-chips-simple {
+  min-height: 0;
+}
+
+.kw-track-wrap {
+  flex-wrap: wrap;
+}
+
 /* 背景裝飾光斑 */
 .bg-blobs::before,
 .bg-blobs::after {
