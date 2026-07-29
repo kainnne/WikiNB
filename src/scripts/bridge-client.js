@@ -277,7 +277,6 @@ export function mountNavAuth() {
   const codexLink = document.getElementById('nav-codex');
   const aboutLink = document.getElementById('nav-about');
   const githubLink = document.getElementById('nav-github');
-  const brandLink = document.getElementById('brand-link');
   const wikiLink = document.getElementById('nav-wikinb');
 
   const update = () => {
@@ -293,8 +292,7 @@ export function mountNavAuth() {
     if (aboutLink) aboutLink.classList.toggle('hidden', loggedIn);
     if (githubLink) githubLink.classList.toggle('hidden', loggedIn);
 
-    // 登入後：品牌與 WikiNB 切換成工作模式樣式
-    brandLink?.classList.toggle('is-logged', loggedIn);
+    // 登入後：WikiNB 切換成工作模式樣式
     wikiLink?.classList.toggle('is-logged', loggedIn);
 
     document.dispatchEvent(new CustomEvent('wikinb:auth-change', { detail: { loggedIn } }));

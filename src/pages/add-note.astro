@@ -22,12 +22,9 @@ const base = import.meta.env.BASE_URL;
     <div id="add-panel" class="hidden space-y-4">
       <section class="glass-card space-y-3 p-4 sm:p-5">
         <label class="block text-sm font-semibold text-berry-800">
-          資料夾（主關鍵字）
-          <select id="folder-select" class="search-input mt-2 py-2 text-sm">
-            <option value="">未選擇</option>
-          </select>
+          資料夾
+          <select id="folder-select" class="search-input mt-2 py-2 text-sm"></select>
         </label>
-        <p id="folder-keyword-hint" class="text-sm text-berry-600/80">選擇資料夾後，會自動帶入主關鍵字。</p>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label class="block flex-1 text-sm font-semibold text-berry-800">
             新建資料夾
@@ -83,7 +80,6 @@ const base = import.meta.env.BASE_URL;
         aria-label="拖入或點擊上傳 Markdown"
       >
         <p class="font-display text-lg font-bold text-berry-800">拖入 .md 檔案</p>
-        <p class="mt-2 text-sm text-berry-600/75">上傳前請先填好上方資料夾、檔名、標題與關鍵字</p>
         <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" />
       </section>
 
@@ -109,13 +105,13 @@ const base = import.meta.env.BASE_URL;
   const folderNew = document.getElementById('folder-new') as HTMLInputElement | null;
   const folderBtn = document.getElementById('folder-create-btn') as HTMLButtonElement | null;
   const folderMsg = document.getElementById('folder-msg');
-  const folderHint = document.getElementById('folder-keyword-hint');
   const metaFilename = document.getElementById('meta-filename') as HTMLInputElement | null;
   const metaTitle = document.getElementById('meta-title') as HTMLInputElement | null;
   const keywordsRoot = document.getElementById('meta-keywords-editor');
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
   const statusEl = document.getElementById('add-status');
+  const DEFAULT_FOLDER = 'Random';
 
   const keywordEditor = keywordsRoot
     ? mountKeywordEditor(keywordsRoot, { locked: [], keywords: [] })
@@ -150,17 +146,14 @@ const base = import.meta.env.BASE_URL;
       .join(' ');
   }
 
-  function updateFolderHint() {
-    if (!folderHint || !folderSelect) return;
-    const folder = folderSelect.value.trim();
+  function syncFolderKeyword() {
+    const folder = (folderSelect?.value || '').trim();
     if (!folder) {
-      folderHint.textContent = '選擇資料夾後，會自動帶入主關鍵字。';
       keywordEditor?.setLocked([]);
       return;
     }
     const leaf = folder.split('/').filter(Boolean).pop() || folder;
     const kw = formatFolderKeyword(leaf);
-    folderHint.textContent = `主關鍵字：${kw}`;
     keywordEditor?.setLocked(kw ? [kw] : []);
   }
 
@@ -176,21 +169,32 @@ const base = import.meta.env.BASE_URL;
 
   function fillFolderSelect(paths: string[], selected = '') {
     if (!folderSelect) return;
-    const current = selected || folderSelect.value;
-    folderSelect.innerHTML = '<option value="">未選擇</option>';
-    for (const p of paths.sort((a, b) => a.localeCompare(b, 'zh-Hant'))) {
+    const list = [...paths];
+    if (!list.includes(DEFAULT_FOLDER)) list.unshift(DEFAULT_FOLDER);
+    const preferred = selected || folderSelect.value || DEFAULT_FOLDER;
+    folderSelect.innerHTML = '';
+    for (const p of list.sort((a, b) => a.localeCompare(b, 'zh-Hant'))) {
       const opt = document.createElement('option');
       opt.value = p;
       opt.textContent = p;
       folderSelect.appendChild(opt);
     }
-    if (current) folderSelect.value = current;
-    updateFolderHint();
+    folderSelect.value = list.includes(preferred) ? preferred : DEFAULT_FOLDER;
+    syncFolderKeyword();
   }
 
   async function refreshFolders(selectPath = '') {
     const data = await listWikiTree();
-    fillFolderSelect(collectDirs(data.tree || []), selectPath);
+    const dirs = collectDirs(data.tree || []);
+    if (!dirs.includes(DEFAULT_FOLDER)) {
+      try {
+        await createWikiFolder({ path: DEFAULT_FOLDER, autoSync: false });
+        dirs.push(DEFAULT_FOLDER);
+      } catch {
+        /* Random 已存在或暫時無法建立時仍繼續 */
+      }
+    }
+    fillFolderSelect(dirs, selectPath || DEFAULT_FOLDER);
   }
 
   function requireMeta() {
@@ -254,7 +258,7 @@ const base = import.meta.env.BASE_URL;
     }
   }
 
-  folderSelect?.addEventListener('change', updateFolderHint);
+  folderSelect?.addEventListener('change', syncFolderKeyword);
 
   folderBtn?.addEventListener('click', async () => {
     const path = (folderNew?.value || '').trim().replace(/^\/+|\/+$/g, '');
@@ -270,7 +274,7 @@ const base = import.meta.env.BASE_URL;
       if (folderNew) folderNew.value = '';
       await refreshFolders(path);
       if (folderSelect) folderSelect.value = path;
-      updateFolderHint();
+      syncFolderKeyword();
     } catch (err) {
       setFolderMsg((err as Error).message || '建立失敗', true);
     } finally {

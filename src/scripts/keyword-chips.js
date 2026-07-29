@@ -72,7 +72,7 @@ export function mountKeywordEditor(root, options = {}) {
       <button type="button" class="kw-confirm btn-ghost text-sm">確認</button>
       <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
     </div>
-    <p class="kw-hint text-xs text-berry-600/70"></p>
+    <p class="kw-hint hidden text-xs text-berry-600/70"></p>
   `;
 
   const track = root.querySelector('.kw-track');
@@ -91,9 +91,7 @@ export function mountKeywordEditor(root, options = {}) {
   const emit = () => options.onChange?.(allKeywords());
 
   const updateHint = () => {
-    if (!hint) return;
-    const n = allKeywords().length;
-    hint.textContent = `關鍵字 ${n}/${max}（每詞最多 ${maxLen} 字；資料夾主關鍵字不可刪）`;
+    /* 不顯示操作引導文案 */
   };
 
   const visibleCount = () => {

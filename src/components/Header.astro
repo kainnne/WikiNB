@@ -55,7 +55,7 @@ const meUrl = sites.sites.me.url;
     @apply rounded-full px-2.5 py-1.5 text-xs font-semibold text-berry-700 transition-colors hover:bg-pink-100/60 hover:text-pink-700 sm:px-3 sm:py-2 sm:text-sm md:px-4;
   }
 
-  /* 未登入／登入後皆無黑框：僅彩色字（與 + md. / Codex 同款漸層） */
+  /* 品牌：恆為彩字（登入前後相同），略大於原先 */
   .brand-link {
     display: inline-flex;
     align-items: center;
@@ -65,24 +65,20 @@ const meUrl = sites.sites.me.url;
   }
 
   .brand-label {
-    font-family: Quicksand, 'Noto Sans TC', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    background: linear-gradient(90deg, #ec407a, #ce93d8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .brand-link.is-logged .brand-label {
     font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 1.55rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  @media (min-width: 640px) {
+    .brand-label {
+      font-size: 1.75rem;
+    }
   }
 
   .brand-link:hover {

@@ -6,14 +6,18 @@ import { getAllWikiPages } from '../lib/wiki';
 
 const pages = getAllWikiPages();
 const recent = pages.slice(0, 6);
+const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title="WikiNB" description="把零散的筆記，沉澱成隨時能回來查閱的知識庫。">
   <section class="animate-fadeIn mb-16 text-center">
     <h1 class="font-display text-4xl font-bold md:text-5xl lg:text-6xl">
-      <span class="bg-gradient-to-r from-pink-500 via-pink-400 to-lavender-400 bg-clip-text text-transparent">
+      <a
+        href={`${base}search`}
+        class="bg-gradient-to-r from-pink-500 via-pink-400 to-lavender-400 bg-clip-text text-transparent transition-opacity hover:opacity-90"
+      >
         WikiNB
-      </span>
+      </a>
     </h1>
     <p class="mx-auto mt-4 max-w-xl text-lg text-berry-700/80">
       把零散的筆記，沉澱成隨時能回來查閱的知識庫。

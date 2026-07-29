@@ -6,15 +6,19 @@ import { getAllWikiPages, getSearchIndex, getWikiDiskTree } from '../lib/wiki';
 const pages = getAllWikiPages();
 const searchIndex = getSearchIndex(pages);
 const folderTree = getWikiDiskTree();
+const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title="WikiNB" description="搜尋與瀏覽 Kainnne 知識庫">
   <div class="animate-fadeIn">
     <div class="mb-6 text-center md:text-left">
       <h1 class="font-display text-4xl font-bold md:text-5xl">
-        <span class="bg-gradient-to-r from-pink-500 via-pink-400 to-lavender-400 bg-clip-text text-transparent">
+        <a
+          href={`${base}search`}
+          class="bg-gradient-to-r from-pink-500 via-pink-400 to-lavender-400 bg-clip-text text-transparent transition-opacity hover:opacity-90"
+        >
           WikiNB
-        </span>
+        </a>
       </h1>
     </div>
 
