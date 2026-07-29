@@ -86,7 +86,14 @@ const related = allPages
   const fsIcon = fsToggle?.querySelector('.wiki-fs-icon');
   let fullscreen = false;
 
-  function setFullscreen(on) {
+  function syncFsParam(on) {
+    const url = new URL(window.location.href);
+    if (on) url.searchParams.set('fs', '1');
+    else url.searchParams.delete('fs');
+    window.history.replaceState({}, '', url);
+  }
+
+  function setFullscreen(on, { syncUrl = true } = {}) {
     fullscreen = Boolean(on);
     reader?.classList.toggle('is-fullscreen', fullscreen);
     document.documentElement.classList.toggle('wiki-fs-active', fullscreen);
@@ -96,12 +103,18 @@ const related = allPages
       fsToggle.title = fullscreen ? '還原' : '放大';
     }
     if (fsIcon) fsIcon.textContent = fullscreen ? '❐' : '⛶';
+    if (syncUrl) syncFsParam(fullscreen);
   }
 
   fsToggle?.addEventListener('click', () => setFullscreen(!fullscreen));
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && fullscreen) setFullscreen(false);
   });
+
+  // 從 WikiNB 字卡放大鈕進來：/?fs=1 → 直接全螢幕
+  if (new URLSearchParams(window.location.search).get('fs') === '1') {
+    setFullscreen(true, { syncUrl: false });
+  }
 </script>
 
 <style is:global>

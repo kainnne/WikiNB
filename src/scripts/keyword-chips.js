@@ -1,7 +1,7 @@
 /**
  * 關鍵字 chip 編輯器：最多 max 個、每詞 maxLen 字元；
  * 資料夾主關鍵字不顯示（仍計入上限）。
- * simple：+md 用 — 只顯示輸入＋確認／取消，無「新增關鍵字」按鈕。
+ * 輸入列恆顯示：確認新增、取消清空；無「新增關鍵字」按鈕。
  */
 
 export const KEYWORD_MAX = 10;
@@ -37,9 +37,9 @@ export function normalizeKeywords(list, { max = KEYWORD_MAX, maxLen = KEYWORD_MA
  * @param {string[]} [options.locked]
  * @param {number} [options.max]
  * @param {number} [options.maxLen]
- * @param {boolean} [options.simple] +md：永遠顯示輸入列，無新增按鈕；關鍵字非必填
- * @param {boolean} [options.compact] 舊 compact（改用 simple）
- * @param {boolean} [options.composeOpen] 管理頁：預設展開輸入列
+ * @param {boolean} [options.simple] +md：chip 放在輸入列上方
+ * @param {boolean} [options.compact] 相容舊參數（等同 simple）
+ * @param {boolean} [options.composeOpen] 相容舊參數（已一律展開）
  * @param {(keywords: string[]) => void} [options.onChange]
  */
 export function mountKeywordEditor(root, options = {}) {
@@ -48,13 +48,11 @@ export function mountKeywordEditor(root, options = {}) {
   const max = options.max ?? KEYWORD_MAX;
   const maxLen = options.maxLen ?? KEYWORD_MAX_LEN;
   const simple = Boolean(options.simple || options.compact);
-  const stickyCompose = Boolean(options.composeOpen) || simple;
   let locked = normalizeKeywords(options.locked || [], { max, maxLen: 32 });
   let extras = normalizeKeywords(options.keywords || [], { max, maxLen }).filter(
     (k) => !locked.some((l) => l.toLowerCase() === k.toLowerCase()),
   );
   let offset = 0;
-  let adding = stickyCompose;
 
   const ensureCapacity = () => {
     const room = Math.max(0, max - locked.length);
@@ -71,30 +69,27 @@ export function mountKeywordEditor(root, options = {}) {
         <div class="kw-track"></div>
       </div>
       <button type="button" class="kw-nav kw-next is-hidden" aria-label="往後一個關鍵字" disabled>&gt;</button>
-      <button type="button" class="kw-add btn-ghost">新增關鍵字</button>
     </div>
     <div class="kw-chips-simple${simple ? '' : ' hidden'}">
       <div class="kw-track kw-track-wrap"></div>
     </div>
-    <div class="kw-compose${adding ? '' : ' hidden'}">
+    <div class="kw-compose">
       <input
         type="text"
         class="search-input kw-input py-2 text-sm"
         maxlength="${maxLen}"
         autocomplete="off"
-        placeholder="${simple ? '選填，輸入後按確認' : ''}"
+        placeholder="輸入後按確認"
       />
       <button type="button" class="kw-confirm btn-ghost text-sm">確認</button>
       <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
     </div>
   `;
 
-  const toolbar = root.querySelector('.kw-toolbar');
   const track = root.querySelector(simple ? '.kw-chips-simple .kw-track' : '.kw-toolbar .kw-track');
   const viewport = root.querySelector('.kw-viewport');
   const prevBtn = root.querySelector('.kw-prev');
   const nextBtn = root.querySelector('.kw-next');
-  const addBtn = root.querySelector('.kw-add');
   const compose = root.querySelector('.kw-compose');
   const input = root.querySelector('.kw-input');
   const confirmBtn = root.querySelector('.kw-confirm');
@@ -142,6 +137,8 @@ export function mountKeywordEditor(root, options = {}) {
   const render = () => {
     ensureCapacity();
     const items = visibleKeywords();
+    compose?.classList.remove('hidden');
+    if (confirmBtn) confirmBtn.disabled = allKeywords().length >= max;
 
     if (simple) {
       if (track) {
@@ -149,8 +146,6 @@ export function mountKeywordEditor(root, options = {}) {
         bindRemove(track);
       }
       simpleChips?.classList.toggle('hidden', items.length === 0);
-      compose?.classList.remove('hidden');
-      if (confirmBtn) confirmBtn.disabled = allKeywords().length >= max;
       return;
     }
 
@@ -173,45 +168,22 @@ export function mountKeywordEditor(root, options = {}) {
       nextBtn.disabled = !needNav || offset >= maxOffset;
       nextBtn.classList.toggle('is-hidden', !needNav);
     }
-    if (addBtn) {
-      addBtn.disabled = adding || allKeywords().length >= max;
-      addBtn.classList.toggle('hidden', adding);
-    }
-    compose?.classList.toggle('hidden', !adding);
-    toolbar?.classList.toggle('kw-toolbar-solo', false);
-  };
-
-  const setAdding = (on) => {
-    adding = on;
-    if (on && input) {
-      input.value = '';
-      queueMicrotask(() => input.focus());
-    }
-    render();
   };
 
   const confirmAdd = () => {
     const value = clipKeyword(input?.value || '', maxLen);
     if (!value) {
       if (input) input.value = '';
-      if (!stickyCompose) setAdding(false);
       return;
     }
-    if (allKeywords().length >= max) {
-      if (!stickyCompose) setAdding(false);
-      return;
-    }
+    if (allKeywords().length >= max) return;
     if (!allKeywords().some((k) => k.toLowerCase() === value.toLowerCase())) {
       extras = [...extras, value];
       emit();
     }
     if (input) input.value = '';
-    if (stickyCompose) {
-      render();
-      input?.focus();
-      return;
-    }
-    setAdding(false);
+    render();
+    input?.focus();
   };
 
   prevBtn?.addEventListener('click', () => {
@@ -222,18 +194,10 @@ export function mountKeywordEditor(root, options = {}) {
     offset += 1;
     render();
   });
-  addBtn?.addEventListener('click', () => {
-    if (allKeywords().length >= max) return;
-    setAdding(true);
-  });
   confirmBtn?.addEventListener('click', confirmAdd);
   cancelBtn?.addEventListener('click', () => {
     if (input) input.value = '';
-    if (simple || stickyCompose) {
-      input?.focus();
-      return;
-    }
-    setAdding(false);
+    input?.focus();
   });
   input?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -242,7 +206,6 @@ export function mountKeywordEditor(root, options = {}) {
     } else if (e.key === 'Escape') {
       e.preventDefault();
       if (input) input.value = '';
-      if (!simple && !stickyCompose) setAdding(false);
     }
   });
   input?.addEventListener('input', () => {
@@ -258,8 +221,7 @@ export function mountKeywordEditor(root, options = {}) {
   return {
     getKeywords: () => allKeywords(),
     getExtras: () => [...extras],
-    /** simple 模式下輸入中的草稿不算「必須確認」；永遠可直接送出 */
-    isComposing: () => (simple ? false : adding),
+    isComposing: () => false,
     setLocked(nextLocked) {
       locked = normalizeKeywords(nextLocked || [], { max, maxLen: 32 });
       extras = extras.filter((k) => !locked.some((l) => l.toLowerCase() === k.toLowerCase()));

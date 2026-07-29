@@ -9,7 +9,9 @@ const meUrl = sites.sites.me.url;
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
     <a id="brand-link" href={base} class="brand-link group shrink-0">
       <span id="brand-label" class="brand-label">Kainnne</span>
-      <span id="brand-home" class="brand-home is-home-hidden">© HOME</span>
+      <span id="brand-home" class="brand-home is-home-hidden" aria-hidden="true">
+        <span class="brand-home-label">© HOME</span>
+      </span>
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
@@ -77,35 +79,51 @@ const meUrl = sites.sites.me.url;
   /* 品牌：恆為彩字（登入前後相同） */
   .brand-link {
     display: inline-flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    gap: 0.35rem;
+    gap: 0.45rem;
     text-decoration: none;
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
-  .brand-label,
-  .brand-home {
+  .brand-label {
     font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
     font-weight: 700;
+    font-size: 1.55rem;
+    letter-spacing: 0.04em;
+    line-height: 1;
     background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
-  .brand-label {
-    font-size: 1.55rem;
-    letter-spacing: 0.04em;
-    line-height: 1;
+  /* © HOME：中空彩色橢圓框（非黑底） */
+  .brand-home {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1.5px solid transparent;
+    padding: 0.18rem 0.55rem;
+    white-space: nowrap;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.35)) padding-box,
+      linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
+    box-shadow: 0 2px 10px rgba(123, 97, 255, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
 
-  .brand-home {
-    font-size: 0.72rem;
+  .brand-home-label {
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-weight: 700;
+    font-size: 0.68rem;
     letter-spacing: 0.06em;
     line-height: 1.2;
-    padding-bottom: 0.12rem;
-    white-space: nowrap;
+    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   .brand-home.is-home-hidden {
@@ -118,14 +136,25 @@ const meUrl = sites.sites.me.url;
     }
 
     .brand-home {
-      font-size: 0.85rem;
-      padding-bottom: 0.14rem;
+      padding: 0.22rem 0.65rem;
+    }
+
+    .brand-home-label {
+      font-size: 0.78rem;
     }
   }
 
   .brand-link:hover {
     transform: translateY(-1px);
-    opacity: 0.9;
+    opacity: 0.95;
+  }
+
+  .brand-link:hover .brand-home {
+    transform: scale(1.04);
+    box-shadow: 0 4px 14px rgba(123, 97, 255, 0.2);
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)) padding-box,
+      linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
   }
 
   /* 未登入：粉紅實心；登入後：黑底彩字 */

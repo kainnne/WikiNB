@@ -170,14 +170,14 @@ export function createWikiSearch(searchIndex, options = {}) {
             </a>
             <p class="mt-1 line-clamp-2 text-sm text-berry-700/75">${escapeHtml(page.description)}</p>
           </div>
-          <button
-            type="button"
+          <a
+            href="${escapeAttr(href)}?fs=1"
             class="wiki-fs-btn mt-1 shrink-0"
-            aria-label="放大視窗"
+            aria-label="放大檢視"
             title="放大"
           >
             <span class="wiki-fs-icon" aria-hidden="true">⛶</span>
-          </button>
+          </a>
         </div>
         <div id="content-${escapeAttr(id)}" class="wiki-panel hidden border-t border-pink-100/60 bg-white/30 px-4 pb-6 pt-2 md:px-6" hidden>
           <div class="wiki-content pl-11 md:pl-12">${page.html}</div>
@@ -264,62 +264,15 @@ export function createWikiSearch(searchIndex, options = {}) {
     if (scroll) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
 
-  const setItemFullscreen = (item, on) => {
-    const active = Boolean(on);
-    const fsBtn = item?.querySelector('.wiki-fs-btn');
-    const fsIcon = fsBtn?.querySelector('.wiki-fs-icon');
-
-    item
-      ?.closest('[data-search-results]')
-      ?.querySelectorAll('.wiki-item.is-fullscreen')
-      .forEach((other) => {
-        if (other !== item) {
-          other.classList.remove('is-fullscreen');
-          const otherBtn = other.querySelector('.wiki-fs-btn');
-          const otherIcon = otherBtn?.querySelector('.wiki-fs-icon');
-          if (otherBtn) {
-            otherBtn.setAttribute('aria-label', '放大視窗');
-            otherBtn.title = '放大';
-          }
-          if (otherIcon) otherIcon.textContent = '⛶';
-        }
-      });
-
-    item?.classList.toggle('is-fullscreen', active);
-    document.documentElement.classList.toggle('wiki-browse-fs-active', active);
-    document.body.classList.toggle('wiki-browse-fs-active', active);
-
-    if (active) openItem(item, false);
-
-    if (fsBtn) {
-      fsBtn.setAttribute('aria-label', active ? '還原視窗' : '放大視窗');
-      fsBtn.title = active ? '還原' : '放大';
-    }
-    if (fsIcon) fsIcon.textContent = active ? '❐' : '⛶';
-  };
-
   const bindHandlers = (container) => {
     container.querySelectorAll('.wiki-expand').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const item = btn.closest('.wiki-item');
         if (!item) return;
-        if (item.classList.contains('is-fullscreen')) {
-          setItemFullscreen(item, false);
-          return;
-        }
         const panel = item.querySelector('.wiki-panel');
         if (panel && !panel.hidden) closeItem(item);
         else openItem(item);
-      });
-    });
-
-    container.querySelectorAll('.wiki-fs-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const item = btn.closest('.wiki-item');
-        if (!item) return;
-        setItemFullscreen(item, !item.classList.contains('is-fullscreen'));
       });
     });
 
@@ -379,14 +332,7 @@ export function createWikiSearch(searchIndex, options = {}) {
   const getQueryFromUrl = () => new URLSearchParams(window.location.search).get('q') || '';
 
   const mount = ({ input, form, resultsEl, emptyEl, metaEl, syncUrl = false }) => {
-    const exitFullscreen = () => {
-      resultsEl?.querySelectorAll('.wiki-item.is-fullscreen').forEach((item) => {
-        setItemFullscreen(item, false);
-      });
-    };
-
     const runSearch = () => {
-      exitFullscreen();
       const q = input?.value ?? '';
       if (syncUrl) {
         const url = new URL(window.location.href);
@@ -401,10 +347,6 @@ export function createWikiSearch(searchIndex, options = {}) {
     form?.addEventListener('submit', (e) => {
       e.preventDefault();
       runSearch();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') exitFullscreen();
     });
 
     return { runSearch, getQueryFromUrl };
