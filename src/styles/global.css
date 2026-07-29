@@ -228,6 +228,14 @@
   font-size: 0.8rem;
 }
 
+.kw-editor-simple {
+  gap: 0.5rem;
+}
+
+.kw-editor-simple .kw-compose {
+  margin: 0;
+}
+
 .kw-editor-simple .kw-chips-simple {
   min-height: 0;
 }

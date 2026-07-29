@@ -62,16 +62,30 @@ export function mountKeywordEditor(root, options = {}) {
 
   root.classList.add('kw-editor');
   if (simple) root.classList.add('kw-editor-simple');
-  root.innerHTML = `
-    <div class="kw-toolbar${simple ? ' hidden' : ''}">
+  root.innerHTML = simple
+    ? `
+    <div class="kw-compose">
+      <input
+        type="text"
+        class="search-input kw-input py-2 text-sm"
+        maxlength="${maxLen}"
+        autocomplete="off"
+        placeholder="輸入後按確認"
+      />
+      <button type="button" class="kw-confirm btn-ghost text-sm">確認</button>
+      <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
+    </div>
+    <div class="kw-chips-simple hidden">
+      <div class="kw-track kw-track-wrap"></div>
+    </div>
+  `
+    : `
+    <div class="kw-toolbar">
       <button type="button" class="kw-nav kw-prev is-hidden" aria-label="往前一個關鍵字" disabled>&lt;</button>
       <div class="kw-viewport">
         <div class="kw-track"></div>
       </div>
       <button type="button" class="kw-nav kw-next is-hidden" aria-label="往後一個關鍵字" disabled>&gt;</button>
-    </div>
-    <div class="kw-chips-simple${simple ? '' : ' hidden'}">
-      <div class="kw-track kw-track-wrap"></div>
     </div>
     <div class="kw-compose">
       <input
