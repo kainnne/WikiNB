@@ -98,7 +98,7 @@ const meUrl = sites.sites.me.url;
     color: transparent;
   }
 
-  /* © HOME：中空彩色橢圓框（非黑底） */
+  /* © HOME：僅彩色外框，內部透明 */
   .brand-home {
     display: inline-flex;
     align-items: center;
@@ -108,10 +108,10 @@ const meUrl = sites.sites.me.url;
     padding: 0.18rem 0.55rem;
     white-space: nowrap;
     background:
-      linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.35)) padding-box,
+      linear-gradient(transparent, transparent) padding-box,
       linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
-    box-shadow: 0 2px 10px rgba(123, 97, 255, 0.12);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    box-shadow: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
   .brand-home-label {
@@ -151,10 +151,7 @@ const meUrl = sites.sites.me.url;
 
   .brand-link:hover .brand-home {
     transform: scale(1.04);
-    box-shadow: 0 4px 14px rgba(123, 97, 255, 0.2);
-    background:
-      linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)) padding-box,
-      linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
+    opacity: 1;
   }
 
   /* 未登入：粉紅實心；登入後：黑底彩字 */
