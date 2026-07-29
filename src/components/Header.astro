@@ -9,6 +9,7 @@ const meUrl = sites.sites.me.url;
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
     <a id="brand-link" href={base} class="brand-link group shrink-0">
       <span id="brand-label" class="brand-label">Kainnne</span>
+      <span class="brand-home" aria-hidden="false">| HOME</span>
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
@@ -55,29 +56,48 @@ const meUrl = sites.sites.me.url;
     @apply rounded-full px-2.5 py-1.5 text-xs font-semibold text-berry-700 transition-colors hover:bg-pink-100/60 hover:text-pink-700 sm:px-3 sm:py-2 sm:text-sm md:px-4;
   }
 
-  /* 品牌：恆為彩字（登入前後相同），略大於原先 */
+  /* 品牌：恆為彩字（登入前後相同） */
   .brand-link {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
+    gap: 0.35rem;
     text-decoration: none;
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
-  .brand-label {
+  .brand-label,
+  .brand-home {
     font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
-    font-size: 1.55rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
     background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
+  .brand-label {
+    font-size: 1.55rem;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  .brand-home {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    padding-bottom: 0.12rem;
+    white-space: nowrap;
+  }
+
   @media (min-width: 640px) {
     .brand-label {
       font-size: 1.75rem;
+    }
+
+    .brand-home {
+      font-size: 0.85rem;
+      padding-bottom: 0.14rem;
     }
   }
 
