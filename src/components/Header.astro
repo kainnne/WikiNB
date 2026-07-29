@@ -3,13 +3,21 @@ import sites from '../../config/sites.json';
 
 const base = import.meta.env.BASE_URL;
 const meUrl = sites.sites.me.url;
+
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const home = (base.replace(/\/+$/, '') || '/') ;
+const isHome =
+  path === home ||
+  path === `${home}/index.html` ||
+  path === '/' ||
+  path === '/index.html';
 ---
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
     <a id="brand-link" href={base} class="brand-link group shrink-0">
       <span id="brand-label" class="brand-label">Kainnne</span>
-      <span class="brand-home" aria-hidden="false">© HOME</span>
+      {!isHome && <span class="brand-home">© HOME</span>}
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">

@@ -22,26 +22,43 @@ const related = allPages
 ---
 
 <BaseLayout title={page.title} description={page.description}>
-  <article class="animate-fadeIn">
-    <header class="mb-8">
-      <div class="mb-3 flex flex-wrap items-center gap-2">
-        <time class="text-sm font-semibold text-pink-500">{page.date}</time>
-        {page.updated && (
-          <span class="text-xs text-berry-600/60">更新於 {page.updated}</span>
-        )}
-        {page.tags.map((tag) => (
-          <a href={`${base}search?q=${encodeURIComponent(tag)}`} class="tag-badge hover:bg-pink-200">
-            {tag}
-          </a>
-        ))}
+  <article class="animate-fadeIn wiki-page">
+    <div id="wiki-reader" class="wiki-reader">
+      <div class="wiki-reader-titlebar">
+        <span class="wiki-reader-label">{page.title}</span>
+        <button
+          id="wiki-fs-toggle"
+          type="button"
+          class="wiki-fs-btn"
+          aria-label="放大視窗"
+          title="放大"
+        >
+          <span class="wiki-fs-icon" aria-hidden="true">⛶</span>
+        </button>
       </div>
-      <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">{page.title}</h1>
-      {page.description && (
-        <p class="mt-3 text-lg text-berry-700/80">{page.description}</p>
-      )}
-    </header>
 
-    <div class="glass-card wiki-content p-6 md:p-10" set:html={page.html} />
+      <div class="wiki-reader-scroll">
+        <header class="mb-6 px-1 sm:mb-8">
+          <div class="mb-3 flex flex-wrap items-center gap-2">
+            <time class="text-sm font-semibold text-pink-500">{page.date}</time>
+            {page.updated && (
+              <span class="text-xs text-berry-600/60">更新於 {page.updated}</span>
+            )}
+            {page.tags.map((tag) => (
+              <a href={`${base}search?q=${encodeURIComponent(tag)}`} class="tag-badge hover:bg-pink-200">
+                {tag}
+              </a>
+            ))}
+          </div>
+          <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">{page.title}</h1>
+          {page.description && (
+            <p class="mt-3 text-lg text-berry-700/80">{page.description}</p>
+          )}
+        </header>
+
+        <div class="glass-card wiki-content p-6 md:p-10" set:html={page.html} />
+      </div>
+    </div>
 
     {related.length > 0 && (
       <section class="mt-10">
@@ -62,3 +79,138 @@ const related = allPages
     </div>
   </article>
 </BaseLayout>
+
+<script>
+  const reader = document.getElementById('wiki-reader');
+  const fsToggle = document.getElementById('wiki-fs-toggle');
+  const fsIcon = fsToggle?.querySelector('.wiki-fs-icon');
+  let fullscreen = false;
+
+  function setFullscreen(on) {
+    fullscreen = Boolean(on);
+    reader?.classList.toggle('is-fullscreen', fullscreen);
+    document.documentElement.classList.toggle('wiki-fs-active', fullscreen);
+    document.body.classList.toggle('wiki-fs-active', fullscreen);
+    if (fsToggle) {
+      fsToggle.setAttribute('aria-label', fullscreen ? '還原視窗' : '放大視窗');
+      fsToggle.title = fullscreen ? '還原' : '放大';
+    }
+    if (fsIcon) fsIcon.textContent = fullscreen ? '❐' : '⛶';
+  }
+
+  fsToggle?.addEventListener('click', () => setFullscreen(!fullscreen));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && fullscreen) setFullscreen(false);
+  });
+</script>
+
+<style is:global>
+  .wiki-page .wiki-reader {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid rgba(251, 207, 232, 0.55);
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 8px 28px rgba(236, 64, 122, 0.08);
+  }
+
+  .wiki-page .wiki-reader-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0.65rem 0.45rem;
+    border-bottom: 1px solid rgba(252, 231, 243, 0.85);
+    background: rgba(255, 255, 255, 0.45);
+  }
+
+  @media (min-width: 640px) {
+    .wiki-page .wiki-reader-titlebar {
+      padding: 0.6rem 0.85rem 0.5rem;
+    }
+  }
+
+  .wiki-page .wiki-reader-label {
+    min-width: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #5c2a4a;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wiki-page .wiki-fs-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.55rem;
+    border: 1px solid rgba(244, 143, 177, 0.45);
+    background: rgba(255, 255, 255, 0.75);
+    color: #9c2d5a;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  .wiki-page .wiki-fs-btn:hover,
+  .wiki-page .wiki-fs-btn:focus-visible {
+    background: rgba(252, 231, 243, 0.95);
+    transform: scale(1.05);
+    outline: none;
+  }
+
+  .wiki-page .wiki-reader-scroll {
+    padding: 1rem 0.85rem 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .wiki-page .wiki-reader-scroll {
+      padding: 1.25rem 1.25rem 1.5rem;
+    }
+  }
+
+  .wiki-page .wiki-reader.is-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(160deg, #fff5f8 0%, #fce4ec 35%, #f3e5f5 100%);
+  }
+
+  .wiki-page .wiki-reader.is-fullscreen .wiki-reader-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem 1rem 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .wiki-page .wiki-reader.is-fullscreen .wiki-reader-scroll {
+      padding: 1.25rem 1.5rem 2rem;
+    }
+  }
+
+  .wiki-page .wiki-reader.is-fullscreen .wiki-reader-label {
+    font-size: 0.95rem;
+  }
+
+  html.wiki-fs-active,
+  body.wiki-fs-active {
+    overflow: hidden;
+  }
+</style>
