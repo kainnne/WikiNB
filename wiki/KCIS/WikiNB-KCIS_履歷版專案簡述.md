@@ -1,3 +1,14 @@
+---
+title: WikiNB · KCIS
+description: 康橋國際學校教學筆記知識庫與 AI 複習平台（履歷版專案簡述）。
+type: note
+status: active
+tags:
+  - KCIS
+  - 專案
+date: 2026-07-28
+---
+
 # WikiNB · KCIS
 
 ## 技術摘要

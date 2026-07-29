@@ -474,7 +474,190 @@ function extractWikiTitle(content, fallbackSlug) {
   if (m) {
     return m[1].trim().replace(/^["']|["']$/g, '');
   }
-  return fallbackSlug;
+  const h1 = String(content || '').match(/^#\s+(.+)$/m);
+  if (h1) return h1[1].replace(/\s+#+\s*$/, '').trim();
+  const parts = String(fallbackSlug || '')
+    .split('/')
+    .filter(Boolean);
+  return parts[parts.length - 1] || fallbackSlug || 'untitled';
+}
+
+function formatFolderKeyword(folderName) {
+  const name = String(folderName || '').trim();
+  if (!name) return '';
+  if (/^[A-Z0-9]{2,6}$/.test(name)) return name;
+  const spaced = name
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+  const words = spaced.split(/\s+/).filter(Boolean);
+  if (!words.length) return '';
+  return words
+    .map((w, i) =>
+      i === 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase(),
+    )
+    .join(' ');
+}
+
+function folderKeywordFromRelPath(folderPath) {
+  const leaf = String(folderPath || '')
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter(Boolean)
+    .pop();
+  return formatFolderKeyword(leaf || '');
+}
+
+function yamlScalar(value) {
+  const v = String(value ?? '');
+  if (v === '') return '""';
+  if (/[:#{}[\],&*?|>!%@`]/.test(v) || /^\s|\s$/.test(v) || /[\n"']/.test(v)) {
+    return JSON.stringify(v);
+  }
+  return v;
+}
+
+function unquoteYaml(value) {
+  const v = String(value ?? '').trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    try {
+      return JSON.parse(v.startsWith("'") ? JSON.stringify(v.slice(1, -1)) : v);
+    } catch {
+      return v.slice(1, -1);
+    }
+  }
+  return v;
+}
+
+function uniqueTags(tags) {
+  const out = [];
+  const seen = new Set();
+  for (const raw of tags || []) {
+    const t = String(raw || '').trim();
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+  }
+  return out;
+}
+
+function splitWikiFrontmatter(raw) {
+  const text = String(raw || '').replace(/^\uFEFF/, '');
+  if (!text.startsWith('---')) return { data: {}, body: text };
+  const end = text.search(/\r?\n---[ \t]*\r?\n/);
+  if (end === -1) return { data: {}, body: text };
+  const fmBlock = text.slice(3, end).replace(/^\r?\n/, '');
+  const after = text.slice(end).replace(/^\r?\n---[ \t]*\r?\n?/, '');
+  const data = {};
+  const lines = fmBlock.split(/\r?\n/);
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const m = line.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
+    if (!m) {
+      i += 1;
+      continue;
+    }
+    const key = m[1];
+    const rest = m[2].trim();
+    if (rest === '' || rest === '|' || rest === '>') {
+      const arr = [];
+      let j = i + 1;
+      while (j < lines.length && /^\s+-\s+/.test(lines[j])) {
+        arr.push(unquoteYaml(lines[j].replace(/^\s+-\s+/, '').trim()));
+        j += 1;
+      }
+      if (arr.length || key === 'tags' || key === 'relatedSkills') {
+        data[key] = arr;
+        i = j;
+        continue;
+      }
+      data[key] = '';
+      i += 1;
+      continue;
+    }
+    if (rest === '[]') {
+      data[key] = [];
+      i += 1;
+      continue;
+    }
+    data[key] = unquoteYaml(rest);
+    i += 1;
+  }
+  return { data, body: after.replace(/^\r?\n/, '') };
+}
+
+function excerptFromBody(body, max = 120) {
+  const plain = String(body || '')
+    .replace(/^#+\s+.+$/m, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[[^\]]*\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_~`-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return plain.slice(0, max);
+}
+
+function buildWikiFrontmatter(data) {
+  const tags = uniqueTags(data.tags || []);
+  const tagBlock =
+    tags.length === 0 ? 'tags: []\n' : `tags:\n${tags.map((t) => `  - ${yamlScalar(t)}`).join('\n')}\n`;
+  let out = '---\n';
+  out += `title: ${yamlScalar(data.title || '')}\n`;
+  out += `description: ${yamlScalar(data.description || '')}\n`;
+  out += `type: ${yamlScalar(data.type || 'note')}\n`;
+  out += `status: ${yamlScalar(data.status || 'active')}\n`;
+  out += tagBlock;
+  out += `date: ${yamlScalar(data.date || new Date().toISOString().slice(0, 10))}\n`;
+  if (data.updated) out += `updated: ${yamlScalar(data.updated)}\n`;
+  out += '---\n';
+  return out;
+}
+
+/** 合併／覆寫 frontmatter，正文保留。 */
+function upsertWikiFrontmatter(raw, patch = {}) {
+  const { data, body } = splitWikiFrontmatter(raw);
+  const today = new Date().toISOString().slice(0, 10);
+  const mergedTags =
+    patch.tags !== undefined
+      ? uniqueTags(patch.tags)
+      : uniqueTags(Array.isArray(data.tags) ? data.tags : []);
+  const title =
+    patch.title !== undefined
+      ? String(patch.title || '').trim()
+      : String(data.title || '').trim();
+  const description =
+    patch.description !== undefined
+      ? String(patch.description || '').trim()
+      : String(data.description || '').trim() || excerptFromBody(body);
+  const merged = {
+    title: title || extractWikiTitle(body, 'untitled'),
+    description,
+    type: patch.type || data.type || 'note',
+    status: patch.status || data.status || 'active',
+    tags: mergedTags,
+    date: data.date || today,
+    updated: patch.updated || (patch.title !== undefined || patch.tags !== undefined ? today : data.updated),
+  };
+  const bodyText = String(body || '').replace(/^\r?\n+/, '');
+  return `${buildWikiFrontmatter(merged)}\n${bodyText}`;
+}
+
+function parseKeywordList(input) {
+  if (Array.isArray(input)) {
+    return uniqueTags(input.map((x) => String(x || '')));
+  }
+  return uniqueTags(
+    String(input || '')
+      .split(/[,，、\n]/)
+      .map((s) => s.trim()),
+  );
 }
 
 function upsertWikiIndexLink(slug, label) {
@@ -579,16 +762,28 @@ function buildWikiTree(dir = wikiRoot(), prefix = '') {
 
 /** 儲存整理好的筆記到 wiki/（支援子資料夾；可 autoSync 直接上線） */
 async function handleWikiUpload(req, res) {
-  const { filename, content, folder, autoSync } = req.body || {};
+  const { filename, content, folder, title, keywords, tags, autoSync } = req.body || {};
   if (!content || !String(content).trim()) {
     res.status(400).json({ error: '請提供筆記內容' });
+    return;
+  }
+
+  const noteTitle = String(title || '').trim();
+  if (!noteTitle) {
+    res.status(400).json({ error: '請填寫顯示標題（title）' });
+    return;
+  }
+
+  const fileLabel = String(filename || '').trim();
+  if (!fileLabel) {
+    res.status(400).json({ error: '請填寫檔案名稱' });
     return;
   }
 
   try {
     fs.mkdirSync(wikiRoot(), { recursive: true });
 
-    let relName = String(filename || 'note.md').trim();
+    let relName = fileLabel;
     const folderNorm = folder
       ? normalizeWikiRelPath(folder, { allowMdSuffix: false })
       : null;
@@ -596,8 +791,12 @@ async function handleWikiUpload(req, res) {
       res.status(400).json({ error: '目標資料夾路徑無效' });
       return;
     }
+    if (!folderNorm) {
+      res.status(400).json({ error: '請選擇資料夾（主關鍵字來自資料夾名稱）' });
+      return;
+    }
     // 若 filename 本身不含路徑，且有指定 folder，則拼成 folder/file.md
-    if (folderNorm && !relName.includes('/') && !relName.includes('\\')) {
+    if (!relName.includes('/') && !relName.includes('\\')) {
       relName = `${folderNorm}/${relName}`;
     }
 
@@ -611,12 +810,21 @@ async function handleWikiUpload(req, res) {
       res.status(400).json({ error: '檔名路徑無效' });
       return;
     }
+
+    const folderKeyword = folderKeywordFromRelPath(folderNorm);
+    const extraKeywords = parseKeywordList(keywords ?? tags);
+    const finalContent = upsertWikiFrontmatter(String(content), {
+      title: noteTitle,
+      tags: uniqueTags([folderKeyword, ...extraKeywords]),
+      description: undefined, // 保留既有或從正文摘要
+      updated: new Date().toISOString().slice(0, 10),
+    });
+
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, String(content), 'utf8');
+    fs.writeFileSync(targetPath, finalContent, 'utf8');
 
     const slug = safeName.replace(/\.md$/i, '');
-    const title = extractWikiTitle(content, slug);
-    upsertWikiIndexLink(slug, title);
+    upsertWikiIndexLink(slug, noteTitle);
 
     let syncResult = null;
     if (autoSync) {
@@ -627,6 +835,8 @@ async function handleWikiUpload(req, res) {
       ok: true,
       filename: safeName,
       slug,
+      title: noteTitle,
+      tags: uniqueTags([folderKeyword, ...extraKeywords]),
       path: `wiki/${safeName}`,
       synced: Boolean(autoSync),
       sync: syncResult,
@@ -885,6 +1095,60 @@ app.post('/api/wiki/rename', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('wiki rename error:', err);
     res.status(500).json({ error: '重新命名失敗', detail: String(err.message || err).slice(0, 400) });
+  }
+});
+
+/** 只更新 frontmatter title（不改檔名／路徑） */
+app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
+  const slug = normalizeWikiSlug(req.body?.slug);
+  const title = String(req.body?.title || '').trim();
+  if (!slug) {
+    res.status(400).json({ error: '筆記路徑無效' });
+    return;
+  }
+  if (!title) {
+    res.status(400).json({ error: '請填寫標題' });
+    return;
+  }
+
+  const filePath = resolveUnderWiki(`${slug}.md`);
+  if (!filePath || !fs.existsSync(filePath)) {
+    res.status(404).json({ error: `找不到 wiki/${slug}.md` });
+    return;
+  }
+
+  try {
+    const before = fs.readFileSync(filePath, 'utf8');
+    const folder = slug.includes('/') ? slug.slice(0, slug.lastIndexOf('/')) : '';
+    const folderKeyword = folderKeywordFromRelPath(folder);
+    const { data } = splitWikiFrontmatter(before);
+    const existingTags = Array.isArray(data.tags) ? data.tags : [];
+    const next = upsertWikiFrontmatter(before, {
+      title,
+      tags: uniqueTags([folderKeyword, ...existingTags]),
+      updated: new Date().toISOString().slice(0, 10),
+    });
+    fs.writeFileSync(filePath, next, 'utf8');
+    upsertWikiIndexLink(slug, title);
+
+    let syncResult = null;
+    if (req.body?.autoSync) {
+      syncResult = await runWikiSync();
+    }
+
+    res.json({
+      ok: true,
+      slug,
+      title,
+      synced: Boolean(req.body?.autoSync),
+      sync: syncResult,
+      message: req.body?.autoSync
+        ? `已更新標題並推上 GitHub。`
+        : `已更新標題。`,
+    });
+  } catch (err) {
+    console.error('wiki update-title error:', err);
+    res.status(500).json({ error: '更新標題失敗', detail: String(err.message || err).slice(0, 400) });
   }
 });
 

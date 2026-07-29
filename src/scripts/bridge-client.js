@@ -101,10 +101,17 @@ export async function syncWiki() {
   return bridgeFetch('/api/sync', { method: 'POST', body: '{}' });
 }
 
-export async function uploadWikiNote({ filename, content, folder, autoSync = false }) {
+export async function uploadWikiNote({
+  filename,
+  content,
+  folder,
+  title,
+  keywords,
+  autoSync = false,
+}) {
   return bridgeFetch('/api/wiki/upload', {
     method: 'POST',
-    body: JSON.stringify({ filename, content, folder, autoSync }),
+    body: JSON.stringify({ filename, content, folder, title, keywords, autoSync }),
   });
 }
 
@@ -116,6 +123,14 @@ export async function renameWikiFile({ oldSlug, newSlug, autoSync = false }) {
   return bridgeFetch('/api/wiki/rename', {
     method: 'POST',
     body: JSON.stringify({ oldSlug, newSlug, autoSync }),
+  });
+}
+
+/** 更新筆記 frontmatter 標題（不改檔名） */
+export async function updateWikiTitle({ slug, title, autoSync = false }) {
+  return bridgeFetch('/api/wiki/update-title', {
+    method: 'POST',
+    body: JSON.stringify({ slug, title, autoSync }),
   });
 }
 

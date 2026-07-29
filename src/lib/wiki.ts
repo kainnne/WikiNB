@@ -78,6 +78,62 @@ function parentFolder(slug: string): string {
   return idx === -1 ? '' : slug.slice(0, idx);
 }
 
+/** 檔名 stem：`AboutMe/about_kaine` → `about_kaine` */
+export function fileStem(slug: string): string {
+  const parts = String(slug || '')
+    .split('/')
+    .filter(Boolean);
+  return parts[parts.length - 1] || String(slug || '');
+}
+
+/**
+ * 資料夾名 → 主關鍵字。例：`AboutMe` → `About me`；`LLM` 維持縮寫。
+ */
+export function formatFolderKeyword(folderName: string): string {
+  const name = String(folderName || '').trim();
+  if (!name) return '';
+  if (/^[A-Z0-9]{2,6}$/.test(name)) return name;
+  const spaced = name
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+  const words = spaced.split(/\s+/).filter(Boolean);
+  if (!words.length) return '';
+  return words
+    .map((w, i) =>
+      i === 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase(),
+    )
+    .join(' ');
+}
+
+/** 由 slug 取葉資料夾關鍵字：`AboutMe/note` → `About me` */
+export function folderKeywordFromSlug(slug: string): string {
+  const folder = parentFolder(slug);
+  if (!folder) return '';
+  const leaf = folder.split('/').filter(Boolean).pop() || '';
+  return formatFolderKeyword(leaf);
+}
+
+function uniqueTags(tags: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of tags) {
+    const t = String(raw || '').trim();
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+  }
+  return out;
+}
+
+function extractH1Title(body: string): string | undefined {
+  const m = String(body || '').match(/^#\s+(.+)$/m);
+  const title = m?.[1]?.replace(/\s+#+\s*$/, '').trim();
+  return title || undefined;
+}
+
 function stripMarkdown(text: string): string {
   return text
     .replace(/```[\s\S]*?```/g, '')
@@ -124,13 +180,22 @@ function parseWikiFile(filePath: string, slug: string): WikiPage {
     formatDateField(data.updated) ||
     new Date().toISOString().slice(0, 10);
 
+  const folderKeyword = folderKeywordFromSlug(slug);
+  const fmTags = Array.isArray(data.tags) ? (data.tags as string[]) : [];
+  const tags = uniqueTags([folderKeyword, ...fmTags]);
+
+  const title =
+    (typeof data.title === 'string' && data.title.trim()) ||
+    extractH1Title(content) ||
+    fileStem(slug);
+
   return {
     slug,
-    title: (data.title as string) || slug,
+    title,
     description: (data.description as string) || plain.slice(0, 120),
     type: (data.type as WikiPage['type']) || 'note',
     status: (data.status as WikiPage['status']) || 'active',
-    tags: (data.tags as string[]) || [],
+    tags,
     date,
     updated: formatDateField(data.updated),
     priority: data.priority as WikiPage['priority'],
@@ -312,6 +377,8 @@ export function getSearchIndex(pages: WikiPage[]) {
   return pages.map((p) => ({
     slug: p.slug,
     folder: parentFolder(p.slug),
+    folderKeyword: folderKeywordFromSlug(p.slug),
+    filename: fileStem(p.slug),
     title: p.title,
     description: p.description,
     type: p.type,

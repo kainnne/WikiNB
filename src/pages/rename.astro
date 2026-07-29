@@ -4,7 +4,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="管理筆記" description="重新命名與刪除 wiki 筆記">
+<BaseLayout title="管理筆記" description="修改標題與刪除 wiki 筆記">
   <div class="animate-fadeIn mx-auto max-w-2xl">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
       <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">管理筆記</h1>
@@ -36,7 +36,7 @@ const base = import.meta.env.BASE_URL;
     isLoggedIn,
     checkHealth,
     listWikiTree,
-    renameWikiFile,
+    updateWikiTitle,
     deleteWikiFile,
     syncWiki,
   } from '../scripts/bridge-client.js';
@@ -72,10 +72,21 @@ const base = import.meta.env.BASE_URL;
     return parts.slice(0, -1).join('/');
   }
 
-  function isValidStem(stem) {
-    if (!stem || stem === 'index' || stem === '.' || stem === '..') return false;
-    if (stem.includes('/') || stem.includes('\\') || stem.includes('..')) return false;
-    return /^[\u4e00-\u9fffA-Za-z0-9_-]+$/.test(stem);
+  function formatFolderKeyword(folderName) {
+    const name = String(folderName || '').trim();
+    if (!name) return '';
+    if (/^[A-Z0-9]{2,6}$/.test(name)) return name;
+    const spaced = name
+      .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .trim();
+    const words = spaced.split(/\s+/).filter(Boolean);
+    if (!words.length) return '';
+    return words
+      .map((w, i) =>
+        i === 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase(),
+      )
+      .join(' ');
   }
 
   function setStatus(text, isError = false) {
@@ -96,31 +107,31 @@ const base = import.meta.env.BASE_URL;
     const slug = node.slug;
     const stem = stemOf(slug);
     const folder = folderOf(slug);
-    const title = escapeHtml(node.title || '');
+    const title = node.title || stem;
     const pathAttr = escapeHtml(node.path || `${slug}.md`);
-    const folderLabel = folder ? `<span class="text-xs text-berry-600/60">${escapeHtml(folder)}/</span>` : '';
+    const leaf = folder.split('/').filter(Boolean).pop() || '';
+    const folderKw = formatFolderKeyword(leaf);
+    const metaBits = [
+      folder ? `<span class="text-xs text-berry-600/60">${escapeHtml(folder)}/</span>` : '',
+      `<span class="tag-badge">${escapeHtml(stem)}.md</span>`,
+      folderKw ? `<span class="tag-badge">${escapeHtml(folderKw)}</span>` : '',
+    ].filter(Boolean).join('');
 
     return `
-      <div class="rename-row border-t border-pink-100/80 p-4" data-slug="${escapeAttr(slug)}" data-folder="${escapeAttr(folder)}" data-path="${pathAttr}">
+      <div class="rename-row border-t border-pink-100/80 p-4" data-slug="${escapeAttr(slug)}" data-path="${pathAttr}">
         <div class="mb-2 flex flex-wrap items-center gap-2">
-          ${folderLabel}
-          <span class="tag-badge">${escapeHtml(stem)}.md</span>
-          <span class="text-sm text-berry-700/75">${title}</span>
+          ${metaBits}
         </div>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div class="flex flex-1 items-center gap-1">
-            <input
-              type="text"
-              class="search-input rename-input flex-1 py-2 text-sm"
-              value="${escapeAttr(stem)}"
-              spellcheck="false"
-              autocomplete="off"
-              aria-label="檔名：${escapeAttr(stem)}"
-            />
-            <span class="shrink-0 text-sm font-semibold text-berry-600/70">.md</span>
-          </div>
+          <input
+            type="text"
+            class="search-input rename-input flex-1 py-2 text-sm"
+            value="${escapeAttr(title)}"
+            autocomplete="off"
+            aria-label="標題：${escapeAttr(title)}"
+          />
           <button type="button" class="btn-rename rename-save shrink-0 justify-center px-4 py-2 text-sm">
-            儲存檔名
+            儲存標題
           </button>
           <button type="button" class="btn-delete rename-delete shrink-0 justify-center px-4 py-2 text-sm">
             刪除
@@ -178,7 +189,6 @@ const base = import.meta.env.BASE_URL;
 
     listEl?.querySelectorAll('.rename-row').forEach((row) => {
       const oldSlug = row.getAttribute('data-slug');
-      const folder = row.getAttribute('data-folder') || '';
       const filePath = row.getAttribute('data-path');
       const input = row.querySelector('.rename-input');
       const saveBtn = row.querySelector('.rename-save');
@@ -186,20 +196,12 @@ const base = import.meta.env.BASE_URL;
       const msg = row.querySelector('.rename-msg');
 
       saveBtn?.addEventListener('click', async () => {
-        const stem = String(input?.value || '').trim().replace(/\.md$/i, '');
+        const title = String(input?.value || '').trim();
         msg?.classList.remove('hidden');
-        if (!isValidStem(stem)) {
+        if (!title) {
           if (msg) {
-            msg.textContent = '無效：可用中文、英文、數字、_ 與 -';
+            msg.textContent = '標題不可空白';
             msg.className = 'rename-msg mt-2 text-sm text-red-600';
-          }
-          return;
-        }
-        const newSlug = folder ? `${folder}/${stem}` : stem;
-        if (newSlug === oldSlug) {
-          if (msg) {
-            msg.textContent = '檔名未變更';
-            msg.className = 'rename-msg mt-2 text-sm text-berry-600/80';
           }
           return;
         }
@@ -207,21 +209,21 @@ const base = import.meta.env.BASE_URL;
         saveBtn.disabled = true;
         saveBtn.textContent = '儲存中…';
         try {
-          const result = await renameWikiFile({ oldSlug, newSlug, autoSync: true });
+          const result = await updateWikiTitle({ slug: oldSlug, title, autoSync: true });
           if (msg) {
-            msg.textContent = result.message || '已重新命名';
+            msg.textContent = result.message || '已更新標題';
             msg.className = 'rename-msg mt-2 text-sm text-emerald-700';
           }
-          setStatus(`剛更新：${stemOf(oldSlug)} → ${stem}`);
+          setStatus(`剛更新標題：${title}`);
           await loadList();
         } catch (err) {
           if (msg) {
-            msg.textContent = err.message || '重新命名失敗';
+            msg.textContent = err.message || '更新標題失敗';
             msg.className = 'rename-msg mt-2 text-sm text-red-600';
           }
         } finally {
           saveBtn.disabled = false;
-          saveBtn.textContent = '儲存檔名';
+          saveBtn.textContent = '儲存標題';
         }
       });
 

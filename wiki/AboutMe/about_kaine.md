@@ -1,3 +1,13 @@
+---
+title: 關於我
+description: 一個持續把想法做成作品的人。
+type: note
+status: active
+tags:
+  - About me
+date: 2026-07-28
+---
+
 # 關於我
 
 > 一個持續把想法做成作品的人。

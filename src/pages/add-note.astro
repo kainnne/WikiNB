@@ -22,11 +22,12 @@ const base = import.meta.env.BASE_URL;
     <div id="add-panel" class="hidden space-y-4">
       <section class="glass-card space-y-3 p-4 sm:p-5">
         <label class="block text-sm font-semibold text-berry-800">
-          資料夾
+          資料夾（主關鍵字）
           <select id="folder-select" class="search-input mt-2 py-2 text-sm">
             <option value="">未選擇</option>
           </select>
         </label>
+        <p id="folder-keyword-hint" class="text-sm text-berry-600/80">選擇資料夾後，會自動帶入主關鍵字。</p>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label class="block flex-1 text-sm font-semibold text-berry-800">
             新建資料夾
@@ -34,7 +35,7 @@ const base = import.meta.env.BASE_URL;
               id="folder-new"
               type="text"
               class="search-input mt-2 py-2 text-sm"
-              placeholder="例如：專案/demo"
+              placeholder="例如：AboutMe"
               spellcheck="false"
               autocomplete="off"
             />
@@ -46,6 +47,40 @@ const base = import.meta.env.BASE_URL;
         <p id="folder-msg" class="text-sm text-berry-600/80"></p>
       </section>
 
+      <section class="glass-card space-y-3 p-4 sm:p-5">
+        <label class="block text-sm font-semibold text-berry-800">
+          檔案名稱
+          <input
+            id="meta-filename"
+            type="text"
+            class="search-input mt-2 py-2 text-sm"
+            placeholder="例如：about_kaine（可省略 .md）"
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </label>
+        <label class="block text-sm font-semibold text-berry-800">
+          顯示標題
+          <input
+            id="meta-title"
+            type="text"
+            class="search-input mt-2 py-2 text-sm"
+            placeholder="字卡與專頁會顯示這個標題"
+            autocomplete="off"
+          />
+        </label>
+        <label class="block text-sm font-semibold text-berry-800">
+          額外關鍵字
+          <input
+            id="meta-keywords"
+            type="text"
+            class="search-input mt-2 py-2 text-sm"
+            placeholder="用逗號分隔，例如：履歷, 自我介紹"
+            autocomplete="off"
+          />
+        </label>
+      </section>
+
       <section
         id="drop-zone"
         class="drop-zone glass-card cursor-pointer p-8 text-center transition"
@@ -54,7 +89,8 @@ const base = import.meta.env.BASE_URL;
         aria-label="拖入或點擊上傳 Markdown"
       >
         <p class="font-display text-lg font-bold text-berry-800">拖入 .md 檔案</p>
-        <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" multiple />
+        <p class="mt-2 text-sm text-berry-600/75">上傳前請先填好上方資料夾、檔名、標題與關鍵字</p>
+        <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" />
       </section>
 
       <p id="add-status" class="text-sm text-berry-600/80"></p>
@@ -78,6 +114,10 @@ const base = import.meta.env.BASE_URL;
   const folderNew = document.getElementById('folder-new') as HTMLInputElement | null;
   const folderBtn = document.getElementById('folder-create-btn') as HTMLButtonElement | null;
   const folderMsg = document.getElementById('folder-msg');
+  const folderHint = document.getElementById('folder-keyword-hint');
+  const metaFilename = document.getElementById('meta-filename') as HTMLInputElement | null;
+  const metaTitle = document.getElementById('meta-title') as HTMLInputElement | null;
+  const metaKeywords = document.getElementById('meta-keywords') as HTMLInputElement | null;
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
   const statusEl = document.getElementById('add-status');
@@ -94,6 +134,35 @@ const base = import.meta.env.BASE_URL;
     folderMsg.className = isError ? 'text-sm text-red-600' : 'text-sm text-berry-600/80';
   }
 
+  function formatFolderKeyword(folderName: string) {
+    const name = String(folderName || '').trim();
+    if (!name) return '';
+    if (/^[A-Z0-9]{2,6}$/.test(name)) return name;
+    const spaced = name
+      .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .trim();
+    const words = spaced.split(/\s+/).filter(Boolean);
+    if (!words.length) return '';
+    return words
+      .map((w, i) =>
+        i === 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase(),
+      )
+      .join(' ');
+  }
+
+  function updateFolderHint() {
+    if (!folderHint || !folderSelect) return;
+    const folder = folderSelect.value.trim();
+    if (!folder) {
+      folderHint.textContent = '選擇資料夾後，會自動帶入主關鍵字。';
+      return;
+    }
+    const leaf = folder.split('/').filter(Boolean).pop() || folder;
+    const kw = formatFolderKeyword(leaf);
+    folderHint.textContent = `主關鍵字：${kw}`;
+  }
+
   function collectDirs(nodes: any[], out: string[] = []) {
     for (const node of nodes || []) {
       if (node.type === 'dir') {
@@ -107,7 +176,6 @@ const base = import.meta.env.BASE_URL;
   function fillFolderSelect(paths: string[], selected = '') {
     if (!folderSelect) return;
     const current = selected || folderSelect.value;
-    // 沒有「根目錄」選項：筆記一律放進資料夾。
     folderSelect.innerHTML = '<option value="">未選擇</option>';
     for (const p of paths.sort((a, b) => a.localeCompare(b, 'zh-Hant'))) {
       const opt = document.createElement('option');
@@ -116,6 +184,7 @@ const base = import.meta.env.BASE_URL;
       folderSelect.appendChild(opt);
     }
     if (current) folderSelect.value = current;
+    updateFolderHint();
   }
 
   async function refreshFolders(selectPath = '') {
@@ -123,39 +192,69 @@ const base = import.meta.env.BASE_URL;
     fillFolderSelect(collectDirs(data.tree || []), selectPath);
   }
 
+  function requireMeta() {
+    const folder = (folderSelect?.value || '').trim().replace(/^\/+|\/+$/g, '');
+    const filename = (metaFilename?.value || '').trim();
+    const title = (metaTitle?.value || '').trim();
+    const keywords = (metaKeywords?.value || '').trim();
+    if (!folder) {
+      setStatus('請先選擇資料夾', true);
+      return null;
+    }
+    if (!filename) {
+      setStatus('請填寫檔案名稱', true);
+      return null;
+    }
+    if (!title) {
+      setStatus('請填寫顯示標題', true);
+      return null;
+    }
+    return { folder, filename, title, keywords };
+  }
+
   async function publishFile(file: File) {
-    const name = file.name || 'note.md';
-    if (!/\.(md|txt)$/i.test(name)) {
+    const meta = requireMeta();
+    if (!meta) return;
+
+    const droppedName = file.name || '';
+    if (!/\.(md|txt)$/i.test(droppedName) && droppedName) {
       setStatus('請上傳 .md 或 .txt', true);
       return;
     }
-    const folder = (folderSelect?.value || '').trim().replace(/^\/+|\/+$/g, '');
-    if (!folder) {
-      setStatus('請先選擇資料夾', true);
-      return;
+
+    // 若檔名欄位還空，用拖入檔名；否則以表單為準
+    if (!metaFilename?.value.trim() && droppedName) {
+      metaFilename!.value = droppedName.replace(/\.(md|txt)$/i, '');
+      meta.filename = metaFilename.value;
     }
+
     const content = await file.text();
     if (!content.trim()) {
       setStatus('檔案是空的', true);
       return;
     }
-    setStatus(`正在上傳並推送 ${name}…`);
+
+    setStatus(`正在上傳並推送 ${meta.filename}…`);
     dropZone?.classList.add('opacity-60', 'pointer-events-none');
     try {
       const result = await uploadWikiNote({
-        filename: name,
+        filename: meta.filename,
         content,
-        folder,
+        folder: meta.folder,
+        title: meta.title,
+        keywords: meta.keywords,
         autoSync: true,
       });
       setStatus(result.message || '已上線');
-      await refreshFolders(folder);
+      await refreshFolders(meta.folder);
     } catch (err) {
       setStatus((err as Error).message || '上傳失敗', true);
     } finally {
       dropZone?.classList.remove('opacity-60', 'pointer-events-none');
     }
   }
+
+  folderSelect?.addEventListener('change', updateFolderHint);
 
   folderBtn?.addEventListener('click', async () => {
     const path = (folderNew?.value || '').trim().replace(/^\/+|\/+$/g, '');
@@ -171,6 +270,7 @@ const base = import.meta.env.BASE_URL;
       if (folderNew) folderNew.value = '';
       await refreshFolders(path);
       if (folderSelect) folderSelect.value = path;
+      updateFolderHint();
     } catch (err) {
       setFolderMsg((err as Error).message || '建立失敗', true);
     } finally {
@@ -179,11 +279,15 @@ const base = import.meta.env.BASE_URL;
     }
   });
 
-  dropZone?.addEventListener('click', () => fileInput?.click());
+  dropZone?.addEventListener('click', () => {
+    if (!requireMeta()) return;
+    fileInput?.click();
+  });
   fileInput?.addEventListener('change', async () => {
     const files = [...(fileInput.files || [])];
     fileInput.value = '';
-    for (const f of files) await publishFile(f);
+    const file = files[0];
+    if (file) await publishFile(file);
   });
 
   ;['dragenter', 'dragover'].forEach((evt) => {
@@ -199,8 +303,10 @@ const base = import.meta.env.BASE_URL;
     });
   });
   dropZone?.addEventListener('drop', async (e) => {
+    if (!requireMeta()) return;
     const files = [...((e as DragEvent).dataTransfer?.files || [])];
-    for (const f of files) await publishFile(f);
+    const file = files[0];
+    if (file) await publishFile(file);
   });
 
   async function init() {

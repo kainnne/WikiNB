@@ -87,6 +87,8 @@ export function createWikiSearch(searchIndex, options = {}) {
     const haystack = [
       page.slug,
       page.folder,
+      page.folderKeyword,
+      page.filename,
       page.title,
       page.description,
       (page.tags || []).join(' '),
@@ -135,7 +137,7 @@ export function createWikiSearch(searchIndex, options = {}) {
 
     const id = domId(page.slug);
     const href = `${getBase()}wiki/${encodeSlugPath(page.slug)}`;
-    const label = page.slug.includes('/') ? page.slug.split('/').pop() : page.slug;
+    const label = page.title || page.filename || page.slug;
     const tags = (page.tags || [])
       .slice(0, 3)
       .map((t) => `<span class="tag-badge">${escapeHtml(t)}</span>`)
