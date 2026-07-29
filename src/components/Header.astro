@@ -9,9 +9,7 @@ const meUrl = sites.sites.me.url;
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
     <a id="brand-link" href={base} class="brand-link group shrink-0">
       <span id="brand-label" class="brand-label">Kainnne</span>
-      <span id="brand-home" class="brand-home is-home-hidden" aria-hidden="true">
-        <span class="brand-home-label">© HOME</span>
-      </span>
+      <span id="brand-home" class="brand-home is-home-hidden" aria-hidden="true">© HOME</span>
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
@@ -79,48 +77,35 @@ const meUrl = sites.sites.me.url;
   /* 品牌：恆為彩字（登入前後相同） */
   .brand-link {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    gap: 0.45rem;
+    gap: 0.35rem;
     text-decoration: none;
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
-  .brand-label {
+  .brand-label,
+  .brand-home {
     font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
     font-weight: 700;
+    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .brand-label {
     font-size: 1.55rem;
     letter-spacing: 0.04em;
     line-height: 1;
-    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
   }
 
-  /* © HOME：橢圓外框而已（透明底 + 一般 border） */
   .brand-home {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
-    border: 1.5px solid #b794ff;
-    background: transparent;
-    padding: 0.18rem 0.55rem;
-    white-space: nowrap;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-  }
-
-  .brand-home-label {
-    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
-    font-weight: 700;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     letter-spacing: 0.06em;
     line-height: 1.2;
-    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    padding-bottom: 0.12rem;
+    white-space: nowrap;
   }
 
   .brand-home.is-home-hidden {
@@ -133,22 +118,14 @@ const meUrl = sites.sites.me.url;
     }
 
     .brand-home {
-      padding: 0.22rem 0.65rem;
-    }
-
-    .brand-home-label {
-      font-size: 0.78rem;
+      font-size: 0.85rem;
+      padding-bottom: 0.14rem;
     }
   }
 
   .brand-link:hover {
     transform: translateY(-1px);
-    opacity: 0.95;
-  }
-
-  .brand-link:hover .brand-home {
-    transform: scale(1.04);
-    border-color: #ff8fab;
+    opacity: 0.9;
   }
 
   /* 未登入：粉紅實心；登入後：黑底彩字 */
