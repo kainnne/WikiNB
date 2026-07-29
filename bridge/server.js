@@ -110,6 +110,50 @@ async function sendCodeEmail(code) {
   return { dev: false };
 }
 
+/** 登入成功後的安全通知信（失敗不阻斷登入） */
+async function sendLoginAlertEmail({ ip } = {}) {
+  const when = new Date().toLocaleString('zh-TW', {
+    timeZone: 'Asia/Taipei',
+    hour12: false,
+  });
+  const subject = 'Kainnne WikiNB 登入通知';
+  const text = [
+    '你的 WikiNB 帳號剛剛成功登入。',
+    '',
+    `時間：${when}（台北時間）`,
+    `來源 IP：${ip || 'unknown'}`,
+    '',
+    '若不是你本人操作，請立即檢查帳號安全。',
+  ].join('\n');
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (DEV_LOG_CODE) {
+      console.log('\n📧 [DEV] 登入通知（未設定 SMTP）：');
+      console.log(text, '\n');
+    }
+    return { dev: true };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: AUTH_EMAILS.join(','),
+    subject,
+    text,
+  });
+
+  return { dev: false };
+}
+
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
@@ -185,7 +229,7 @@ app.post('/api/auth/send-code', async (req, res) => {
   }
 });
 
-app.post('/api/auth/verify', (req, res) => {
+app.post('/api/auth/verify', async (req, res) => {
   const { code } = req.body || {};
   const pending = pendingCodes.get('login');
 
@@ -202,6 +246,14 @@ app.post('/api/auth/verify', (req, res) => {
   pendingCodes.delete('login');
   const token = randomToken();
   sessions.set(token, { expiresAt: Date.now() + SESSION_TTL_MS, createdAt: Date.now() });
+
+  const forwarded = String(req.headers['x-forwarded-for'] || '')
+    .split(',')[0]
+    .trim();
+  const ip = forwarded || req.socket?.remoteAddress || '';
+  sendLoginAlertEmail({ ip }).catch((err) => {
+    console.error('login alert email failed:', err);
+  });
 
   res.json({
     ok: true,

@@ -1,6 +1,6 @@
 /**
  * 關鍵字 chip 編輯器：最多 max 個、每詞 maxLen 字元；
- * 溢出時用 <> 一次挪一個；新增時必須確認或取消。
+ * 資料夾主關鍵字不顯示（仍計入上限）；新增時才跳出輸入框。
  */
 
 export const KEYWORD_MAX = 10;
@@ -60,19 +60,18 @@ export function mountKeywordEditor(root, options = {}) {
   root.classList.add('kw-editor');
   root.innerHTML = `
     <div class="kw-toolbar">
-      <button type="button" class="kw-nav kw-prev" aria-label="往前一個關鍵字" disabled>&lt;</button>
+      <button type="button" class="kw-nav kw-prev is-hidden" aria-label="往前一個關鍵字" disabled>&lt;</button>
       <div class="kw-viewport">
         <div class="kw-track"></div>
       </div>
-      <button type="button" class="kw-nav kw-next" aria-label="往後一個關鍵字" disabled>&gt;</button>
+      <button type="button" class="kw-nav kw-next is-hidden" aria-label="往後一個關鍵字" disabled>&gt;</button>
       <button type="button" class="kw-add btn-ghost">新增關鍵字</button>
     </div>
     <div class="kw-compose hidden">
-      <input type="text" class="search-input kw-input py-2 text-sm" maxlength="${maxLen}" placeholder="最多 ${maxLen} 字" autocomplete="off" />
+      <input type="text" class="search-input kw-input py-2 text-sm" maxlength="${maxLen}" autocomplete="off" />
       <button type="button" class="kw-confirm btn-ghost text-sm">確認</button>
       <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
     </div>
-    <p class="kw-hint hidden text-xs text-berry-600/70"></p>
   `;
 
   const track = root.querySelector('.kw-track');
@@ -84,26 +83,22 @@ export function mountKeywordEditor(root, options = {}) {
   const input = root.querySelector('.kw-input');
   const confirmBtn = root.querySelector('.kw-confirm');
   const cancelBtn = root.querySelector('.kw-cancel');
-  const hint = root.querySelector('.kw-hint');
 
   const allKeywords = () => [...locked, ...extras];
+  const visibleKeywords = () => [...extras];
 
   const emit = () => options.onChange?.(allKeywords());
-
-  const updateHint = () => {
-    /* 不顯示操作引導文案 */
-  };
 
   const visibleCount = () => {
     if (!viewport) return 1;
     const w = viewport.clientWidth || 200;
-    // 約略：每個 chip ~88px
     return Math.max(1, Math.floor(w / 96));
   };
 
   const render = () => {
     ensureCapacity();
-    const items = allKeywords();
+    // 介面只顯示使用者新增的關鍵字，資料夾主關鍵字不顯示
+    const items = visibleKeywords();
     const canShow = visibleCount();
     const maxOffset = Math.max(0, items.length - canShow);
     offset = Math.min(offset, maxOffset);
@@ -112,15 +107,14 @@ export function mountKeywordEditor(root, options = {}) {
     if (track) {
       track.innerHTML = slice
         .map((kw) => {
-          const isLocked = locked.some((l) => l.toLowerCase() === kw.toLowerCase());
           const safe = String(kw)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/"/g, '&quot;');
           return `
-            <span class="kw-chip${isLocked ? ' is-locked' : ''}" data-kw="${safe}">
+            <span class="kw-chip" data-kw="${safe}">
               <span class="kw-chip-text">${safe}</span>
-              ${isLocked ? '' : '<button type="button" class="kw-remove" aria-label="移除">×</button>'}
+              <button type="button" class="kw-remove" aria-label="移除">×</button>
             </span>
           `;
         })
@@ -149,7 +143,6 @@ export function mountKeywordEditor(root, options = {}) {
     if (addBtn) {
       addBtn.disabled = adding || allKeywords().length >= max;
     }
-    updateHint();
   };
 
   const setAdding = (on) => {
@@ -218,6 +211,7 @@ export function mountKeywordEditor(root, options = {}) {
   return {
     getKeywords: () => allKeywords(),
     getExtras: () => [...extras],
+    isComposing: () => adding,
     setLocked(nextLocked) {
       locked = normalizeKeywords(nextLocked || [], { max, maxLen: 32 });
       extras = extras.filter((k) => !locked.some((l) => l.toLowerCase() === k.toLowerCase()));

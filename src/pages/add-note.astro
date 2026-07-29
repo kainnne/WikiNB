@@ -45,24 +45,28 @@ const base = import.meta.env.BASE_URL;
       </section>
 
       <section class="glass-card space-y-3 p-4 sm:p-5">
-        <label class="block text-sm font-semibold text-berry-800">
-          檔案名稱
-          <input
-            id="meta-filename"
-            type="text"
-            class="search-input mt-2 py-2 text-sm"
-            placeholder="例如：about_kaine（可省略 .md）"
-            spellcheck="false"
-            autocomplete="off"
-          />
-        </label>
+        <div>
+          <p class="mb-2 text-sm font-semibold text-berry-800">檔案名稱</p>
+          <div class="flex items-center gap-2">
+            <input
+              id="meta-filename"
+              type="text"
+              class="search-input flex-1 py-2 text-sm"
+              style="padding-left: 1.25rem"
+              placeholder="例如：about_kaine"
+              spellcheck="false"
+              autocomplete="off"
+            />
+            <span class="shrink-0 text-sm font-semibold text-berry-600/70">.md</span>
+          </div>
+        </div>
         <label class="block text-sm font-semibold text-berry-800">
           顯示標題
           <input
             id="meta-title"
             type="text"
             class="search-input mt-2 py-2 text-sm"
-            placeholder="字卡與專頁會顯示這個標題"
+            style="padding-left: 1.25rem"
             autocomplete="off"
           />
         </label>
@@ -77,11 +81,18 @@ const base = import.meta.env.BASE_URL;
         class="drop-zone glass-card cursor-pointer p-8 text-center transition"
         tabindex="0"
         role="button"
-        aria-label="拖入或點擊上傳 Markdown"
+        aria-label="拖入或選取 Markdown"
       >
-        <p class="font-display text-lg font-bold text-berry-800">拖入 .md 檔案</p>
+        <p id="drop-label" class="font-display text-lg font-bold text-berry-800">拖入或選取 md. 檔案</p>
+        <p id="drop-file-name" class="mt-2 hidden text-sm font-semibold text-pink-600"></p>
         <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" />
       </section>
+
+      <div class="flex justify-end">
+        <button id="btn-publish" type="button" class="btn-chroma-publish">
+          <span class="btn-chroma-publish-label">新增</span>
+        </button>
+      </div>
 
       <p id="add-status" class="text-sm text-berry-600/80"></p>
     </div>
@@ -109,9 +120,15 @@ const base = import.meta.env.BASE_URL;
   const metaTitle = document.getElementById('meta-title') as HTMLInputElement | null;
   const keywordsRoot = document.getElementById('meta-keywords-editor');
   const dropZone = document.getElementById('drop-zone');
+  const dropLabel = document.getElementById('drop-label');
+  const dropFileName = document.getElementById('drop-file-name');
   const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+  const publishBtn = document.getElementById('btn-publish') as HTMLButtonElement | null;
   const statusEl = document.getElementById('add-status');
   const DEFAULT_FOLDER = 'Random';
+
+  /** @type {File | null} */
+  let stagedFile = null;
 
   const keywordEditor = keywordsRoot
     ? mountKeywordEditor(keywordsRoot, { locked: [], keywords: [] })
@@ -191,19 +208,40 @@ const base = import.meta.env.BASE_URL;
         await createWikiFolder({ path: DEFAULT_FOLDER, autoSync: false });
         dirs.push(DEFAULT_FOLDER);
       } catch {
-        /* Random 已存在或暫時無法建立時仍繼續 */
+        /* ignore */
       }
     }
     fillFolderSelect(dirs, selectPath || DEFAULT_FOLDER);
   }
 
-  function requireMeta() {
+  function setStagedFile(file: File | null) {
+    stagedFile = file;
+    if (file) {
+      dropLabel!.textContent = '已選取檔案';
+      dropFileName?.classList.remove('hidden');
+      if (dropFileName) dropFileName.textContent = file.name;
+      if (metaFilename && !metaFilename.value.trim()) {
+        metaFilename.value = file.name.replace(/\.(md|txt)$/i, '');
+      }
+    } else {
+      if (dropLabel) dropLabel.textContent = '拖入或選取 md. 檔案';
+      dropFileName?.classList.add('hidden');
+      if (dropFileName) dropFileName.textContent = '';
+    }
+  }
+
+  function validateForPublish() {
+    if (keywordEditor?.isComposing?.()) {
+      setStatus('請先確認或取消關鍵字輸入', true);
+      return null;
+    }
     const folder = (folderSelect?.value || '').trim().replace(/^\/+|\/+$/g, '');
-    const filename = (metaFilename?.value || '').trim();
+    const filename = (metaFilename?.value || '').trim().replace(/\.md$/i, '');
     const title = (metaTitle?.value || '').trim();
     const keywords = keywordEditor?.getExtras?.() || [];
+
     if (!folder) {
-      setStatus('請先選擇資料夾', true);
+      setStatus('請選擇資料夾', true);
       return null;
     }
     if (!filename) {
@@ -214,31 +252,25 @@ const base = import.meta.env.BASE_URL;
       setStatus('請填寫顯示標題', true);
       return null;
     }
-    return { folder, filename, title, keywords };
+    if (!stagedFile) {
+      setStatus('請拖入或選取 md. 檔案', true);
+      return null;
+    }
+    return { folder, filename, title, keywords, file: stagedFile };
   }
 
-  async function publishFile(file: File) {
-    const meta = requireMeta();
+  async function publish() {
+    const meta = validateForPublish();
     if (!meta) return;
 
-    const droppedName = file.name || '';
-    if (!/\.(md|txt)$/i.test(droppedName) && droppedName) {
-      setStatus('請上傳 .md 或 .txt', true);
-      return;
-    }
-
-    if (!metaFilename?.value.trim() && droppedName) {
-      metaFilename!.value = droppedName.replace(/\.(md|txt)$/i, '');
-      meta.filename = metaFilename.value;
-    }
-
-    const content = await file.text();
+    const content = await meta.file.text();
     if (!content.trim()) {
       setStatus('檔案是空的', true);
       return;
     }
 
-    setStatus(`正在上傳並推送 ${meta.filename}…`);
+    setStatus(`正在上傳並推送 ${meta.filename}.md…`);
+    publishBtn?.setAttribute('disabled', 'true');
     dropZone?.classList.add('opacity-60', 'pointer-events-none');
     try {
       const result = await uploadWikiNote({
@@ -250,10 +282,15 @@ const base = import.meta.env.BASE_URL;
         autoSync: true,
       });
       setStatus(result.message || '已上線');
+      setStagedFile(null);
+      if (metaFilename) metaFilename.value = '';
+      if (metaTitle) metaTitle.value = '';
+      keywordEditor?.setKeywords([]);
       await refreshFolders(meta.folder);
     } catch (err) {
       setStatus((err as Error).message || '上傳失敗', true);
     } finally {
+      publishBtn?.removeAttribute('disabled');
       dropZone?.classList.remove('opacity-60', 'pointer-events-none');
     }
   }
@@ -283,15 +320,17 @@ const base = import.meta.env.BASE_URL;
     }
   });
 
-  dropZone?.addEventListener('click', () => {
-    if (!requireMeta()) return;
-    fileInput?.click();
-  });
-  fileInput?.addEventListener('change', async () => {
-    const files = [...(fileInput.files || [])];
+  dropZone?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', () => {
+    const file = fileInput.files?.[0] || null;
     fileInput.value = '';
-    const file = files[0];
-    if (file) await publishFile(file);
+    if (!file) return;
+    if (!/\.(md|txt)$/i.test(file.name)) {
+      setStatus('請選取 .md 或 .txt', true);
+      return;
+    }
+    setStagedFile(file);
+    setStatus('');
   });
 
   ;['dragenter', 'dragover'].forEach((evt) => {
@@ -306,11 +345,19 @@ const base = import.meta.env.BASE_URL;
       dropZone.classList.remove('drop-active');
     });
   });
-  dropZone?.addEventListener('drop', async (e) => {
-    if (!requireMeta()) return;
-    const files = [...((e as DragEvent).dataTransfer?.files || [])];
-    const file = files[0];
-    if (file) await publishFile(file);
+  dropZone?.addEventListener('drop', (e) => {
+    const file = (e as DragEvent).dataTransfer?.files?.[0] || null;
+    if (!file) return;
+    if (!/\.(md|txt)$/i.test(file.name)) {
+      setStatus('請選取 .md 或 .txt', true);
+      return;
+    }
+    setStagedFile(file);
+    setStatus('');
+  });
+
+  publishBtn?.addEventListener('click', () => {
+    void publish();
   });
 
   async function init() {
@@ -340,5 +387,63 @@ const base = import.meta.env.BASE_URL;
     border-color: rgba(236, 64, 122, 0.55);
     background: rgba(252, 231, 243, 0.65);
     box-shadow: 0 0 0 2px rgba(236, 64, 122, 0.2);
+  }
+
+  .btn-chroma-publish {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    padding: 0.65rem 1.6rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    background:
+      linear-gradient(#111111, #111111) padding-box,
+      linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+
+  .btn-chroma-publish::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      120deg,
+      rgba(66, 133, 244, 0.12),
+      rgba(155, 114, 203, 0.14),
+      rgba(217, 101, 112, 0.1),
+      rgba(251, 188, 5, 0.1),
+      rgba(52, 168, 83, 0.1)
+    );
+  }
+
+  .btn-chroma-publish-label {
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.04em;
+    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .btn-chroma-publish:hover:not(:disabled),
+  .btn-chroma-publish:focus-visible:not(:disabled) {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 12px 26px rgba(123, 97, 255, 0.28);
+    outline: none;
+  }
+
+  .btn-chroma-publish:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 </style>
