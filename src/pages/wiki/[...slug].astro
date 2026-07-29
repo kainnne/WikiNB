@@ -26,15 +26,26 @@ const related = allPages
     <div id="wiki-reader" class="wiki-reader">
       <div class="wiki-reader-titlebar">
         <span class="wiki-reader-label">{page.title}</span>
-        <button
-          id="wiki-fs-toggle"
-          type="button"
-          class="wiki-fs-btn"
-          aria-label="放大視窗"
-          title="放大"
-        >
-          <span class="wiki-fs-icon" aria-hidden="true">⛶</span>
-        </button>
+        <div class="wiki-reader-actions">
+          <button
+            id="wiki-copy-link"
+            type="button"
+            class="wiki-fs-btn wiki-copy-btn"
+            aria-label="複製連結"
+            title="複製連結"
+          >
+            <span class="wiki-copy-label">copy</span>
+          </button>
+          <button
+            id="wiki-fs-toggle"
+            type="button"
+            class="wiki-fs-btn"
+            aria-label="放大視窗"
+            title="放大"
+          >
+            <span class="wiki-fs-icon" aria-hidden="true">⛶</span>
+          </button>
+        </div>
       </div>
 
       <div class="wiki-reader-scroll">
@@ -84,7 +95,43 @@ const related = allPages
   const reader = document.getElementById('wiki-reader');
   const fsToggle = document.getElementById('wiki-fs-toggle');
   const fsIcon = fsToggle?.querySelector('.wiki-fs-icon');
+  const copyBtn = document.getElementById('wiki-copy-link');
+  const copyLabel = copyBtn?.querySelector('.wiki-copy-label');
   let fullscreen = false;
+
+  function noteShareUrl() {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    if (!url.pathname.endsWith('/')) url.pathname += '/';
+    return url.href;
+  }
+
+  async function copyNoteLink() {
+    const text = noteShareUrl();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    if (copyLabel) {
+      const prev = copyLabel.textContent;
+      copyLabel.textContent = 'copied';
+      copyBtn?.setAttribute('title', '已複製');
+      window.setTimeout(() => {
+        copyLabel.textContent = prev || 'copy';
+        copyBtn?.setAttribute('title', '複製連結');
+      }, 1400);
+    }
+  }
 
   function syncFsParam(on) {
     const url = new URL(window.location.href);
@@ -106,6 +153,9 @@ const related = allPages
     if (syncUrl) syncFsParam(fullscreen);
   }
 
+  copyBtn?.addEventListener('click', () => {
+    void copyNoteLink();
+  });
   fsToggle?.addEventListener('click', () => setFullscreen(!fullscreen));
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && fullscreen) setFullscreen(false);
@@ -154,6 +204,13 @@ const related = allPages
     text-overflow: ellipsis;
   }
 
+  .wiki-page .wiki-reader-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
   .wiki-page .wiki-fs-btn {
     flex-shrink: 0;
     display: inline-flex;
@@ -169,6 +226,15 @@ const related = allPages
     line-height: 1;
     cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  .wiki-page .wiki-copy-btn {
+    width: auto;
+    min-width: 2rem;
+    padding: 0 0.45rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
   }
 
   .wiki-page .wiki-fs-btn:hover,

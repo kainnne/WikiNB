@@ -170,14 +170,25 @@ export function createWikiSearch(searchIndex, options = {}) {
             </a>
             <p class="mt-1 line-clamp-2 text-sm text-berry-700/75">${escapeHtml(page.description)}</p>
           </div>
-          <a
-            href="${escapeAttr(href)}?fs=1"
-            class="wiki-fs-btn mt-1 shrink-0"
-            aria-label="放大檢視"
-            title="放大"
-          >
-            <span class="wiki-fs-icon" aria-hidden="true">⛶</span>
-          </a>
+          <div class="wiki-card-actions mt-1 shrink-0">
+            <button
+              type="button"
+              class="wiki-fs-btn wiki-copy-btn"
+              data-copy-href="${escapeAttr(href)}"
+              aria-label="複製連結"
+              title="複製連結"
+            >
+              <span class="wiki-copy-label">copy</span>
+            </button>
+            <a
+              href="${escapeAttr(href)}?fs=1"
+              class="wiki-fs-btn"
+              aria-label="放大檢視"
+              title="放大"
+            >
+              <span class="wiki-fs-icon" aria-hidden="true">⛶</span>
+            </a>
+          </div>
         </div>
         <div id="content-${escapeAttr(id)}" class="wiki-panel hidden border-t border-pink-100/60 bg-white/30 px-4 pb-6 pt-2 md:px-6" hidden>
           <div class="wiki-content pl-11 md:pl-12">${page.html}</div>
@@ -264,6 +275,43 @@ export function createWikiSearch(searchIndex, options = {}) {
     if (scroll) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
 
+  const absoluteShareUrl = (href) => {
+    const url = new URL(href, window.location.origin);
+    url.search = '';
+    url.hash = '';
+    if (!url.pathname.endsWith('/')) url.pathname += '/';
+    return url.href;
+  };
+
+  const copyShareLink = async (btn) => {
+    const href = btn.getAttribute('data-copy-href') || '';
+    if (!href) return;
+    const text = absoluteShareUrl(href);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    const label = btn.querySelector('.wiki-copy-label');
+    if (label) {
+      const prev = label.textContent;
+      label.textContent = 'copied';
+      btn.setAttribute('title', '已複製');
+      window.setTimeout(() => {
+        label.textContent = prev || 'copy';
+        btn.setAttribute('title', '複製連結');
+      }, 1400);
+    }
+  };
+
   const bindHandlers = (container) => {
     container.querySelectorAll('.wiki-expand').forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -273,6 +321,14 @@ export function createWikiSearch(searchIndex, options = {}) {
         const panel = item.querySelector('.wiki-panel');
         if (panel && !panel.hidden) closeItem(item);
         else openItem(item);
+      });
+    });
+
+    container.querySelectorAll('.wiki-copy-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void copyShareLink(btn);
       });
     });
 
