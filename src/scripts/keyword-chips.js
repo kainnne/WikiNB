@@ -1,7 +1,7 @@
 /**
  * 關鍵字 chip 編輯器：最多 max 個、每詞 maxLen 字元；
  * 資料夾主關鍵字不顯示（仍計入上限）。
- * 輸入列恆顯示：確認新增、取消清空；無「新增關鍵字」按鈕。
+ * 輸入列恆顯示：新增關鍵字、取消清空；無「新增關鍵字」獨立按鈕。
  */
 
 export const KEYWORD_MAX = 10;
@@ -70,9 +70,9 @@ export function mountKeywordEditor(root, options = {}) {
         class="search-input kw-input py-2 text-sm"
         maxlength="${maxLen}"
         autocomplete="off"
-        placeholder="輸入後按確認"
+        placeholder="輸入後按新增"
       />
-      <button type="button" class="kw-confirm btn-ghost text-sm">確認</button>
+      <button type="button" class="kw-confirm btn-ghost text-sm">新增</button>
       <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
     </div>
     <div class="kw-chips-simple hidden">
@@ -93,9 +93,9 @@ export function mountKeywordEditor(root, options = {}) {
         class="search-input kw-input py-2 text-sm"
         maxlength="${maxLen}"
         autocomplete="off"
-        placeholder="輸入後按確認"
+        placeholder="輸入後按新增"
       />
-      <button type="button" class="kw-confirm btn-ghost text-sm">確認</button>
+      <button type="button" class="kw-confirm btn-ghost text-sm">新增</button>
       <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
     </div>
   `;
