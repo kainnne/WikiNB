@@ -27,6 +27,18 @@ const base = import.meta.env.BASE_URL;
     </div>
 
     <div id="codex-terminal" class="codex-terminal hidden">
+      <div class="codex-titlebar">
+        <span class="codex-titlebar-label">Codex × Kainnne</span>
+        <button
+          id="codex-fs-toggle"
+          type="button"
+          class="codex-fs-btn"
+          aria-label="放大視窗"
+          title="放大"
+        >
+          <span class="codex-fs-icon" aria-hidden="true">⛶</span>
+        </button>
+      </div>
       <div class="codex-toolbar">
         <label class="codex-field">
           <span>模型 /model</span>
@@ -78,11 +90,31 @@ const base = import.meta.env.BASE_URL;
   const modelSelect = document.getElementById('codex-model');
   const effortSelect = document.getElementById('codex-effort');
   const tipsEl = document.getElementById('codex-tips');
+  const fsToggle = document.getElementById('codex-fs-toggle');
+  const fsIcon = fsToggle?.querySelector('.codex-fs-icon');
 
   let abortController = null;
   let running = false;
+  let fullscreen = false;
   /** @type {{ role: string, content: string }[]} */
   let chatHistory = [];
+
+  function setFullscreen(on) {
+    fullscreen = Boolean(on);
+    terminal?.classList.toggle('is-fullscreen', fullscreen);
+    document.documentElement.classList.toggle('codex-fs-active', fullscreen);
+    document.body.classList.toggle('codex-fs-active', fullscreen);
+    if (fsToggle) {
+      fsToggle.setAttribute('aria-label', fullscreen ? '還原視窗' : '放大視窗');
+      fsToggle.title = fullscreen ? '還原' : '放大';
+    }
+    if (fsIcon) fsIcon.textContent = fullscreen ? '❐' : '⛶';
+  }
+
+  fsToggle?.addEventListener('click', () => setFullscreen(!fullscreen));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && fullscreen) setFullscreen(false);
+  });
 
   function setBubbleText(bubble, text, role = 'assistant') {
     if (!bubble) return;
@@ -364,6 +396,88 @@ const base = import.meta.env.BASE_URL;
     box-shadow: 0 8px 32px rgba(236, 64, 122, 0.12);
     background: linear-gradient(160deg, #fff5f8 0%, #fce4ec 30%, #f3e5f5 100%);
     font-family: var(--codex-hand);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .codex-page .codex-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0.65rem 0.45rem;
+    border-bottom: 1px solid rgba(252, 231, 243, 0.8);
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  @media (min-width: 640px) {
+    .codex-page .codex-titlebar {
+      padding: 0.6rem 0.85rem 0.5rem;
+    }
+  }
+
+  .codex-page .codex-titlebar-label {
+    min-width: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #5c2a4a;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .codex-page .codex-fs-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.55rem;
+    border: 1px solid rgba(244, 143, 177, 0.45);
+    background: rgba(255, 255, 255, 0.75);
+    color: #9c2d5a;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  .codex-page .codex-fs-btn:hover,
+  .codex-page .codex-fs-btn:focus-visible {
+    background: rgba(252, 231, 243, 0.95);
+    transform: scale(1.05);
+    outline: none;
+  }
+
+  .codex-page .codex-terminal.is-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  html.codex-fs-active,
+  body.codex-fs-active {
+    overflow: hidden;
+  }
+
+  .codex-page .codex-terminal.is-fullscreen .codex-output {
+    flex: 1 1 auto;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .codex-page .codex-terminal.is-fullscreen .codex-titlebar-label {
+    font-size: 0.95rem;
   }
 
   .codex-page .codex-toolbar {

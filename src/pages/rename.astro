@@ -212,6 +212,7 @@ const base = import.meta.env.BASE_URL;
         const editor = mountKeywordEditor(mount, {
           locked: folderKw ? [folderKw] : [],
           keywords: tags,
+          composeOpen: true,
         });
         keywordEditors.set(oldSlug, editor);
       }
