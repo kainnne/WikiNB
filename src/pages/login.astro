@@ -49,6 +49,9 @@ const base = import.meta.env.BASE_URL;
         <button id="btn-verify" type="button" class="btn-primary mt-4 w-full justify-center">
           驗證並登入
         </button>
+        <button id="btn-resend-code" type="button" class="btn-ghost mt-3 w-full justify-center text-sm">
+          重新寄送驗證碼
+        </button>
         <p id="verify-error" class="mt-2 hidden text-center text-sm text-red-600" role="alert"></p>
       </div>
 
@@ -97,6 +100,7 @@ const base = import.meta.env.BASE_URL;
   const stepVerify = document.getElementById('step-verify');
   const btnSend = document.getElementById('btn-send-code');
   const btnVerify = document.getElementById('btn-verify');
+  const btnResend = document.getElementById('btn-resend-code');
   const inputUsername = document.getElementById('input-username');
   const inputPassword = document.getElementById('input-password');
   const inputCode = document.getElementById('input-code');
@@ -111,36 +115,62 @@ const base = import.meta.env.BASE_URL;
     }
   });
 
-  btnSend?.addEventListener('click', async () => {
-    showError(loginError, '');
-    statusEl.textContent = '';
-
+  async function requestCode({ fromResend = false } = {}) {
     const username = inputUsername?.value?.trim() || '';
     const password = inputPassword?.value || '';
     if (!username || !password) {
-      showError(loginError, '請輸入帳號與密碼');
+      showError(fromResend ? verifyError : loginError, '請輸入帳號與密碼');
       return;
     }
 
-    btnSend.setAttribute('disabled', 'true');
-    const originalLabel = btnSend.textContent;
-    btnSend.textContent = '寄送中…';
-    statusEl.textContent = '驗證帳密並寄送中…';
+    const busyBtn = fromResend ? btnResend : btnSend;
+    busyBtn?.setAttribute('disabled', 'true');
+    if (!fromResend && btnSend) {
+      btnSend.textContent = '寄送中…';
+    }
+    if (fromResend && btnResend) {
+      btnResend.textContent = '寄送中…';
+    }
+    if (statusEl) statusEl.textContent = '驗證帳密並寄送中…';
+    showError(loginError, '');
+    showError(verifyError, '');
 
     try {
       const res = await sendLoginCode(username, password);
       markCodeSent(btnSend);
-      statusEl.textContent = res.message || '驗證碼已寄出，請查收信箱';
+      if (statusEl) {
+        statusEl.textContent = res.message || '驗證碼已寄出，請查收信箱';
+        if (typeof res.failCount === 'number' && res.failCount > 0) {
+          statusEl.textContent += `（目前累積錯誤 ${res.failCount} 次，重新寄送不會歸零）`;
+        }
+      }
       stepVerify?.classList.remove('hidden');
       inputCode?.focus();
     } catch (err) {
       const msg = err?.message || '登入失敗';
       const isAuthFail = /帳號或密碼/.test(msg);
-      showError(loginError, isAuthFail ? '帳號或密碼不正確' : msg);
-      statusEl.textContent = '';
-      btnSend.textContent = originalLabel || '登入並寄送驗證碼';
-      btnSend.removeAttribute('disabled');
+      showError(fromResend ? verifyError : loginError, isAuthFail ? '帳號或密碼不正確' : msg);
+      if (statusEl) statusEl.textContent = '';
+      if (!fromResend && btnSend) {
+        btnSend.textContent = '登入並寄送驗證碼';
+        btnSend.classList.add('btn-primary');
+        btnSend.classList.remove('btn-sent');
+        btnSend.removeAttribute('disabled');
+      }
+    } finally {
+      if (fromResend && btnResend) {
+        btnResend.textContent = '重新寄送驗證碼';
+        btnResend.removeAttribute('disabled');
+      }
     }
+  }
+
+  btnSend?.addEventListener('click', () => {
+    void requestCode({ fromResend: false });
+  });
+
+  btnResend?.addEventListener('click', () => {
+    void requestCode({ fromResend: true });
   });
 
   btnVerify?.addEventListener('click', async () => {
@@ -151,14 +181,14 @@ const base = import.meta.env.BASE_URL;
       return;
     }
     btnVerify.setAttribute('disabled', 'true');
-    statusEl.textContent = '驗證中…';
+    if (statusEl) statusEl.textContent = '驗證中…';
     try {
       const res = await verifyLoginCode(code);
       setSession({ token: res.token, expiresAt: res.expiresAt });
       window.location.href = homeUrl();
     } catch (err) {
       showError(verifyError, err?.message || '驗證失敗');
-      statusEl.textContent = '';
+      if (statusEl) statusEl.textContent = '';
       btnVerify.removeAttribute('disabled');
     }
   });

@@ -46,9 +46,17 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:4321,https:/
 const DEV_LOG_CODE = process.env.DEV_LOG_CODE !== 'false';
 const CODE_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const OTP_MAX_FAILS = 3;
+const OTP_LOCK_MS = 10 * 60 * 1000;
 
 const pendingCodes = new Map();
 const sessions = new Map();
+
+/** 驗證碼錯誤累計（重新寄送不會歸零；鎖定結束後才清零） */
+const otpGuard = {
+  failCount: 0,
+  lockedUntil: 0,
+};
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -154,6 +162,85 @@ async function sendLoginAlertEmail({ ip } = {}) {
   return { dev: false };
 }
 
+function clientIp(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '')
+    .split(',')[0]
+    .trim();
+  return forwarded || req.socket?.remoteAddress || 'unknown';
+}
+
+function refreshOtpLockState() {
+  if (otpGuard.lockedUntil && otpGuard.lockedUntil <= Date.now()) {
+    otpGuard.failCount = 0;
+    otpGuard.lockedUntil = 0;
+  }
+}
+
+function otpLockRemainingMs() {
+  refreshOtpLockState();
+  if (!otpGuard.lockedUntil) return 0;
+  return Math.max(0, otpGuard.lockedUntil - Date.now());
+}
+
+function otpLockResponse(res) {
+  const remainMs = otpLockRemainingMs();
+  if (remainMs <= 0) return false;
+  const mins = Math.max(1, Math.ceil(remainMs / 60000));
+  res.status(429).json({
+    error: `登入已暫停，請約 ${mins} 分鐘後再試（累積錯誤 ${otpGuard.failCount} 次）`,
+    failCount: otpGuard.failCount,
+    lockedUntil: otpGuard.lockedUntil,
+    locked: true,
+  });
+  return true;
+}
+
+/** 驗證碼連續錯誤達上限：暫停登入並寄信 */
+async function sendOtpLockAlertEmail({ ip, failCount } = {}) {
+  const when = new Date().toLocaleString('zh-TW', {
+    timeZone: 'Asia/Taipei',
+    hour12: false,
+  });
+  const subject = 'Kainnne WikiNB 安全警示：驗證碼錯誤次數過多';
+  const text = [
+    '有人連續輸錯 WikiNB 登入驗證碼，已暫時鎖定登入。',
+    '',
+    `累積錯誤：${failCount} 次`,
+    `鎖定時長：10 分鐘`,
+    `時間：${when}（台北時間）`,
+    `來源 IP：${ip || 'unknown'}`,
+    '',
+    '若不是你本人操作，請檢查帳號安全。鎖定結束前無法再登入或寄送驗證碼。',
+  ].join('\n');
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (DEV_LOG_CODE) {
+      console.log('\n📧 [DEV] 驗證碼鎖定通知（未設定 SMTP）：');
+      console.log(text, '\n');
+    }
+    return { dev: true };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: AUTH_EMAILS.join(','),
+    subject,
+    text,
+  });
+
+  return { dev: false };
+}
+
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
@@ -182,6 +269,8 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/auth/send-code', async (req, res) => {
   try {
+    if (otpLockResponse(res)) return;
+
     const { username, password } = req.body || {};
 
     if (!AUTH_USER || !AUTH_PASS) {
@@ -195,6 +284,7 @@ app.post('/api/auth/send-code', async (req, res) => {
     }
 
     const code = randomCode();
+    // 只換新碼；不重設 otpGuard.failCount（重新寄送不歸零）
     pendingCodes.set('login', { code, expiresAt: Date.now() + CODE_TTL_MS });
 
     try {
@@ -205,6 +295,7 @@ app.post('/api/auth/send-code', async (req, res) => {
           ? `帳密正確。未設定 SMTP，驗證碼已顯示於 Bridge 終端機（將寄至 ${AUTH_EMAILS.length} 個信箱）`
           : `帳密正確，驗證碼已寄送至 ${AUTH_EMAILS.length} 個信箱`,
         expiresIn: CODE_TTL_MS / 1000,
+        failCount: otpGuard.failCount,
         dev: Boolean(sendResult.dev),
       });
     } catch (mailErr) {
@@ -216,6 +307,7 @@ app.post('/api/auth/send-code', async (req, res) => {
           ok: true,
           message: '帳密正確，但 Gmail 寄信失敗。請查看 Bridge 終端機上的驗證碼（並檢查 SMTP_PASS 應用程式密碼）',
           expiresIn: CODE_TTL_MS / 1000,
+          failCount: otpGuard.failCount,
           dev: true,
         });
         return;
@@ -230,6 +322,8 @@ app.post('/api/auth/send-code', async (req, res) => {
 });
 
 app.post('/api/auth/verify', async (req, res) => {
+  if (otpLockResponse(res)) return;
+
   const { code } = req.body || {};
   const pending = pendingCodes.get('login');
 
@@ -239,18 +333,38 @@ app.post('/api/auth/verify', async (req, res) => {
   }
 
   if (String(code).trim() !== pending.code) {
-    res.status(400).json({ error: '驗證碼錯誤' });
+    otpGuard.failCount += 1;
+    const fails = otpGuard.failCount;
+    const ip = clientIp(req);
+
+    if (fails >= OTP_MAX_FAILS) {
+      otpGuard.lockedUntil = Date.now() + OTP_LOCK_MS;
+      sendOtpLockAlertEmail({ ip, failCount: fails }).catch((err) => {
+        console.error('otp lock alert email failed:', err);
+      });
+      res.status(429).json({
+        error: `累積錯誤 ${fails} 次，登入已暫停 10 分鐘，並已寄送通知信`,
+        failCount: fails,
+        lockedUntil: otpGuard.lockedUntil,
+        locked: true,
+      });
+      return;
+    }
+
+    res.status(400).json({
+      error: `驗證碼錯誤（累積錯誤 ${fails} 次，達 ${OTP_MAX_FAILS} 次將暫停登入 10 分鐘）`,
+      failCount: fails,
+    });
     return;
   }
 
   pendingCodes.delete('login');
+  otpGuard.failCount = 0;
+  otpGuard.lockedUntil = 0;
   const token = randomToken();
   sessions.set(token, { expiresAt: Date.now() + SESSION_TTL_MS, createdAt: Date.now() });
 
-  const forwarded = String(req.headers['x-forwarded-for'] || '')
-    .split(',')[0]
-    .trim();
-  const ip = forwarded || req.socket?.remoteAddress || '';
+  const ip = clientIp(req);
   sendLoginAlertEmail({ ip }).catch((err) => {
     console.error('login alert email failed:', err);
   });
