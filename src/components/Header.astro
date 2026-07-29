@@ -98,20 +98,17 @@ const meUrl = sites.sites.me.url;
     color: transparent;
   }
 
-  /* © HOME：僅彩色外框，內部透明 */
+  /* © HOME：橢圓外框而已（透明底 + 一般 border） */
   .brand-home {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    border: 1.5px solid transparent;
+    border: 1.5px solid #b794ff;
+    background: transparent;
     padding: 0.18rem 0.55rem;
     white-space: nowrap;
-    background:
-      linear-gradient(transparent, transparent) padding-box,
-      linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
-    box-shadow: none;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.2s ease, border-color 0.2s ease;
   }
 
   .brand-home-label {
@@ -151,7 +148,7 @@ const meUrl = sites.sites.me.url;
 
   .brand-link:hover .brand-home {
     transform: scale(1.04);
-    opacity: 1;
+    border-color: #ff8fab;
   }
 
   /* 未登入：粉紅實心；登入後：黑底彩字 */
