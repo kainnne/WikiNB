@@ -4,7 +4,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="管理筆記" description="修改標題、簡述、關鍵字與刪除 wiki 筆記">
+<BaseLayout title="管理筆記" description="修改檔名、標題、簡述、關鍵字，或拖入 md 覆蓋筆記">
   <div class="animate-fadeIn mx-auto max-w-2xl">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
       <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl" data-i18n="manage.title">管理筆記</h1>
@@ -39,6 +39,8 @@ const base = import.meta.env.BASE_URL;
     listWikiTree,
     updateWikiTitle,
     deleteWikiFile,
+    renameWikiFile,
+    replaceWikiNote,
     syncWiki,
   } from '../scripts/bridge-client.js';
   import { mountKeywordEditor } from '../scripts/keyword-chips.js';
@@ -77,6 +79,10 @@ const base = import.meta.env.BASE_URL;
     return parts.slice(0, -1).join('/');
   }
 
+  function isValidStem(stem) {
+    return /^[\u4e00-\u9fffA-Za-z0-9_-]+$/.test(String(stem || '').trim());
+  }
+
   function formatFolderKeyword(folderName) {
     const name = String(folderName || '').trim();
     if (!name) return '';
@@ -108,6 +114,21 @@ const base = import.meta.env.BASE_URL;
     );
   }
 
+  function readMdFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('讀取檔案失敗'));
+      reader.readAsText(file);
+    });
+  }
+
+  function isMdFile(file) {
+    if (!file) return false;
+    const name = String(file.name || '').toLowerCase();
+    return name.endsWith('.md') || name.endsWith('.txt') || file.type === 'text/markdown' || file.type === 'text/plain';
+  }
+
   function renderFileRow(node) {
     const slug = node.slug;
     const stem = stemOf(slug);
@@ -117,16 +138,23 @@ const base = import.meta.env.BASE_URL;
     const pathAttr = escapeHtml(node.path || `${slug}.md`);
     const leaf = folder.split('/').filter(Boolean).pop() || '';
     const folderKw = formatFolderKeyword(leaf);
-    const metaBits = [
-      folder ? `<span class="text-xs text-berry-600/60">${escapeHtml(folder)}/</span>` : '',
-      `<span class="tag-badge">${escapeHtml(stem)}.md</span>`,
-    ].filter(Boolean).join('');
 
     return `
-      <div class="rename-row border-t border-pink-100/80 p-4" data-slug="${escapeAttr(slug)}" data-path="${pathAttr}" data-folder-kw="${escapeAttr(folderKw)}" data-tags="${escapeAttr(JSON.stringify(node.tags || []))}">
-        <div class="mb-2 flex flex-wrap items-center gap-2">
-          ${metaBits}
+      <div class="rename-row border-t border-pink-100/80 p-4" data-slug="${escapeAttr(slug)}" data-path="${pathAttr}" data-folder="${escapeAttr(folder)}" data-folder-kw="${escapeAttr(folderKw)}" data-tags="${escapeAttr(JSON.stringify(node.tags || []))}">
+        <label class="mb-1 block text-xs font-semibold text-berry-600/70" data-i18n="manage.filename">檔案名稱</label>
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          ${folder ? `<span class="text-xs font-semibold text-berry-600/60">${escapeHtml(folder)}/</span>` : ''}
+          <input
+            type="text"
+            class="search-input rename-filename flex-1 py-2 text-sm"
+            value="${escapeAttr(stem)}"
+            spellcheck="false"
+            autocomplete="off"
+            aria-label="檔案名稱"
+          />
+          <span class="shrink-0 text-sm font-semibold text-berry-600/70">.md</span>
         </div>
+
         <label class="mb-1 block text-xs font-semibold text-berry-600/70" data-i18n="add.displayTitle">顯示標題</label>
         <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
@@ -158,6 +186,13 @@ const base = import.meta.env.BASE_URL;
           >
         </label>
         <div class="kw-mount mb-3" data-kw-mount="${escapeAttr(slug)}"></div>
+
+        <div class="rename-drop mb-3 rounded-xl border border-dashed border-pink-200/90 bg-pink-50/30 px-3 py-3 text-center">
+          <p class="text-xs text-berry-600/75" data-i18n="manage.replaceHint">拖入 .md 可覆蓋此筆記（舊檔會備份）</p>
+          <button type="button" class="btn-ghost rename-replace-pick mt-2 px-3 py-1.5 text-xs" data-i18n="manage.replacePick">上傳覆蓋</button>
+          <input type="file" class="rename-replace-input hidden" accept=".md,.txt,text/markdown,text/plain" />
+        </div>
+
         <div class="flex flex-wrap gap-2">
           <button type="button" class="btn-rename rename-save shrink-0 justify-center px-4 py-2 text-sm" data-i18n="manage.save">
             儲存
@@ -193,7 +228,7 @@ const base = import.meta.env.BASE_URL;
     const files = (nodes || []).filter((n) => n.type !== 'dir');
     let html = dirs.map(renderDir).join('');
     if (files.length) {
-      if (dirs.length) html += '<div class="root-group-label">根目錄</div>';
+      if (dirs.length) html += `<div class="root-group-label">${escapeHtml(t('search.rootNotes'))}</div>`;
       html += files.map(renderFileRow).join('');
     }
     return html;
@@ -220,8 +255,9 @@ const base = import.meta.env.BASE_URL;
     });
 
     listEl?.querySelectorAll('.rename-row').forEach((row) => {
-      const oldSlug = row.getAttribute('data-slug');
+      let currentSlug = row.getAttribute('data-slug') || '';
       const filePath = row.getAttribute('data-path');
+      const folder = row.getAttribute('data-folder') || '';
       const folderKw = row.getAttribute('data-folder-kw') || '';
       let tags = [];
       try {
@@ -230,58 +266,121 @@ const base = import.meta.env.BASE_URL;
         tags = [];
       }
       const mount = row.querySelector('[data-kw-mount]');
-      if (mount && oldSlug) {
+      if (mount && currentSlug) {
         const editor = mountKeywordEditor(mount, {
           locked: folderKw ? [folderKw] : [],
           keywords: tags,
           composeOpen: true,
         });
-        keywordEditors.set(oldSlug, editor);
+        keywordEditors.set(currentSlug, editor);
       }
 
+      const filenameInput = row.querySelector('.rename-filename');
       const input = row.querySelector('.rename-input');
       const descInput = row.querySelector('.rename-desc');
       const saveBtn = row.querySelector('.rename-save');
       const delBtn = row.querySelector('.rename-delete');
       const msg = row.querySelector('.rename-msg');
+      const dropZone = row.querySelector('.rename-drop');
+      const pickBtn = row.querySelector('.rename-replace-pick');
+      const fileInput = row.querySelector('.rename-replace-input');
+
+      const showMsg = (text, ok = false) => {
+        if (!msg) return;
+        msg.classList.remove('hidden');
+        msg.textContent = text;
+        msg.className = ok
+          ? 'rename-msg mt-2 text-sm text-emerald-700'
+          : 'rename-msg mt-2 text-sm text-red-600';
+      };
+
+      const replaceWithFile = async (file) => {
+        if (!isMdFile(file)) {
+          showMsg(t('manage.replaceNeedMd'));
+          return;
+        }
+        if (!confirm(t('manage.replaceConfirm', { name: `${currentSlug}.md` }))) return;
+        showMsg(t('manage.replacing'), true);
+        try {
+          const content = await readMdFile(file);
+          const result = await replaceWikiNote({ slug: currentSlug, content, autoSync: true });
+          showMsg(result.message || '已覆蓋', true);
+          setStatus(result.message || `已覆蓋 ${currentSlug}`);
+          await loadList();
+        } catch (err) {
+          showMsg(err.message || '覆蓋失敗');
+        }
+      };
+
+      dropZone?.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('is-dragover');
+      });
+      dropZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('is-dragover');
+      });
+      dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('is-dragover');
+      });
+      dropZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('is-dragover');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) void replaceWithFile(file);
+      });
+      pickBtn?.addEventListener('click', () => fileInput?.click());
+      fileInput?.addEventListener('change', () => {
+        const file = fileInput.files?.[0];
+        if (file) void replaceWithFile(file);
+        fileInput.value = '';
+      });
 
       saveBtn?.addEventListener('click', async () => {
         const title = String(input?.value || '').trim();
         const description = String(descInput?.value || '').trim();
-        const keywords = keywordEditors.get(oldSlug)?.getExtras?.() || [];
+        const newStem = String(filenameInput?.value || '').trim();
+        const editor = keywordEditors.get(currentSlug);
+        const keywords = editor?.getExtras?.() || [];
         msg?.classList.remove('hidden');
         if (!title) {
-          if (msg) {
-            msg.textContent = '標題不可空白';
-            msg.className = 'rename-msg mt-2 text-sm text-red-600';
-          }
+          showMsg('標題不可空白');
+          return;
+        }
+        if (!isValidStem(newStem)) {
+          showMsg(t('manage.renameInvalid'));
           return;
         }
 
+        const nextSlug = folder ? `${folder}/${newStem}` : newStem;
         saveBtn.disabled = true;
         saveBtn.textContent = '儲存中…';
         try {
+          if (nextSlug !== currentSlug) {
+            await renameWikiFile({ oldSlug: currentSlug, newSlug: nextSlug, autoSync: false });
+            if (editor) {
+              keywordEditors.delete(currentSlug);
+              keywordEditors.set(nextSlug, editor);
+            }
+            currentSlug = nextSlug;
+            row.setAttribute('data-slug', nextSlug);
+            row.setAttribute('data-path', `${nextSlug}.md`);
+          }
           const result = await updateWikiTitle({
-            slug: oldSlug,
+            slug: currentSlug,
             title,
             description,
             keywords,
             autoSync: true,
           });
-          if (msg) {
-            msg.textContent = result.message || '已更新';
-            msg.className = 'rename-msg mt-2 text-sm text-emerald-700';
-          }
+          showMsg(result.message || '已更新', true);
           setStatus(`剛更新：${title}`);
           await loadList();
         } catch (err) {
-          if (msg) {
-            msg.textContent = err.message || '更新失敗';
-            msg.className = 'rename-msg mt-2 text-sm text-red-600';
-          }
+          showMsg(err.message || '更新失敗');
         } finally {
           saveBtn.disabled = false;
-          saveBtn.textContent = '儲存';
+          saveBtn.textContent = t('manage.save');
         }
       });
 
@@ -291,21 +390,15 @@ const base = import.meta.env.BASE_URL;
         delBtn.disabled = true;
         delBtn.textContent = '刪除中…';
         try {
-          const result = await deleteWikiFile({ path: filePath || oldSlug, autoSync: true });
-          if (msg) {
-            msg.textContent = result.message || '已刪除';
-            msg.className = 'rename-msg mt-2 text-sm text-emerald-700';
-          }
-          setStatus(`已刪除 ${stemOf(oldSlug)}`);
+          const result = await deleteWikiFile({ path: filePath || currentSlug, autoSync: true });
+          showMsg(result.message || '已刪除', true);
+          setStatus(`已刪除 ${stemOf(currentSlug)}`);
           await loadList();
         } catch (err) {
-          if (msg) {
-            msg.textContent = err.message || '刪除失敗';
-            msg.className = 'rename-msg mt-2 text-sm text-red-600';
-          }
+          showMsg(err.message || '刪除失敗');
         } finally {
           delBtn.disabled = false;
-          delBtn.textContent = '刪除';
+          delBtn.textContent = t('manage.delete');
         }
       });
     });
@@ -438,6 +531,11 @@ const base = import.meta.env.BASE_URL;
 
   :global(#rename-list .btn-delete) {
     @apply inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-5 py-2 font-display font-semibold text-red-700 transition-all hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  :global(#rename-list .rename-drop.is-dragover) {
+    border-color: #ec407a;
+    background: rgba(252, 231, 243, 0.85);
   }
 
   :global(#rename-list .folder-row) {

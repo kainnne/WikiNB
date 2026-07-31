@@ -520,11 +520,11 @@ async function runWikiSync() {
     };
   }
 
-  // wiki 筆記 + public/images 靜態圖一併 staging（刪除也會跟著）
+  // wiki 筆記 + public 靜態資源（圖片、舊 md 備份）一併 staging
   try {
     await execFileAsync(
       GIT_BIN,
-      ['add', '-A', '--', 'wiki/', 'public/images/'],
+      ['add', '-A', '--', 'wiki/', 'public/images/', 'public/old_md/'],
       { cwd: PROJECT_ROOT },
     );
   } catch (err) {
@@ -536,7 +536,7 @@ async function runWikiSync() {
   try {
     await execFileAsync(
       GIT_BIN,
-      ['commit', '-m', 'sync: update wiki and public images from Bridge'],
+      ['commit', '-m', 'sync: update wiki and public assets from Bridge'],
       {
         cwd: PROJECT_ROOT,
         env: commitEnv,
@@ -580,7 +580,7 @@ async function runWikiSync() {
   // 確認工作樹乾淨，避免「看似成功、檔案其實沒推上去」
   const { stdout: porcelain } = await execFileAsync(
     GIT_BIN,
-    ['status', '--porcelain', '--', 'wiki/', 'public/images/'],
+    ['status', '--porcelain', '--', 'wiki/', 'public/images/', 'public/old_md/'],
     { cwd: PROJECT_ROOT },
   );
   const dirty = String(porcelain || '').trim();
@@ -591,8 +591,8 @@ async function runWikiSync() {
   return {
     ok: true,
     message: committed
-      ? 'Wiki 與圖片已推送至 GitHub，Pages 重新部署通常約 2–5 分鐘（含大圖時可能更久）'
-      : '沒有新的 wiki／圖片變更可提交；遠端已是最新',
+      ? 'Wiki 與 public 資源已推送至 GitHub，Pages 重新部署通常約 2–5 分鐘（含大圖時可能更久）'
+      : '沒有新的 wiki／public 變更可提交；遠端已是最新',
     gitPush: true,
     committed,
   };
@@ -1311,6 +1311,10 @@ app.post('/api/wiki/rename', authMiddleware, async (req, res) => {
     res.status(400).json({ error: '新檔名與舊檔名相同' });
     return;
   }
+  if (!isSiteWikiMarkdown(`${oldSlug}.md`) || !isSiteWikiMarkdown(`${newSlug}.md`)) {
+    res.status(400).json({ error: '此檔案不可重新命名' });
+    return;
+  }
 
   const fromPath = resolveUnderWiki(`${oldSlug}.md`);
   const toPath = resolveUnderWiki(`${newSlug}.md`);
@@ -1371,6 +1375,88 @@ app.post('/api/wiki/rename', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('wiki rename error:', err);
     res.status(500).json({ error: '重新命名失敗', detail: String(err.message || err).slice(0, 400) });
+  }
+});
+
+function oldMdBackupRoot() {
+  return path.join(PROJECT_ROOT, 'public', 'old_md');
+}
+
+function formatBackupStamp(date = new Date()) {
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const mi = String(date.getMinutes()).padStart(2, '0');
+  return `${y}${mo}${d}_${h}${mi}`;
+}
+
+function uniqueOldMdBackupName(stem) {
+  const safeStem = String(stem || 'note')
+    .replace(/[^\w.\-()\u4e00-\u9fff]+/g, '_')
+    .replace(/\.md$/i, '') || 'note';
+  const root = oldMdBackupRoot();
+  fs.mkdirSync(root, { recursive: true });
+  const stamp = formatBackupStamp();
+  let name = `${stamp}_${safeStem}.md`;
+  let n = 2;
+  while (fs.existsSync(path.join(root, name))) {
+    name = `${stamp}_${safeStem}_${n}.md`;
+    n += 1;
+  }
+  return name;
+}
+
+/** 以新 md 內容覆蓋現有筆記；舊檔備份到 public/old_md/YYYYMMDD_HHmm_stem.md */
+app.post('/api/wiki/replace', authMiddleware, async (req, res) => {
+  const slug = normalizeWikiSlug(req.body?.slug || req.body?.path);
+  const content = String(req.body?.content ?? '');
+  if (!slug || !isSiteWikiMarkdown(`${slug}.md`)) {
+    res.status(400).json({ error: '筆記路徑無效' });
+    return;
+  }
+  if (!content.trim()) {
+    res.status(400).json({ error: '檔案內容是空的' });
+    return;
+  }
+
+  const abs = resolveUnderWiki(`${slug}.md`);
+  if (!abs) {
+    res.status(400).json({ error: '路徑無效' });
+    return;
+  }
+  if (!fs.existsSync(abs)) {
+    res.status(404).json({ error: `找不到 wiki/${slug}.md` });
+    return;
+  }
+
+  try {
+    const stem = path.basename(slug);
+    const backupName = uniqueOldMdBackupName(stem);
+    const backupPath = path.join(oldMdBackupRoot(), backupName);
+    const previous = fs.readFileSync(abs, 'utf8');
+    fs.writeFileSync(backupPath, previous, 'utf8');
+    fs.writeFileSync(abs, content, 'utf8');
+
+    let syncResult = null;
+    if (req.body?.autoSync !== false) {
+      syncResult = await runWikiSync();
+    }
+
+    res.json({
+      ok: true,
+      slug,
+      backup: `public/old_md/${backupName}`,
+      synced: req.body?.autoSync !== false,
+      sync: syncResult,
+      message:
+        req.body?.autoSync !== false
+          ? `已覆蓋 wiki/${slug}.md，舊檔備份為 public/old_md/${backupName}，並推上 GitHub。`
+          : `已覆蓋 wiki/${slug}.md，舊檔備份為 public/old_md/${backupName}。`,
+    });
+  } catch (err) {
+    console.error('wiki replace error:', err);
+    res.status(500).json({ error: '覆蓋失敗', detail: String(err.message || err).slice(0, 400) });
   }
 });
 

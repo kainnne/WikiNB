@@ -127,6 +127,14 @@ export async function renameWikiFile({ oldSlug, newSlug, autoSync = false }) {
   });
 }
 
+/** 以新 md 覆蓋現有筆記；舊檔備份到 public/old_md */
+export async function replaceWikiNote({ slug, content, autoSync = true }) {
+  return bridgeFetch('/api/wiki/replace', {
+    method: 'POST',
+    body: JSON.stringify({ slug, content, autoSync }),
+  });
+}
+
 /** 更新顯示標題／簡述／關鍵字（寫入 _meta.json，不改 md） */
 export async function updateWikiTitle({ slug, title, description, keywords, autoSync = false }) {
   return bridgeFetch('/api/wiki/update-title', {
