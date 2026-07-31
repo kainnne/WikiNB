@@ -12,6 +12,8 @@
 
 - [[AboutMe/01-music]] — 我的音樂背景
 
+- [[KCIS/kcis-ai-navigation]] — 康橋 AI 應用導航網站
+
 ## 學習中
 
 （尚無）
