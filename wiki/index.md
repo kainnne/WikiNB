@@ -14,6 +14,8 @@
 
 - [[KCIS/kcis-ai-navigation]] — 康橋 AI 應用導航網站
 
+- [[AboutMe/02-software-development]] — AI Agent 與軟體開發
+
 ## 學習中
 
 （尚無）

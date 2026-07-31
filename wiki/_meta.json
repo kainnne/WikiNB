@@ -48,5 +48,15 @@
       "推薦演算法",
       "AI應用推薦"
     ]
+  },
+  "AboutMe/02-software-development": {
+    "title": "AI Agent 與軟體開發",
+    "description": "將想法快速轉化為可實際操作的數位產品",
+    "tags": [
+      "AI Agent",
+      "UI／UX",
+      "全端開發",
+      "網頁設計"
+    ]
   }
 }
