@@ -1,11 +1,4 @@
 {
-  "LLM/folder-smoke-test": {
-    "title": "LLM 資料夾測試",
-    "description": "測試巢狀資料夾與 WikiNB 樹狀瀏覽",
-    "tags": [
-      "測試"
-    ]
-  },
   "KCIS/WikiNB-KCIS_履歷版專案簡述": {
     "title": "WikiNB · KCIS",
     "description": "康橋國際學校教學筆記知識庫與 AI 複習平台（履歷版專案簡述）。",
