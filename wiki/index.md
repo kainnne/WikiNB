@@ -17,6 +17,8 @@
 
 - [[Random/markdown-format-guide]] — md. 格式教學
 
+- [[AboutMe/04-collaboration-and-workstyle]] — 協作方式與工作風格
+
 ## 學習中
 
 （尚無）

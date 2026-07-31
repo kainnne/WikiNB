@@ -62,5 +62,10 @@
       "md格式教學",
       "md."
     ]
+  },
+  "AboutMe/04-collaboration-and-workstyle": {
+    "title": "協作方式與工作風格",
+    "description": "給 AI 看的協作方式，沒有到很重要",
+    "tags": []
   }
 }
