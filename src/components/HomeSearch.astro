@@ -77,7 +77,6 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
 
 <script>
   import { isLoggedIn, setAuthVisibility } from '../scripts/bridge-client.js';
-  import { t } from '../scripts/i18n.js';
 
   function updateSearchActions() {
     const dual = document.querySelector('.home-search')?.getAttribute('data-dual') === 'true';
@@ -92,7 +91,6 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
 
   document.getElementById('codex-guest-btn')?.addEventListener('click', () => {
     const base = document.documentElement.dataset.base || '/';
-    window.alert(t('home.codexLoginPrompt'));
     window.location.href = `${base}login`.replace(/([^:]\/)\/+/g, '$1');
   });
 
