@@ -19,6 +19,10 @@
 
 - 2026/4 個人專輯 《Everything Before 24》
 
+![ ](/images/AboutMe/84d8bbe3-e801-4a92-a4dc-615ed6a47d2b_PB.jpg)
+![ ](/images/AboutMe/291e18f8-7826-4b2e-a917-68b229b287f7_B 2.jpg)
+![ ](/images/AboutMe/edd62dfa-c18b-45cc-a08f-acf654972fb3_PB.jpg)
+
 ### 作曲
 
 - 室內樂作曲
@@ -34,7 +38,6 @@
 - 指揮
 - 音樂會籌備與演出管理
 
-![ ](/images/AboutMe/84d8bbe3-e801-4a92-a4dc-615ed6a47d2b_PB.jpg)
 
 
 ## 專輯： <Everything Before 24>
