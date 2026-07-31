@@ -19,6 +19,8 @@
 
 - [[AboutMe/04-collaboration-and-workstyle]] — 協作方式與工作風格
 
+- [[AboutMe/00-about-me]] — 我是誰
+
 ## 學習中
 
 （尚無）

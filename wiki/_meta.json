@@ -67,5 +67,10 @@
     "title": "協作方式與工作風格",
     "description": "給 AI 看的協作方式，沒有到很重要",
     "tags": []
+  },
+  "AboutMe/00-about-me": {
+    "title": "我是誰",
+    "description": "給 AI 看的我是誰",
+    "tags": []
   }
 }
