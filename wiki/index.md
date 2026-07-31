@@ -4,7 +4,6 @@
 
 ## 筆記
 
-- [[AboutMe/about_kaine]] — 關於我
 - [[LLM/folder-smoke-test]] — LLM 資料夾測試
 
 - [[KCIS/WikiNB-KCIS_履歷版專案簡述]] — KCIS/WikiNB-KCIS_履歷版專案簡述
