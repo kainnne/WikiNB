@@ -16,23 +16,8 @@ const meUrl = sites.sites.me.url;
       <a id="nav-wikinb" href={`${base}search`} class="nav-wikinb">
         <span class="nav-wikinb-label">WikiNB</span>
       </a>
-      <a
-        id="nav-about"
-        href={meUrl}
-        class="nav-about"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        About Me
-      </a>
-      <a
-        id="nav-github"
-        href="https://github.com/zx50416"
-        class="nav-github"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        GitHub
+      <a id="nav-gemini" href={`${base}gemini`} class="nav-gemini">
+        <span class="nav-gemini-label">Kainnne x Gemini</span>
       </a>
       <a id="nav-add-note" href={`${base}add-note`} class="nav-chroma" hidden aria-hidden="true">
         <span class="nav-chroma-label">+ md.</span>
@@ -40,7 +25,43 @@ const meUrl = sites.sites.me.url;
       <a id="nav-codex" href={`${base}codex`} class="nav-chroma" hidden aria-hidden="true">
         <span class="nav-chroma-label">Codex</span>
       </a>
-      <a id="nav-login" href={`${base}login`} class="nav-link" data-i18n="nav.login">登入</a>
+      <div id="nav-menu" class="nav-menu">
+        <button
+          id="nav-menu-btn"
+          type="button"
+          class="nav-menu-btn"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="nav-menu-panel"
+          data-i18n-aria="nav.menu"
+          data-i18n-title="nav.menu"
+          title="選單"
+          aria-label="選單"
+        >
+          <span class="nav-menu-bars" aria-hidden="true"></span>
+        </button>
+        <div id="nav-menu-panel" class="nav-menu-panel" hidden>
+          <a id="nav-login" href={`${base}login`} class="nav-menu-item" data-i18n="nav.login">登入</a>
+          <a
+            id="nav-about"
+            href={meUrl}
+            class="nav-menu-item"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            About Me
+          </a>
+          <a
+            id="nav-github"
+            href="https://github.com/zx50416"
+            class="nav-menu-item"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
+        </div>
+      </div>
       <button id="nav-logout" type="button" class="nav-link hidden" data-i18n="nav.logout">登出</button>
       <button id="btn-lang" type="button" class="nav-lang" title="Switch to English" data-i18n-title="nav.langTitle">
         English
@@ -72,6 +93,39 @@ const meUrl = sites.sites.me.url;
 
   syncBrandHome();
   window.addEventListener('pageshow', syncBrandHome);
+
+  /** 右上角下拉選單：登入 / About Me / GitHub */
+  function mountNavMenu() {
+    const wrap = document.getElementById('nav-menu');
+    const btn = document.getElementById('nav-menu-btn');
+    const panel = document.getElementById('nav-menu-panel');
+    if (!wrap || !btn || !panel) return;
+
+    const setOpen = (open) => {
+      panel.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      wrap.classList.toggle('is-open', open);
+    };
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(panel.hidden);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (panel.hidden) return;
+      if (!wrap.contains(e.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    });
+
+    panel.addEventListener('click', () => setOpen(false));
+  }
+
+  mountNavMenu();
 </script>
 
 <style>
@@ -210,9 +264,141 @@ const meUrl = sites.sites.me.url;
     transform: scale(1.05);
   }
 
-  .nav-about,
-  .nav-github {
-    @apply rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 px-3 py-1.5 text-xs font-bold text-white shadow-[0_0_20px_rgba(45,212,191,0.35)] transition-all hover:scale-105 hover:shadow-[0_0_28px_rgba(34,211,238,0.45)] sm:px-4 sm:py-2 sm:text-sm md:px-5;
+  /* Kainnne x Gemini：白底彩字（未登入才顯示） */
+  .nav-gemini {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(183, 148, 244, 0.34);
+    border-radius: 9999px;
+    padding: 0.4rem 0.85rem;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow:
+      0 6px 18px rgba(123, 97, 255, 0.12),
+      0 0 18px rgba(110, 168, 255, 0.1);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .nav-gemini[hidden] {
+    display: none !important;
+  }
+
+  @media (min-width: 640px) {
+    .nav-gemini {
+      padding: 0.45rem 1.1rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  .nav-gemini-label {
+    background: linear-gradient(105deg, #4285f4 0%, #9b72cb 38%, #d96570 67%, #34a853 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .nav-gemini:hover,
+  .nav-gemini:focus-visible {
+    transform: translateY(-1px) scale(1.03);
+    background: #fff;
+    box-shadow:
+      0 10px 26px rgba(123, 97, 255, 0.18),
+      0 0 22px rgba(66, 133, 244, 0.14);
+    outline: none;
+  }
+
+  /* 右上角下拉選單 */
+  .nav-menu {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .nav-menu[hidden] {
+    display: none !important;
+  }
+
+  .nav-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(244, 143, 177, 0.45);
+    background: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .nav-menu-btn:hover,
+  .nav-menu.is-open .nav-menu-btn {
+    transform: translateY(-1px);
+    background: #fff;
+    border-color: rgba(206, 147, 216, 0.8);
+  }
+
+  .nav-menu-bars,
+  .nav-menu-bars::before,
+  .nav-menu-bars::after {
+    display: block;
+    width: 1rem;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #f48fb1, #ce93d8);
+  }
+
+  .nav-menu-bars {
+    position: relative;
+  }
+
+  .nav-menu-bars::before,
+  .nav-menu-bars::after {
+    content: '';
+    position: absolute;
+    left: 0;
+  }
+
+  .nav-menu-bars::before {
+    top: -5px;
+  }
+
+  .nav-menu-bars::after {
+    top: 5px;
+  }
+
+  .nav-menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    min-width: 10rem;
+    padding: 0.35rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(244, 143, 177, 0.35);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 16px 34px rgba(123, 97, 255, 0.18);
+  }
+
+  .nav-menu-panel[hidden] {
+    display: none;
+  }
+
+  .nav-menu-item {
+    @apply rounded-xl px-3 py-2 text-sm font-semibold text-berry-700 transition-colors hover:bg-pink-100/70 hover:text-pink-700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .nav-menu-item.hidden {
+    display: none;
   }
 
   .nav-chroma {

@@ -295,6 +295,10 @@ export function mountNavAuth() {
   const aboutLink = document.getElementById('nav-about');
   const githubLink = document.getElementById('nav-github');
   const wikiLink = document.getElementById('nav-wikinb');
+  const geminiLink = document.getElementById('nav-gemini');
+  const guestMenu = document.getElementById('nav-menu');
+  const guestMenuPanel = document.getElementById('nav-menu-panel');
+  const guestMenuBtn = document.getElementById('nav-menu-btn');
 
   const update = () => {
     const loggedIn = isLoggedIn();
@@ -308,6 +312,17 @@ export function mountNavAuth() {
     // 登入後進入工作模式：隱藏 About Me / GitHub
     if (aboutLink) aboutLink.classList.toggle('hidden', loggedIn);
     if (githubLink) githubLink.classList.toggle('hidden', loggedIn);
+
+    // 訪客專屬：Kainnne x Gemini 與右上角下拉選單（登入後改用 Codex / 登出）
+    if (geminiLink) geminiLink.hidden = loggedIn;
+    if (guestMenu) {
+      guestMenu.hidden = loggedIn;
+      if (loggedIn) {
+        if (guestMenuPanel) guestMenuPanel.hidden = true;
+        guestMenu.classList.remove('is-open');
+        guestMenuBtn?.setAttribute('aria-expanded', 'false');
+      }
+    }
 
     // 登入後：WikiNB 切換成工作模式樣式
     wikiLink?.classList.toggle('is-logged', loggedIn);
