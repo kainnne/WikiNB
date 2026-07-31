@@ -1,6 +1,6 @@
 > 我是 Kaine 朱璽，國立中山大學海洋環境及工程學系學士、碩士畢業，現職AI工程師。我同時具備鋼琴、長笛、指揮、室內樂演出與音樂會企劃經驗，師事國立中山大學音樂系陳以軒老師。
 
-## 核心音樂能力
+![ ](/images/AboutMe/edd62dfa-c18b-45cc-a08f-acf654972fb3_PB.jpg)
 
 ### 學經歷
 
@@ -20,8 +20,10 @@
 - 2026/4 個人專輯 《Everything Before 24》
 
 ![ ](/images/AboutMe/84d8bbe3-e801-4a92-a4dc-615ed6a47d2b_PB.jpg)
-![ ](/images/AboutMe/291e18f8-7826-4b2e-a917-68b229b287f7_B 2.jpg)
-![ ](/images/AboutMe/edd62dfa-c18b-45cc-a08f-acf654972fb3_PB.jpg)
+
+![ ](/images/AboutMe/291e18f8-7826-4b2e-a917-68b229b287f7_B_2.jpg)
+
+![ ](/images/AboutMe/fa2db08b-0123-4a1e-936a-637b15a9d8f4_B.jpg)
 
 ### 作曲
 
