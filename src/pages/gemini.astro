@@ -179,7 +179,13 @@ const base = import.meta.env.BASE_URL;
 
   function sanitizeRenderedMarkdown(markdown) {
     const template = document.createElement('template');
-    template.innerHTML = renderMarkdownWithMath(markdown);
+    const normalized = String(markdown || '')
+      .replace(/^```(?:markdown|md)?\s*\n([\s\S]*?)\n```$/i, '$1')
+      .replace(/\\([*_`~])/g, '$1')
+      // CommonMark 不會解析 **粗體**後面緊接中文字母的情況。
+      // 先轉成安全清理器允許的 strong，支援 Gemini 常見的中英混排輸出。
+      .replace(/\*\*([^*\n]+?)\*\*(?=[\p{L}\p{N}])/gu, '<strong>$1</strong>');
+    template.innerHTML = renderMarkdownWithMath(normalized);
     template.content
       .querySelectorAll('script, style, iframe, object, embed, form, input, button, textarea, select')
       .forEach((node) => node.remove());
@@ -215,6 +221,21 @@ const base = import.meta.env.BASE_URL;
     output?.appendChild(line);
     output?.scrollTo({ top: output.scrollHeight, behavior: 'smooth' });
     return bubble;
+  }
+
+  function startResponseTimer() {
+    let seconds = 1;
+    const bubble = appendMessage(t('gemini.elapsed', { n: seconds }), 'system');
+    const timerId = window.setInterval(() => {
+      seconds += 1;
+      if (bubble) bubble.textContent = t('gemini.elapsed', { n: seconds });
+    }, 1000);
+    return {
+      stop() {
+        window.clearInterval(timerId);
+        bubble?.parentElement?.remove();
+      },
+    };
   }
 
   function updateQuota() {
@@ -334,11 +355,11 @@ const base = import.meta.env.BASE_URL;
       chatSend.textContent = t('gemini.sending');
     }
     appendMessage(message, 'user');
-    const pendingBubble = appendMessage(t('gemini.sending'), 'system');
+    const responseTimer = startResponseTimer();
 
     try {
       const result = await askGuestGemini({ message, history });
-      pendingBubble?.parentElement?.remove();
+      responseTimer.stop();
       appendMessage(result.answer, 'assistant');
       history.push({ role: 'user', content: message });
       history.push({ role: 'assistant', content: result.answer });
@@ -346,7 +367,7 @@ const base = import.meta.env.BASE_URL;
       remaining = Number(result.remaining);
       updateQuota();
     } catch (error) {
-      pendingBubble?.parentElement?.remove();
+      responseTimer.stop();
       const raw = error.message || '';
       const friendly =
         /暫時無法回應|暫時無法讀取|服務暫時發生錯誤/.test(raw)
@@ -487,6 +508,125 @@ const base = import.meta.env.BASE_URL;
     color: #5c2a4a;
     line-height: 1.65;
     box-shadow: 0 5px 18px rgba(91, 70, 135, 0.06);
+  }
+
+  :global(.gemini-bubble.wiki-content) {
+    white-space: normal;
+  }
+
+  :global(.gemini-bubble.wiki-content > *:first-child) {
+    margin-top: 0;
+  }
+
+  :global(.gemini-bubble.wiki-content > *:last-child) {
+    margin-bottom: 0;
+  }
+
+  :global(.gemini-bubble.wiki-content p),
+  :global(.gemini-bubble.wiki-content ul),
+  :global(.gemini-bubble.wiki-content ol),
+  :global(.gemini-bubble.wiki-content pre),
+  :global(.gemini-bubble.wiki-content blockquote),
+  :global(.gemini-bubble.wiki-content table) {
+    margin: 0.55em 0;
+  }
+
+  :global(.gemini-bubble.wiki-content h1),
+  :global(.gemini-bubble.wiki-content h2),
+  :global(.gemini-bubble.wiki-content h3),
+  :global(.gemini-bubble.wiki-content h4) {
+    margin: 0.8em 0 0.35em;
+    color: #3b0f2e;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+
+  :global(.gemini-bubble.wiki-content h1) {
+    font-size: 1.25em;
+  }
+
+  :global(.gemini-bubble.wiki-content h2) {
+    font-size: 1.16em;
+  }
+
+  :global(.gemini-bubble.wiki-content h3),
+  :global(.gemini-bubble.wiki-content h4) {
+    font-size: 1.07em;
+  }
+
+  :global(.gemini-bubble.wiki-content strong) {
+    color: #3b0f2e;
+    font-weight: 800;
+  }
+
+  :global(.gemini-bubble.wiki-content em) {
+    font-style: italic;
+  }
+
+  :global(.gemini-bubble.wiki-content ul) {
+    list-style: disc;
+    padding-left: 1.35rem;
+  }
+
+  :global(.gemini-bubble.wiki-content ol) {
+    list-style: decimal;
+    padding-left: 1.35rem;
+  }
+
+  :global(.gemini-bubble.wiki-content li) {
+    margin: 0.25em 0;
+  }
+
+  :global(.gemini-bubble.wiki-content a) {
+    color: #db2777;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  :global(.gemini-bubble.wiki-content code) {
+    border-radius: 0.3rem;
+    padding: 0.1em 0.35em;
+    background: rgba(244, 114, 182, 0.12);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.88em;
+  }
+
+  :global(.gemini-bubble.wiki-content pre) {
+    overflow-x: auto;
+    border: 1px solid rgba(244, 114, 182, 0.2);
+    border-radius: 0.55rem;
+    padding: 0.7rem 0.8rem;
+    background: rgba(24, 24, 27, 0.06);
+  }
+
+  :global(.gemini-bubble.wiki-content pre code) {
+    padding: 0;
+    background: transparent;
+  }
+
+  :global(.gemini-bubble.wiki-content blockquote) {
+    border-left: 3px solid rgba(236, 72, 153, 0.45);
+    padding-left: 0.75rem;
+    color: rgba(74, 25, 66, 0.85);
+  }
+
+  :global(.gemini-bubble.wiki-content table) {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.92em;
+  }
+
+  :global(.gemini-bubble.wiki-content th),
+  :global(.gemini-bubble.wiki-content td) {
+    border: 1px solid rgba(244, 114, 182, 0.25);
+    padding: 0.4rem 0.55rem;
+    text-align: left;
+  }
+
+  :global(.gemini-bubble.wiki-content th) {
+    background: rgba(252, 231, 243, 0.6);
   }
 
   :global(.gemini-line-user .gemini-bubble) {
