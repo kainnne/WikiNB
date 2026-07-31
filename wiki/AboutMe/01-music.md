@@ -1,10 +1,8 @@
-# 音樂相關背景
-
 我是朱璽，國立中山大學海洋環境及工程學系學士、碩士畢業，現職AI工程師。我同時具備鋼琴、長笛、指揮、室內樂演出與音樂會企劃經驗，師事國立中山大學音樂系陳以軒老師。
 
 ## 核心音樂能力
 
-###學經歷
+### 學經歷
 
 - **在學期間擔任社團社長，將前年不理想之社團評鑑成績提升為前15名之社團，獲20000元之獎學金。**
 - **曾任社團評鑑執行委員。**
@@ -51,12 +49,11 @@
 - 發表平台：YouTube Music、Spotify、Apple Music
 
 ## 作品與音樂連結
+- [ YouTube Music ](https://music.youtube.com/playlist?list=OLAK5uy_mnNVxpjDw5dwcnLaquhOUxn_S_Jn6a46Q&si=iDDcqy6yDp3JkhzE)
+- [ Spotify ](https://open.spotify.com/album/7kH1LtAHtDu2H0evbe5Jib?si=e-6mBBRBSZSJYTTYHNCH3g&utm_source=copy-link)
+- [ Apple Music ](https://music.apple.com/tw/album/everything-before-24/1891561916)
+- [ 紙本作品集電子檔參考 ](https://drive.google.com/file/d/1I4Lf_F2IizklKvFeCUIC9dNtc1yPquGU/view?usp=sharing)
 
-- YouTube Music：`[https://music.youtube.com/playlist?list=OLAK5uy_mnNVxpjDw5dwcnLaquhOUxn_S_Jn6a46Q&si=iDDcqy6yDp3JkhzE]`
-- Spotify：`[https://open.spotify.com/album/7kH1LtAHtDu2H0evbe5Jib?si=e-6mBBRBSZSJYTTYHNCH3g&utm_source=copy-link]`
-- Apple Music：`[https://music.apple.com/tw/album/everything-before-24/1891561916]`
-- 樂譜或作品集參考：`[https://drive.google.com/file/d/1I4Lf_F2IizklKvFeCUIC9dNtc1yPquGU/view?usp=sharing]`
-
-- 我的綜合作品知識庫：`[https://zx50416.github.io/WikiNB/]`
-- 我的個人網站：`[https://zx50416.github.io/Me/]`
-- GitHub：`[https://github.com/zx50416]`
+- [ 我的綜合作品知識庫 ](https://zx50416.github.io/WikiNB/)
+- [ 我的個人網站 ](https://zx50416.github.io/Me/)
+- [ GitHub ](https://github.com/zx50416)
