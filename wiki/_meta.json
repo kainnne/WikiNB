@@ -4,13 +4,6 @@
     "description": "一個持續把想法做成作品的人。",
     "tags": []
   },
-  "AboutMe/welcomekaine": {
-    "title": "歡迎",
-    "description": "Kainnne 知識庫 — 筆記彙整與 AI 提醒助理",
-    "tags": [
-      "指南"
-    ]
-  },
   "LLM/folder-smoke-test": {
     "title": "LLM 資料夾測試",
     "description": "測試巢狀資料夾與 WikiNB 樹狀瀏覽",

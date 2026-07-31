@@ -4,7 +4,6 @@
 
 ## 筆記
 
-- [[AboutMe/welcomekaine]] — 歡迎
 - [[AboutMe/about_kaine]] — 關於我
 - [[LLM/folder-smoke-test]] — LLM 資料夾測試
 
