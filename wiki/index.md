@@ -7,7 +7,7 @@
 
 - [[KCIS/WikiNB-KCIS_履歷版專案簡述]] — KCIS/WikiNB-KCIS_履歷版專案簡述
 
-- [[AboutMe/01-music]] — 我的音樂背景
+- [[AboutMe/01-music]] — About Music
 
 - [[KCIS/kcis-ai-navigation]] — 康橋 AI 應用導航網站
 
