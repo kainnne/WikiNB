@@ -16,6 +16,8 @@
 
 - [[AboutMe/02-software-development]] — AI Agent 與軟體開發
 
+- [[AboutMe/03-ai-and-data]] — ML與資料分析
+
 ## 學習中
 
 （尚無）

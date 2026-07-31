@@ -58,5 +58,19 @@
       "全端開發",
       "網頁設計"
     ]
+  },
+  "AboutMe/03-ai-and-data": {
+    "title": "ML與資料分析",
+    "description": "涵蓋 Machine Learning、LLM、RAG、Fine-tuning 、工程資料分析、ML 研究設計",
+    "tags": [
+      "Machine",
+      "LLM",
+      "Feature",
+      "Research",
+      "RAG",
+      "Fine-tun",
+      "LoRA／QLo",
+      "Time-ser"
+    ]
   }
 }
