@@ -29,5 +29,6 @@ CREATE TABLE IF NOT EXISTS daily_usage (
   email TEXT NOT NULL,
   usage_day TEXT NOT NULL,
   count INTEGER NOT NULL DEFAULT 0,
+  token_count INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (email, usage_day)
 );

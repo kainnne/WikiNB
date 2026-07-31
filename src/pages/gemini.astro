@@ -153,7 +153,7 @@ const base = import.meta.env.BASE_URL;
 
   let pendingEmail = '';
   let running = false;
-  let remaining = null;
+  let remainingPercent = null;
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
 
@@ -241,7 +241,9 @@ const base = import.meta.env.BASE_URL;
   function updateQuota() {
     if (!quota) return;
     quota.textContent =
-      typeof remaining === 'number' ? t('gemini.remaining', { n: remaining }) : '';
+      typeof remainingPercent === 'number'
+        ? t('gemini.remaining', { n: remainingPercent })
+        : '';
   }
 
   function appendWelcome() {
@@ -279,6 +281,9 @@ const base = import.meta.env.BASE_URL;
     unlock?.classList.add('hidden');
     chat?.classList.remove('hidden');
     if (identity) identity.textContent = `${session.name} · ${session.email}`;
+    if (typeof session.remainingPercent === 'number') {
+      remainingPercent = session.remainingPercent;
+    }
     appendWelcome();
     updateQuota();
     chatInput?.focus();
@@ -323,6 +328,7 @@ const base = import.meta.env.BASE_URL;
         name: result.name,
         email: result.email,
         expiresAt: result.expiresAt,
+        remainingPercent: result.remainingPercent,
       };
       setGuestAiSession(session);
       openChat(session);
@@ -364,7 +370,8 @@ const base = import.meta.env.BASE_URL;
       history.push({ role: 'user', content: message });
       history.push({ role: 'assistant', content: result.answer });
       history = history.slice(-10);
-      remaining = Number(result.remaining);
+      const nextPercent = Number(result.remainingPercent);
+      if (Number.isFinite(nextPercent)) remainingPercent = nextPercent;
       updateQuota();
     } catch (error) {
       responseTimer.stop();

@@ -353,6 +353,10 @@ async function verifyOtp(request, env, ctx) {
     name: pending.name,
     email,
     expiresAt: now + SESSION_TTL_MS,
+    remainingPercent: quotaPercent(
+      (await dailyUsage(env, email)).tokenCount,
+      dailyTokenLimit(env),
+    ),
   });
 }
 
@@ -368,12 +372,14 @@ async function guestSession(request, env) {
 async function me(request, env) {
   const session = await guestSession(request, env);
   if (!session) return json({ error: 'AI 訪客驗證已過期' }, 401);
+  const usage = await dailyUsage(env, session.email);
   return json({
     ok: true,
     unlocked: true,
     name: session.name,
     email: session.email,
     expiresAt: Number(session.expires_at),
+    remainingPercent: quotaPercent(usage.tokenCount, dailyTokenLimit(env)),
   });
 }
 
@@ -386,11 +392,33 @@ function taipeiDay() {
   }).format(new Date());
 }
 
-async function loadWikiCorpus(env) {
+function dailyTokenLimit(env) {
+  return Math.max(1000, Number(env.DAILY_TOKEN_LIMIT || 60000));
+}
+
+function quotaPercent(usedTokens, limit) {
+  return Math.max(0, Math.min(100, Math.round(((limit - usedTokens) / limit) * 100)));
+}
+
+async function dailyUsage(env, email) {
+  const day = taipeiDay();
+  const row = await env.DB.prepare(
+    'SELECT count, token_count FROM daily_usage WHERE email = ? AND usage_day = ?',
+  )
+    .bind(email, day)
+    .first();
+  return {
+    day,
+    count: Number(row?.count || 0),
+    tokenCount: Number(row?.token_count || 0),
+  };
+}
+
+async function loadWikiPages(env) {
   const cache = caches.default;
-  const cacheKey = new Request('https://cache.kainnne.local/wiki-corpus');
+  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v2');
   const cached = await cache.match(cacheKey);
-  if (cached) return cached.text();
+  if (cached) return cached.json();
 
   const response = await fetch(env.WIKI_SEARCH_URL, {
     headers: { 'User-Agent': 'Kainnne-Gemini-Worker/1.0' },
@@ -403,30 +431,90 @@ async function loadWikiCorpus(env) {
   if (!match) throw new Error('找不到 WikiNB 搜尋索引');
 
   const pages = JSON.parse(match[1]);
+  await cache.put(
+    cacheKey,
+    json(pages, 200, { 'Cache-Control': 'public, max-age=600' }),
+  );
+  return pages;
+}
+
+function queryTerms(text) {
+  const normalized = String(text || '').normalize('NFKC').toLowerCase();
+  const terms = new Set(
+    normalized.match(/[a-z0-9][a-z0-9+.#_-]{1,}/g) || [],
+  );
+  for (const segment of normalized.match(/[\p{Script=Han}]{2,}/gu) || []) {
+    for (let size = 2; size <= Math.min(4, segment.length); size += 1) {
+      for (let index = 0; index + size <= segment.length; index += 1) {
+        terms.add(segment.slice(index, index + size));
+      }
+    }
+  }
+  return [...terms].slice(0, 120);
+}
+
+function pageRelevance(page, terms) {
+  const title = String(page.title || '').toLowerCase();
+  const description = String(page.description || '').toLowerCase();
+  const tags = (page.tags || []).join(' ').toLowerCase();
+  const body = String(page.bodyText || '').toLowerCase();
+  let score = 0;
+  for (const term of terms) {
+    if (title.includes(term)) score += 8;
+    if (tags.includes(term)) score += 6;
+    if (description.includes(term)) score += 4;
+    if (body.includes(term)) score += 1;
+  }
+  if (/^aboutme\//i.test(String(page.slug || ''))) score += 0.5;
+  return score;
+}
+
+function buildRelevantCorpus(pages, question, maxChars = 20000) {
+  if (!Array.isArray(pages) || pages.length === 0) {
+    return '（目前沒有可用的公開筆記）';
+  }
+  const terms = queryTerms(question);
+  const ranked = pages
+    .map((page, index) => ({ page, index, score: pageRelevance(page, terms) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  const selected = [];
+  const seen = new Set();
+  const add = (page) => {
+    const slug = String(page?.slug || '');
+    if (!slug || seen.has(slug) || selected.length >= 6) return;
+    seen.add(slug);
+    selected.push(page);
+  };
+
+  ranked.filter((item) => item.score > 0).forEach((item) => add(item.page));
+  for (const slug of [
+    'AboutMe/00-about-me',
+    'AboutMe/02-software-development',
+    'AboutMe/03-ai-and-data',
+    'AboutMe/04-collaboration-and-workstyle',
+    'AboutMe/01-music',
+  ]) {
+    add(pages.find((page) => String(page.slug || '').toLowerCase() === slug.toLowerCase()));
+  }
+  ranked.forEach((item) => add(item.page));
+
   const chunks = [];
   let used = 0;
-  const maxChars = 60000;
-  for (const page of pages) {
+  for (const page of selected) {
     const piece = [
       '\n---',
       `筆記：${page.slug}`,
       `標題：${page.title || ''}`,
       `簡述：${page.description || ''}`,
       `關鍵字：${(page.tags || []).join('、')}`,
-      String(page.bodyText || '').slice(0, 6000),
+      String(page.bodyText || '').slice(0, 3200),
     ].join('\n');
     if (used + piece.length > maxChars) break;
     chunks.push(piece);
     used += piece.length;
   }
-  const corpus = chunks.join('\n') || '（目前沒有可用的公開筆記）';
-  await cache.put(
-    cacheKey,
-    new Response(corpus, {
-      headers: { 'Cache-Control': 'public, max-age=600' },
-    }),
-  );
-  return corpus;
+  return chunks.join('\n') || '（目前沒有可用的公開筆記）';
 }
 
 function systemPrompt(corpus) {
@@ -459,14 +547,21 @@ function wait(ms) {
 async function fetchGeminiWithRetry(url, options) {
   let lastError;
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    let retryDelayMs = 1500;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 45 * 1000);
     try {
       const response = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
-      const retryable = [500, 502, 503, 504].includes(response.status);
+      const retryable = [429, 500, 502, 503, 504].includes(response.status);
       if (!retryable || attempt === 1) return response;
       console.warn('Gemini transient error, retrying', response.status);
+      if (response.status === 429) {
+        const retryAfterSeconds = Number(response.headers.get('Retry-After') || 0);
+        retryDelayMs = retryAfterSeconds > 0
+          ? Math.min(10000, Math.max(3000, retryAfterSeconds * 1000))
+          : 5000;
+      }
       await response.body?.cancel();
     } catch (error) {
       clearTimeout(timeoutId);
@@ -474,7 +569,7 @@ async function fetchGeminiWithRetry(url, options) {
       if (attempt === 1) throw error;
       console.warn('Gemini network error, retrying', error?.message || error);
     }
-    await wait(1500);
+    await wait(retryDelayMs + Math.floor(Math.random() * 500));
   }
   throw lastError || new Error('Gemini request failed');
 }
@@ -502,21 +597,16 @@ async function chat(request, env) {
   const burst = await consumeRate(env, `chat:${session.tokenHash}`, 1, 4 * 1000);
   if (!burst.ok) return json({ error: '請稍等幾秒再送出下一個問題' }, 429);
 
-  const day = taipeiDay();
-  const usage = await env.DB.prepare(
-    'SELECT count FROM daily_usage WHERE email = ? AND usage_day = ?',
-  )
-    .bind(session.email, day)
-    .first();
-  const limit = Math.max(1, Number(env.DAILY_MESSAGE_LIMIT || 10));
-  const used = Number(usage?.count || 0);
-  if (used >= limit) {
-    return json({ error: `你今天的 ${limit} 次訪客提問額度已用完，請明天再來` }, 429);
+  const usage = await dailyUsage(env, session.email);
+  const tokenLimit = dailyTokenLimit(env);
+  if (usage.tokenCount >= tokenLimit) {
+    return json({ error: '你今天的訪客 AI 使用額度已達 0%，請明天再來' }, 429);
   }
 
   let corpus;
   try {
-    corpus = await loadWikiCorpus(env);
+    const pages = await loadWikiPages(env);
+    corpus = buildRelevantCorpus(pages, message);
   } catch (error) {
     console.error('Wiki corpus failed', error);
     return json({
@@ -542,8 +632,10 @@ async function chat(request, env) {
           { role: 'user', parts: [{ text: message }] },
         ],
         generationConfig: {
-          temperature: 0.5,
           maxOutputTokens: 2400,
+          thinkingConfig: {
+            thinkingLevel: 'low',
+          },
         },
       }),
     });
@@ -560,7 +652,10 @@ async function chat(request, env) {
     console.error('Gemini error', response.status, data?.error?.message || '');
     if (response.status === 429) {
       return json(
-        { error: 'Gemini 免費 API 額度目前已用完，暫時無法繼續使用，請稍後再試' },
+        {
+          error:
+            'Gemini 免費 API 目前觸發暫時流量限制，並不一定代表今日額度用完。系統已自動重試；請等待 20–60 秒後再試。若持續發生，才可能是當日額度已達上限。',
+        },
         429,
       );
     }
@@ -580,22 +675,34 @@ async function chat(request, env) {
     .trim();
   if (!answer) return json({ error: 'Gemini 沒有產生回答，請換個方式再問一次' }, 502);
   if (finishReason === 'MAX_TOKENS') {
-    answer += '\n\n> 回答內容較長，已達單次輸出上限。你可以輸入「繼續」取得後續內容。';
+    answer += '\n\n> 回答已達單次輸出上限。為避免立即續問觸發免費 API 限流，請等待約 30 秒後，再輸入「請用三點完成結論」。';
   }
 
+  const metadata = data.usageMetadata || {};
+  const historyChars = Array.isArray(body.history)
+    ? body.history.slice(-10).reduce((sum, turn) => sum + String(turn?.content || '').length, 0)
+    : 0;
+  const estimatedInputTokens = Math.ceil((message.length + historyChars) / 3);
+  const outputTokens = Number(metadata.candidatesTokenCount || 0)
+    || Math.ceil(answer.length / 2);
+  const thoughtTokens = Number(metadata.thoughtsTokenCount || 0);
+  const consumedTokens = Math.max(1, estimatedInputTokens + outputTokens + thoughtTokens);
+  const nextTokenCount = usage.tokenCount + consumedTokens;
+
   await env.DB.prepare(
-    `INSERT INTO daily_usage (email, usage_day, count)
-     VALUES (?, ?, 1)
-     ON CONFLICT(email, usage_day) DO UPDATE SET count = count + 1`,
+    `INSERT INTO daily_usage (email, usage_day, count, token_count)
+     VALUES (?, ?, 1, ?)
+     ON CONFLICT(email, usage_day) DO UPDATE SET
+       count = count + 1,
+       token_count = token_count + excluded.token_count`,
   )
-    .bind(session.email, day)
+    .bind(session.email, usage.day, consumedTokens)
     .run();
 
   return json({
     ok: true,
     answer,
-    remaining: Math.max(0, limit - used - 1),
-    limit,
+    remainingPercent: quotaPercent(nextTokenCount, tokenLimit),
   });
 }
 
