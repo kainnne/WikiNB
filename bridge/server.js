@@ -906,13 +906,13 @@ function upsertWikiFrontmatter(raw, patch = {}) {
 function parseKeywordList(input) {
   if (Array.isArray(input)) {
     return uniqueTags(
-      input.map((x) => Array.from(String(x || '').trim()).slice(0, 8).join('')).filter(Boolean),
+      input.map((x) => String(x || '').trim()).filter(Boolean),
     ).slice(0, 10);
   }
   return uniqueTags(
     String(input || '')
       .split(/[,，、\n]/)
-      .map((s) => Array.from(s.trim()).slice(0, 8).join(''))
+      .map((s) => s.trim())
       .filter(Boolean),
   ).slice(0, 10);
 }

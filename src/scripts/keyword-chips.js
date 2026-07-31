@@ -1,31 +1,32 @@
 /**
- * 關鍵字 chip 編輯器：最多 max 個、每詞 maxLen 字元；
+ * 關鍵字 chip 編輯器：最多 max 個；
  * 資料夾主關鍵字不顯示（仍計入上限）。
  * 輸入列恆顯示：新增關鍵字、取消清空；無「新增關鍵字」獨立按鈕。
+ * 單一字詞不限制字元長度（英文友善）。
  */
 import { t, translateKeyword } from './i18n.js';
 
 export const KEYWORD_MAX = 10;
-export const KEYWORD_MAX_LEN = 8;
 
 export function charLen(text) {
   return Array.from(String(text ?? '')).length;
 }
 
-export function clipKeyword(text, maxLen = KEYWORD_MAX_LEN) {
-  return Array.from(String(text ?? '').trim()).slice(0, maxLen).join('');
+/** trim only — no per-keyword character cap */
+export function clipKeyword(text) {
+  return String(text ?? '').trim();
 }
 
-export function normalizeKeywords(list, { max = KEYWORD_MAX, maxLen = KEYWORD_MAX_LEN } = {}) {
+export function normalizeKeywords(list, { max = KEYWORD_MAX } = {}) {
   const out = [];
   const seen = new Set();
   for (const raw of list || []) {
-    const clipped = clipKeyword(raw, maxLen);
-    if (!clipped) continue;
-    const key = clipped.toLowerCase();
+    const value = clipKeyword(raw);
+    if (!value) continue;
+    const key = value.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(clipped);
+    out.push(value);
     if (out.length >= max) break;
   }
   return out;
@@ -37,7 +38,6 @@ export function normalizeKeywords(list, { max = KEYWORD_MAX, maxLen = KEYWORD_MA
  * @param {string[]} [options.keywords]
  * @param {string[]} [options.locked]
  * @param {number} [options.max]
- * @param {number} [options.maxLen]
  * @param {boolean} [options.simple] +md：chip 放在輸入列上方
  * @param {boolean} [options.compact] 相容舊參數（等同 simple）
  * @param {boolean} [options.composeOpen] 相容舊參數（已一律展開）
@@ -47,10 +47,9 @@ export function mountKeywordEditor(root, options = {}) {
   if (!root) return null;
 
   const max = options.max ?? KEYWORD_MAX;
-  const maxLen = options.maxLen ?? KEYWORD_MAX_LEN;
   const simple = Boolean(options.simple || options.compact);
-  let locked = normalizeKeywords(options.locked || [], { max, maxLen: 32 });
-  let extras = normalizeKeywords(options.keywords || [], { max, maxLen }).filter(
+  let locked = normalizeKeywords(options.locked || [], { max });
+  let extras = normalizeKeywords(options.keywords || [], { max }).filter(
     (k) => !locked.some((l) => l.toLowerCase() === k.toLowerCase()),
   );
   let offset = 0;
@@ -69,7 +68,6 @@ export function mountKeywordEditor(root, options = {}) {
       <input
         type="text"
         class="search-input kw-input py-2 text-sm"
-        maxlength="${maxLen}"
         autocomplete="off"
         data-i18n-placeholder="keywords.placeholder"
         placeholder="${t('keywords.placeholder')}"
@@ -93,7 +91,6 @@ export function mountKeywordEditor(root, options = {}) {
       <input
         type="text"
         class="search-input kw-input py-2 text-sm"
-        maxlength="${maxLen}"
         autocomplete="off"
         data-i18n-placeholder="keywords.placeholder"
         placeholder="${t('keywords.placeholder')}"
@@ -192,7 +189,7 @@ export function mountKeywordEditor(root, options = {}) {
   };
 
   const confirmAdd = () => {
-    const value = clipKeyword(input?.value || '', maxLen);
+    const value = clipKeyword(input?.value || '');
     if (!value) {
       if (input) input.value = '';
       return;
@@ -229,10 +226,6 @@ export function mountKeywordEditor(root, options = {}) {
       if (input) input.value = '';
     }
   });
-  input?.addEventListener('input', () => {
-    const clipped = clipKeyword(input.value, maxLen);
-    if (clipped !== input.value) input.value = clipped;
-  });
 
   const onLocale = () => {
     if (confirmBtn) confirmBtn.textContent = t('keywords.add');
@@ -252,14 +245,14 @@ export function mountKeywordEditor(root, options = {}) {
     getExtras: () => [...extras],
     isComposing: () => false,
     setLocked(nextLocked) {
-      locked = normalizeKeywords(nextLocked || [], { max, maxLen: 32 });
+      locked = normalizeKeywords(nextLocked || [], { max });
       extras = extras.filter((k) => !locked.some((l) => l.toLowerCase() === k.toLowerCase()));
       ensureCapacity();
       emit();
       render();
     },
     setKeywords(next) {
-      extras = normalizeKeywords(next || [], { max, maxLen }).filter(
+      extras = normalizeKeywords(next || [], { max }).filter(
         (k) => !locked.some((l) => l.toLowerCase() === k.toLowerCase()),
       );
       ensureCapacity();
