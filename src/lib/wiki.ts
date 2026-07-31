@@ -180,6 +180,55 @@ function linkifyWikiLinks(html: string): string {
   );
 }
 
+/** 把 public/images 路徑接到 Astro base（GitHub Pages 的 /WikiNB/）。 */
+function resolvePublicImageSrc(src: string): string {
+  const raw = String(src || '').trim();
+  if (!raw || /^https?:\/\//i.test(raw) || raw.startsWith('data:')) return raw;
+
+  const base = String(import.meta.env?.BASE_URL || '/');
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`;
+  let pathPart = raw.replace(/^\.\//, '');
+  if (pathPart.startsWith('/')) pathPart = pathPart.slice(1);
+
+  const baseTrim = normalizedBase.replace(/^\/+|\/+$/g, '');
+  if (baseTrim && (pathPart === baseTrim || pathPart.startsWith(`${baseTrim}/`))) {
+    pathPart = pathPart.slice(baseTrim.length).replace(/^\//, '');
+  }
+
+  if (!pathPart.startsWith('images/')) return raw;
+
+  const encoded = pathPart
+    .split('/')
+    .map((seg) => encodeURIComponent(seg))
+    .join('/');
+  return `${normalizedBase}${encoded}`;
+}
+
+/** 修正 images 路徑、加上響應式 class 與 lazy load。 */
+function enhanceWikiImages(html: string): string {
+  return html.replace(/<img\b([^>]*)>/gi, (_full, attrs: string) => {
+    const srcMatch = attrs.match(/\bsrc\s*=\s*(["'])([^"']*)\1/i);
+    if (!srcMatch) return `<img${attrs}>`;
+
+    const nextSrc = resolvePublicImageSrc(srcMatch[2]);
+    let nextAttrs = attrs.replace(/\bsrc\s*=\s*(["'])([^"']*)\1/i, `src="${nextSrc}"`);
+
+    if (/\bclass\s*=\s*(["'])/i.test(nextAttrs)) {
+      nextAttrs = nextAttrs.replace(/\bclass\s*=\s*(["'])([^"']*)\1/i, (_m, q, cls) => {
+        const merged = /\bwiki-img\b/.test(cls) ? cls : `${cls} wiki-img`.trim();
+        return `class=${q}${merged}${q}`;
+      });
+    } else {
+      nextAttrs += ' class="wiki-img"';
+    }
+
+    if (!/\bloading\s*=/i.test(nextAttrs)) nextAttrs += ' loading="lazy"';
+    if (!/\bdecoding\s*=/i.test(nextAttrs)) nextAttrs += ' decoding="async"';
+
+    return `<img${nextAttrs}>`;
+  });
+}
+
 function formatDateField(value: unknown): string | undefined {
   if (value == null || value === '') return undefined;
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
@@ -196,7 +245,9 @@ function formatDateField(value: unknown): string | undefined {
 function parseWikiFile(filePath: string, slug: string): WikiPage {
   const raw = fs.readFileSync(filePath, 'utf-8');
   const { data, content } = matter(raw);
-  const html = linkifyWikiLinks(marked.parse(content, { async: false }) as string);
+  const html = enhanceWikiImages(
+    linkifyWikiLinks(marked.parse(content, { async: false }) as string),
+  );
   const plain = stripMarkdown(content);
   const date =
     formatDateField(data.date) ||

@@ -104,6 +104,34 @@
     @apply border-t border-pink-100 px-4 py-2;
   }
 
+  /* public/images：適中寬度、響應式，避免超大原圖撐爆版面 */
+  .wiki-content img,
+  .wiki-content .wiki-img {
+    display: block;
+    width: auto;
+    max-width: min(100%, 20rem);
+    height: auto;
+    margin: 1.25rem auto;
+    border-radius: 0.85rem;
+    object-fit: contain;
+    box-shadow: 0 8px 24px rgba(236, 64, 122, 0.12);
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  @media (min-width: 640px) {
+    .wiki-content img,
+    .wiki-content .wiki-img {
+      max-width: min(100%, 28rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .wiki-content img,
+    .wiki-content .wiki-img {
+      max-width: min(100%, 36rem);
+    }
+  }
+
   .search-input {
     @apply w-full rounded-2xl border border-pink-200/80 bg-white/60 px-5 py-3 pl-12 font-body text-berry-800 placeholder:text-pink-400/70 backdrop-blur-sm outline-none transition-all focus:border-pink-400 focus:bg-white/80 focus:shadow-glow;
   }
