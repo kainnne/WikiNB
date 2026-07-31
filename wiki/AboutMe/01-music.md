@@ -34,6 +34,9 @@
 - 指揮
 - 音樂會籌備與演出管理
 
+![ ](/images/AboutMe/84d8bbe3-e801-4a92-a4dc-615ed6a47d2b_PB.jpg)
+
+
 ## 專輯： <Everything Before 24>
 
 - 類型：概念器樂專輯／室內樂作品集
