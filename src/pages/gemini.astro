@@ -6,14 +6,11 @@ import '@fontsource/iansui/latin-400.css';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="Kainnne x Gemini" description="Kainnne WikiNB 唯讀 Gemini 筆記助理">
+<BaseLayout title="Kainnne x Gemini" description="Kainnne WikiNB Gemini 筆記助理">
   <div class="animate-fadeIn gemini-page">
     <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
         <h1 class="gemini-heading" data-i18n="gemini.title">Kainnne x Gemini</h1>
-        <p class="mt-2 text-sm text-berry-600/75" data-i18n="gemini.subtitle">
-          唯讀瀏覽 WikiNB，並延伸回答你的問題。
-        </p>
       </div>
       <a href={base} class="btn-ghost shrink-0 text-sm" data-i18n="gemini.home">← 首頁</a>
     </div>
@@ -24,7 +21,7 @@ const base = import.meta.env.BASE_URL;
           解鎖訪客 AI
         </h2>
         <p class="mt-2 text-sm leading-relaxed text-berry-600/75" data-i18n="gemini.unlockHint">
-          這不是 WikiNB 登入。驗證後只會取得 Gemini 唯讀問答權限。
+          驗證後可取得 Gemini 問答權限
         </p>
       </div>
 
@@ -102,10 +99,6 @@ const base = import.meta.env.BASE_URL;
           <p class="gemini-chrome-title" data-i18n="gemini.title">Kainnne x Gemini</p>
           <p id="gemini-identity" class="truncate text-xs text-berry-600/60"></p>
         </div>
-        <span class="gemini-readonly-badge">READ ONLY</span>
-      </div>
-      <div class="gemini-notice" data-i18n="gemini.readonly">
-        唯讀模式：可讀公開 wiki 筆記，但不能修改、上傳、刪除或同步。
       </div>
       <div id="gemini-output" class="gemini-output" aria-live="polite"></div>
       <div id="gemini-quota" class="gemini-quota"></div>
@@ -354,8 +347,13 @@ const base = import.meta.env.BASE_URL;
       updateQuota();
     } catch (error) {
       pendingBubble?.parentElement?.remove();
-      appendMessage(error.message || 'Gemini 暫時無法回應', 'error');
-      if (/驗證已過期/.test(error.message || '')) openUnlock();
+      const raw = error.message || '';
+      const friendly =
+        /暫時無法回應|暫時無法讀取|服務暫時發生錯誤/.test(raw)
+          ? t('gemini.tempError')
+          : raw || t('gemini.tempError');
+      appendMessage(friendly, 'error');
+      if (/驗證已過期/.test(raw)) openUnlock();
     } finally {
       running = false;
       if (chatInput) {
@@ -461,27 +459,6 @@ const base = import.meta.env.BASE_URL;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-  }
-
-  .gemini-readonly-badge {
-    flex: none;
-    border: 1px solid rgba(52, 168, 83, 0.25);
-    border-radius: 999px;
-    padding: 0.25rem 0.55rem;
-    background: rgba(240, 253, 244, 0.8);
-    color: #228447;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-  }
-
-  .gemini-notice {
-    padding: 0.55rem 1rem;
-    border-bottom: 1px solid rgba(183, 148, 244, 0.14);
-    background: rgba(250, 245, 255, 0.55);
-    color: rgba(92, 42, 74, 0.72);
-    font-size: 0.75rem;
-    text-align: center;
   }
 
   .gemini-output {
