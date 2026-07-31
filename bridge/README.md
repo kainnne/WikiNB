@@ -18,7 +18,7 @@ npm run bridge
 ## 新增 MD
 
 網站登入後按「新增 MD」：選／建資料夾 → 拖入 `.md` → 本機寫入 + `git add -A wiki/` + push。  
-Pages 約 1–2 分鐘更新。
+Pages 重新部署通常約 2–5 分鐘（含大圖時可能更久）。
 
 ## 自動同步
 

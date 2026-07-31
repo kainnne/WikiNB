@@ -520,9 +520,13 @@ async function runWikiSync() {
     };
   }
 
-  // -A 才能把「已刪除」的 wiki 檔一併 staging，避免雲端還留著舊頁／搜尋幽靈連結
+  // wiki 筆記 + public/images 靜態圖一併 staging（刪除也會跟著）
   try {
-    await execFileAsync(GIT_BIN, ['add', '-A', '--', 'wiki/'], { cwd: PROJECT_ROOT });
+    await execFileAsync(
+      GIT_BIN,
+      ['add', '-A', '--', 'wiki/', 'public/images/'],
+      { cwd: PROJECT_ROOT },
+    );
   } catch (err) {
     throw new Error(`git add 失敗（${GIT_BIN}）：${gitExecErrorDetail(err)}`);
   }
@@ -530,10 +534,14 @@ async function runWikiSync() {
   const commitEnv = { ...process.env };
   let committed = false;
   try {
-    await execFileAsync(GIT_BIN, ['commit', '-m', 'sync: update wiki from Bridge'], {
-      cwd: PROJECT_ROOT,
-      env: commitEnv,
-    });
+    await execFileAsync(
+      GIT_BIN,
+      ['commit', '-m', 'sync: update wiki and public images from Bridge'],
+      {
+        cwd: PROJECT_ROOT,
+        env: commitEnv,
+      },
+    );
     committed = true;
   } catch (err) {
     const msg = gitExecErrorDetail(err);
@@ -553,13 +561,13 @@ async function runWikiSync() {
       await execFileAsync(GIT_BIN, ['push', remote, 'HEAD:main'], {
         cwd: PROJECT_ROOT,
         env: pushEnv,
-        timeout: 120000,
+        timeout: 300000,
       });
     } else {
       await execFileAsync(GIT_BIN, ['push', 'origin', 'HEAD'], {
         cwd: PROJECT_ROOT,
         env: pushEnv,
-        timeout: 120000,
+        timeout: 300000,
       });
     }
   } catch (err) {
@@ -569,22 +577,22 @@ async function runWikiSync() {
     );
   }
 
-  // 確認 wiki/ 工作樹乾淨，避免「看似成功、檔案其實沒推上去」
+  // 確認工作樹乾淨，避免「看似成功、檔案其實沒推上去」
   const { stdout: porcelain } = await execFileAsync(
     GIT_BIN,
-    ['status', '--porcelain', '--', 'wiki/'],
+    ['status', '--porcelain', '--', 'wiki/', 'public/images/'],
     { cwd: PROJECT_ROOT },
   );
   const dirty = String(porcelain || '').trim();
   if (dirty) {
-    throw new Error(`同步後 wiki/ 仍有未提交變更：\n${dirty.slice(0, 400)}`);
+    throw new Error(`同步後仍有未提交變更：\n${dirty.slice(0, 400)}`);
   }
 
   return {
     ok: true,
     message: committed
-      ? 'Wiki 已推送至 GitHub，Pages 將自動重新部署（約 1–2 分鐘）'
-      : '沒有新的 wiki 變更可提交；遠端已是最新',
+      ? 'Wiki 與圖片已推送至 GitHub，Pages 重新部署通常約 2–5 分鐘（含大圖時可能更久）'
+      : '沒有新的 wiki／圖片變更可提交；遠端已是最新',
     gitPush: true,
     committed,
   };
@@ -1097,7 +1105,7 @@ async function handleWikiUpload(req, res) {
       synced: Boolean(autoSync),
       sync: syncResult,
       message: autoSync
-        ? `已存到 wiki/${safeName} 並推上 GitHub（Pages 約 1–2 分鐘更新）。`
+        ? `已存到 wiki/${safeName} 並推上 GitHub（Pages 約 2–5 分鐘更新，含大圖時可能更久）。`
         : `已存到 wiki/${safeName}。`,
     });
   } catch (err) {
