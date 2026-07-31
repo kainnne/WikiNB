@@ -1,5 +1,4 @@
 ---
-title: WikiNB · KCIS
 description: 康橋國際學校教學筆記知識庫與 AI 複習平台（履歷版專案簡述）。
 type: note
 status: active
