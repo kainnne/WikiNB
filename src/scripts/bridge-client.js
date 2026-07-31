@@ -129,10 +129,18 @@ export async function renameWikiFile({ oldSlug, newSlug, autoSync = false }) {
 
 /** 以新 md 覆蓋現有筆記；舊檔備份到 public/old_md */
 export async function replaceWikiNote({ slug, content, autoSync = true }) {
-  return bridgeFetch('/api/wiki/replace', {
-    method: 'POST',
-    body: JSON.stringify({ slug, content, autoSync }),
-  });
+  try {
+    return await bridgeFetch('/api/wiki/replace', {
+      method: 'POST',
+      body: JSON.stringify({ slug, content, autoSync }),
+    });
+  } catch (err) {
+    // 路由不存在代表 Bridge 還在跑舊版程式碼
+    if (/^HTTP 404$/.test(err.message)) {
+      throw new Error('Bridge 還在執行舊版本，請重新啟動 Bridge（npm run bridge）後再試一次。');
+    }
+    throw err;
+  }
 }
 
 /** 更新顯示標題／簡述／關鍵字（寫入 _meta.json，不改 md） */
