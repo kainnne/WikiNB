@@ -53,5 +53,14 @@
       "LoRA／QLo",
       "Time-ser"
     ]
+  },
+  "Random/markdown-format-guide": {
+    "title": "md. 格式教學",
+    "description": "就是一個簡單易懂的md.格式教學",
+    "tags": [
+      "Markdown",
+      "md格式教學",
+      "md."
+    ]
   }
 }

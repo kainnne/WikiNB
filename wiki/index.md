@@ -15,6 +15,8 @@
 
 - [[AboutMe/03-ai-and-data]] — ML與資料分析
 
+- [[Random/markdown-format-guide]] — md. 格式教學
+
 ## 學習中
 
 （尚無）
