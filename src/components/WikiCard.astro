@@ -23,7 +23,7 @@ const href = `${base}wiki/${encodeWikiSlug(slug)}`;
   <div class="mb-2 flex min-h-[1.5rem] flex-wrap gap-2">
     {displayTags.map((tag) =>
       tag ? (
-        <span class="tag-badge">{tag}</span>
+        <span class="tag-badge" data-keyword={tag}>{tag}</span>
       ) : (
         <span class="tag-badge invisible select-none" aria-hidden="true">占位</span>
       ),

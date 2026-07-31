@@ -7,6 +7,8 @@
  * searchIndex 由 src/lib/wiki.ts 的 getSearchIndex() 產生。
  * options.folderTree 可傳入 getWikiFolderTree() 的結果；沒有時會由 slug 自行推導。
  */
+import { t, translateKeyword } from './i18n.js';
+
 export function createWikiSearch(searchIndex, options = {}) {
   const escapeHtml = (text) =>
     String(text ?? '')
@@ -140,11 +142,14 @@ export function createWikiSearch(searchIndex, options = {}) {
     const label = page.title || page.filename || page.slug;
     const tags = (page.tags || [])
       .slice(0, 3)
-      .map((t) => `<span class="tag-badge">${escapeHtml(t)}</span>`)
+      .map(
+        (kw) =>
+          `<span class="tag-badge" data-keyword="${escapeAttr(kw)}">${escapeHtml(translateKeyword(kw))}</span>`,
+      )
       .join('');
     const learningBadge =
       page.type === 'learning'
-        ? '<span class="tag-badge bg-lavender-300/30 text-berry-700">學習中</span>'
+        ? `<span class="tag-badge bg-lavender-300/30 text-berry-700" data-i18n="search.learning">${escapeHtml(t('search.learning'))}</span>`
         : '';
 
     return `
@@ -155,7 +160,7 @@ export function createWikiSearch(searchIndex, options = {}) {
             class="wiki-expand mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-pink-200/80 bg-white/50 text-pink-500 transition-all hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600"
             aria-expanded="false"
             aria-controls="content-${escapeAttr(id)}"
-            aria-label="展開：${escapeAttr(page.title)}"
+            aria-label="${escapeAttr(t('search.expand', { title: page.title }))}"
           >
             <span class="wiki-chevron text-sm transition-transform">▸</span>
           </button>
@@ -175,16 +180,16 @@ export function createWikiSearch(searchIndex, options = {}) {
               type="button"
               class="wiki-fs-btn wiki-copy-btn"
               data-copy-href="${escapeAttr(href)}"
-              aria-label="複製連結"
-              title="複製連結"
+              aria-label="${escapeAttr(t('search.copyLink'))}"
+              title="${escapeAttr(t('search.copyLink'))}"
             >
               <span class="wiki-copy-label">copy</span>
             </button>
             <a
               href="${escapeAttr(href)}?fs=1"
               class="wiki-fs-btn"
-              aria-label="放大檢視"
-              title="放大"
+              aria-label="${escapeAttr(t('search.maximize'))}"
+              title="${escapeAttr(t('search.maximize'))}"
             >
               <span class="wiki-fs-icon" aria-hidden="true">⛶</span>
             </a>
@@ -193,7 +198,7 @@ export function createWikiSearch(searchIndex, options = {}) {
         <div id="content-${escapeAttr(id)}" class="wiki-panel hidden border-t border-pink-100/60 bg-white/30 px-4 pb-6 pt-2 md:px-6" hidden>
           <div class="wiki-content pl-11 md:pl-12">${page.html}</div>
           <div class="mt-6 pl-11 md:pl-12">
-            <a href="${escapeAttr(href)}" class="text-sm font-semibold text-pink-600 hover:text-pink-700">專頁檢視 →</a>
+            <a href="${escapeAttr(href)}" class="text-sm font-semibold text-pink-600 hover:text-pink-700">${escapeHtml(t('search.openPage'))}</a>
           </div>
         </div>
       </article>
@@ -216,7 +221,7 @@ export function createWikiSearch(searchIndex, options = {}) {
         >
           <span class="folder-chevron${open ? ' is-open' : ''}">▸</span>
           <span class="folder-name">${escapeHtml(node.name)}</span>
-          <span class="folder-count">${notes} 篇</span>
+          <span class="folder-count">${escapeHtml(t('search.folderCount', { n: notes }))}</span>
         </button>
         <div id="${escapeAttr(id)}" class="wiki-tree folder-children${open ? '' : ' hidden'}"${open ? '' : ' hidden'}>
           ${renderNodes(node.children || [], forceExpand)}
@@ -237,7 +242,7 @@ export function createWikiSearch(searchIndex, options = {}) {
 
     let html = dirs.map((node) => renderDir(node, forceExpand)).join('');
     if (files.length) {
-      if (dirs.length) html += '<div class="root-group-label">根目錄</div>';
+      if (dirs.length) html += `<div class="root-group-label">${escapeHtml(t('search.rootNotes'))}</div>`;
       html += files.map(renderFile).join('');
     }
     return html;
@@ -304,10 +309,10 @@ export function createWikiSearch(searchIndex, options = {}) {
     if (label) {
       const prev = label.textContent;
       label.textContent = 'copied';
-      btn.setAttribute('title', '已複製');
+      btn.setAttribute('title', t('search.copied'));
       window.setTimeout(() => {
         label.textContent = prev || 'copy';
-        btn.setAttribute('title', '複製連結');
+        btn.setAttribute('title', t('search.copyLink'));
       }, 1400);
     }
   };
@@ -361,10 +366,12 @@ export function createWikiSearch(searchIndex, options = {}) {
     if (metaEl) {
       if (!q) {
         metaEl.textContent = hasTree
-          ? `共 ${results.length} 篇 · ${countDirs(folderTree)} 個資料夾`
+          ? t('search.metaAll', { n: results.length, dirs: countDirs(folderTree) })
           : '';
       } else {
-        metaEl.textContent = results.length ? `找到 ${results.length} 筆` : '沒有結果';
+        metaEl.textContent = results.length
+          ? t('search.metaFound', { n: results.length })
+          : t('search.metaNone');
       }
     }
 
@@ -372,7 +379,7 @@ export function createWikiSearch(searchIndex, options = {}) {
       resultsEl.classList.add('hidden');
       resultsEl.innerHTML = '';
       if (emptyEl) {
-        emptyEl.textContent = q ? `沒有符合「${q}」的結果` : '還沒有筆記';
+        emptyEl.textContent = q ? t('search.emptyQuery', { q }) : t('search.emptyAll');
         emptyEl.classList.remove('hidden');
       }
       return;
@@ -404,9 +411,10 @@ export function createWikiSearch(searchIndex, options = {}) {
       e.preventDefault();
       runSearch();
     });
+    document.addEventListener('wikinb:locale-change', runSearch);
 
     return { runSearch, getQueryFromUrl };
   };
 
-  return { mount, renderResults, getQueryFromUrl, filterPages };
+  return { mount, getQueryFromUrl, filterPages };
 }

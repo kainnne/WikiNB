@@ -257,7 +257,7 @@ app.get('/api/health', (_req, res) => {
   const wikiDir = path.join(PROJECT_ROOT, 'wiki');
   let wikiPages = 0;
   if (fs.existsSync(wikiDir)) {
-    wikiPages = fs.readdirSync(wikiDir).filter((f) => f.endsWith('.md') && f !== 'index.md').length;
+    wikiPages = fs.readdirSync(wikiDir).filter((f) => isSiteWikiMarkdown(f)).length;
   }
   res.json({
     online: true,
@@ -600,6 +600,15 @@ async function runWikiSync() {
 
 function wikiRoot() {
   return path.join(PROJECT_ROOT, 'wiki');
+}
+
+/** 網站／瀏覽／管理會顯示的 wiki .md（排除 index、技術用 AGENTS） */
+function isSiteWikiMarkdown(filename) {
+  const base = path.basename(filename);
+  if (!/\.md$/i.test(base)) return false;
+  const stem = base.replace(/\.md$/i, '');
+  const lower = stem.toLowerCase();
+  return lower !== 'index' && lower !== 'agents';
 }
 
 const WIKI_META_PATH = () => path.join(wikiRoot(), '_meta.json');
@@ -968,7 +977,7 @@ function collectWikiMdFiles(dir = wikiRoot(), prefix = '') {
     const abs = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       out.push(...collectWikiMdFiles(abs, rel));
-    } else if (entry.name.endsWith('.md') && entry.name !== 'index.md') {
+    } else if (isSiteWikiMarkdown(entry.name)) {
       out.push(rel);
     }
   }
@@ -991,7 +1000,7 @@ function buildWikiTree(dir = wikiRoot(), prefix = '') {
         path: rel,
         children: buildWikiTree(abs, rel),
       });
-    } else if (entry.name.endsWith('.md') && entry.name !== 'index.md') {
+    } else if (isSiteWikiMarkdown(entry.name)) {
       const slug = rel.replace(/\.md$/i, '');
       const content = fs.readFileSync(abs, 'utf8');
       const { data } = splitWikiFrontmatter(content);

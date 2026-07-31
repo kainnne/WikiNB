@@ -53,10 +53,16 @@ const related = allPages
           <div class="mb-3 flex flex-wrap items-center gap-2">
             <time class="text-sm font-semibold text-pink-500">{page.date}</time>
             {page.updated && (
-              <span class="text-xs text-berry-600/60">更新於 {page.updated}</span>
+              <span class="text-xs text-berry-600/60" data-i18n="wiki.updated" data-i18n-date={page.updated}
+                >更新於 {page.updated}</span
+              >
             )}
             {page.tags.map((tag) => (
-              <a href={`${base}search?q=${encodeURIComponent(tag)}`} class="tag-badge hover:bg-pink-200">
+              <a
+                href={`${base}search?q=${encodeURIComponent(tag)}`}
+                class="tag-badge hover:bg-pink-200"
+                data-keyword={tag}
+              >
                 {tag}
               </a>
             ))}
@@ -73,7 +79,7 @@ const related = allPages
 
     {related.length > 0 && (
       <section class="mt-10">
-        <h2 class="mb-4 font-display text-xl font-bold text-berry-800">相關筆記</h2>
+        <h2 class="mb-4 font-display text-xl font-bold text-berry-800" data-i18n="wiki.related">相關筆記</h2>
         <div class="grid gap-3 sm:grid-cols-3">
           {related.map((r) => (
             <a href={`${base}wiki/${encodeWikiSlug(r.slug)}`} class="glass-card-hover block p-4">

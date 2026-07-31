@@ -22,13 +22,14 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
         type="search"
         name="q"
         placeholder={placeholder}
+        data-i18n-placeholder="home.placeholder"
         class="search-input py-3 text-base sm:py-4 sm:text-lg"
         autocomplete="off"
       />
     </div>
 
     <div id="search-actions-single" class="mt-4">
-      <button type="submit" class="btn-primary w-full justify-center py-3 text-sm sm:text-base">
+      <button type="submit" class="btn-primary w-full justify-center py-3 text-sm sm:text-base" data-i18n="search.button">
         Search
       </button>
     </div>
@@ -39,10 +40,10 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
       hidden
       aria-hidden="true"
     >
-      <button type="submit" class="btn-primary justify-center py-3 text-sm sm:text-base">
+      <button type="submit" class="btn-primary justify-center py-3 text-sm sm:text-base" data-i18n="search.button">
         Search
       </button>
-      <a href={`${base}rename`} class="btn-rename-nav justify-center py-3 text-sm sm:text-base">
+      <a href={`${base}rename`} class="btn-rename-nav justify-center py-3 text-sm sm:text-base" data-i18n="home.management">
         Management
       </a>
       <a

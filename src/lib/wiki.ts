@@ -6,6 +6,15 @@ import { marked } from 'marked';
 const WIKI_DIR = path.join(process.cwd(), 'wiki');
 const WIKI_META_PATH = path.join(WIKI_DIR, '_meta.json');
 
+/** 網站／瀏覽／管理會顯示的 wiki .md（排除 index、技術用 AGENTS） */
+export function isSiteWikiMarkdown(filename: string): boolean {
+  const base = path.basename(filename);
+  if (!/\.md$/i.test(base)) return false;
+  const stem = base.replace(/\.md$/i, '');
+  const lower = stem.toLowerCase();
+  return lower !== 'index' && lower !== 'agents';
+}
+
 type WikiMetaEntry = {
   title?: string;
   description?: string;
@@ -301,7 +310,7 @@ export function getAllWikiPages(): WikiPage[] {
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
         files.push(...collectFiles(path.join(dir, entry.name), rel));
-      } else if (entry.name.endsWith('.md') && entry.name !== 'index.md') {
+      } else if (isSiteWikiMarkdown(entry.name)) {
         files.push(rel);
       }
     }
@@ -326,6 +335,7 @@ export function getAllWikiPages(): WikiPage[] {
 export function getWikiPage(slug: string | string[] | undefined): WikiPage | undefined {
   const normalized = normalizeWikiSlug(slug);
   if (!normalized) return undefined;
+  if (!isSiteWikiMarkdown(`${normalized}.md`)) return undefined;
 
   const root = path.resolve(WIKI_DIR);
   const filePath = path.resolve(root, `${normalized}.md`);
@@ -419,7 +429,7 @@ export function getWikiDiskTree(dir = WIKI_DIR, prefix = ''): WikiTreeNode[] {
         path: rel,
         children: getWikiDiskTree(abs, rel),
       });
-    } else if (entry.name.endsWith('.md') && entry.name !== 'index.md') {
+    } else if (isSiteWikiMarkdown(entry.name)) {
       const slug = rel.replace(/\.md$/i, '');
       let title = slug;
       try {

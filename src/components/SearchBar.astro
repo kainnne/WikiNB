@@ -25,6 +25,7 @@ const formAction = action.startsWith('http') ? action : `${base}${action.replace
       type="search"
       name="q"
       placeholder={placeholder}
+      data-i18n-placeholder="search.placeholder"
       class:list={[
         'search-input',
         size === 'lg' && 'py-4 text-lg',
@@ -36,6 +37,7 @@ const formAction = action.startsWith('http') ? action : `${base}${action.replace
     <button
       type="submit"
       class="btn-primary mt-4 w-full justify-center py-3 text-base md:text-lg"
+      data-i18n="search.button"
     >
       {buttonLabel}
     </button>

@@ -7,21 +7,22 @@ const base = import.meta.env.BASE_URL;
 <BaseLayout title="管理筆記" description="修改標題、簡述、關鍵字與刪除 wiki 筆記">
   <div class="animate-fadeIn mx-auto max-w-2xl">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">管理筆記</h1>
+      <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl" data-i18n="manage.title">管理筆記</h1>
       <div class="flex flex-wrap items-center gap-2">
         <button id="btn-sync-wiki" type="button" class="btn-chroma-sync hidden">
-          <span class="btn-chroma-sync-label">同步 Wiki</span>
+          <span class="btn-chroma-sync-label" data-i18n="nav.sync">同步 Wiki</span>
         </button>
-        <a href={base} class="btn-ghost shrink-0 text-sm">← 首頁</a>
+        <a href={base} class="btn-ghost shrink-0 text-sm" data-i18n="manage.home">← 首頁</a>
       </div>
     </div>
 
     <div id="rename-gate" class="glass-card hidden p-6 text-center text-berry-700/80">
-      請先 <a href={`${base}login`} class="font-semibold text-pink-600">登入</a> 後使用。
+      <span data-i18n="manage.gate">請先登入後使用。</span>
+      <a href={`${base}login`} class="ml-1 font-semibold text-pink-600" data-i18n="nav.login">登入</a>
     </div>
 
     <div id="rename-offline" class="glass-card hidden border border-amber-200 bg-amber-50/50 p-6 text-center text-amber-900">
-      本機 Bridge 未連線。請確認 Mac 已開機且 Bridge 正在執行。
+      <span data-i18n="manage.offline">本機 Bridge 未連線。請確認 Mac 已開機且 Bridge 正在執行。</span>
     </div>
 
     <div id="rename-panel" class="hidden space-y-4">
@@ -41,6 +42,7 @@ const base = import.meta.env.BASE_URL;
     syncWiki,
   } from '../scripts/bridge-client.js';
   import { mountKeywordEditor } from '../scripts/keyword-chips.js';
+  import { applyI18n, t } from '../scripts/i18n.js';
 
   const gate = document.getElementById('rename-gate');
   const offline = document.getElementById('rename-offline');
@@ -125,7 +127,7 @@ const base = import.meta.env.BASE_URL;
         <div class="mb-2 flex flex-wrap items-center gap-2">
           ${metaBits}
         </div>
-        <label class="mb-1 block text-xs font-semibold text-berry-600/70">顯示標題</label>
+        <label class="mb-1 block text-xs font-semibold text-berry-600/70" data-i18n="add.displayTitle">顯示標題</label>
         <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="text"
@@ -135,24 +137,32 @@ const base = import.meta.env.BASE_URL;
             aria-label="標題：${escapeAttr(title)}"
           />
         </div>
-        <label class="mb-1 block text-xs font-semibold text-berry-600/70">簡述</label>
+        <label class="mb-1 block text-xs font-semibold text-berry-600/70">
+          <span data-i18n="manage.description">簡述</span>
+        </label>
         <div class="mb-3">
           <input
             type="text"
             class="search-input rename-desc flex-1 py-2 text-sm"
             value="${escapeAttr(description)}"
             placeholder="例如：一個持續把想法做成作品的人。"
+            data-i18n-placeholder="add.descriptionPlaceholder"
             autocomplete="off"
             aria-label="簡述"
           />
         </div>
-        <label class="mb-1 block text-xs font-semibold text-berry-600/70">關鍵字</label>
+        <label class="mb-1 block text-xs font-semibold text-berry-600/70">
+          <span data-i18n="manage.keywords">關鍵字</span>
+          <span class="ml-2 font-normal text-berry-500/80" data-i18n="keywords.previewHint"
+            >僅前三個關鍵字會呈現在預覽字卡</span
+          >
+        </label>
         <div class="kw-mount mb-3" data-kw-mount="${escapeAttr(slug)}"></div>
         <div class="flex flex-wrap gap-2">
-          <button type="button" class="btn-rename rename-save shrink-0 justify-center px-4 py-2 text-sm">
+          <button type="button" class="btn-rename rename-save shrink-0 justify-center px-4 py-2 text-sm" data-i18n="manage.save">
             儲存
           </button>
-          <button type="button" class="btn-delete rename-delete shrink-0 justify-center px-4 py-2 text-sm">
+          <button type="button" class="btn-delete rename-delete shrink-0 justify-center px-4 py-2 text-sm" data-i18n="manage.delete">
             刪除
           </button>
         </div>
@@ -169,7 +179,7 @@ const base = import.meta.env.BASE_URL;
         <button type="button" class="folder-row" data-dir-toggle="${escapeAttr(node.path)}" aria-expanded="${open}">
           <span class="folder-chevron${open ? ' is-open' : ''}">▸</span>
           <span class="folder-name">${escapeHtml(node.name)}</span>
-          <span class="folder-count">${notes} 篇</span>
+          <span class="folder-count">${escapeHtml(t('manage.folderCount', { n: notes }))}</span>
         </button>
         <div class="folder-children${open ? '' : ' hidden'}"${open ? '' : ' hidden'}>
           ${renderNodes(node.children || [])}
@@ -302,12 +312,15 @@ const base = import.meta.env.BASE_URL;
   }
 
   function renderTree(tree) {
+    keywordEditors.forEach((ed) => ed.destroy?.());
+    keywordEditors.clear();
     if (!listEl) return;
     if (!tree?.length) {
-      listEl.innerHTML = '<div class="p-6 text-center text-berry-700/80">目前沒有可管理的筆記。</div>';
+      listEl.innerHTML = `<div class="p-6 text-center text-berry-700/80">${escapeHtml(t('search.emptyAll'))}</div>`;
       return;
     }
     listEl.innerHTML = renderNodes(tree);
+    applyI18n(listEl);
     bindHandlers();
   }
 
@@ -315,7 +328,7 @@ const base = import.meta.env.BASE_URL;
     const data = await listWikiTree();
     const tree = data.tree || [];
     renderTree(tree);
-    setStatus(`共 ${countFiles(tree)} 個檔案`);
+    setStatus(t('manage.fileCount', { n: countFiles(tree) }));
   }
 
   async function init() {
@@ -350,11 +363,14 @@ const base = import.meta.env.BASE_URL;
       setStatus(err.message || '同步失敗', true);
     } finally {
       syncBtn.removeAttribute('disabled');
-      if (label) label.textContent = '同步 Wiki';
+      if (label) label.textContent = t('nav.sync');
     }
   });
 
   init();
+  document.addEventListener('wikinb:locale-change', () => {
+    if (panel && !panel.classList.contains('hidden')) void loadList();
+  });
 </script>
 
 <style>

@@ -3,6 +3,7 @@
  * 資料夾主關鍵字不顯示（仍計入上限）。
  * 輸入列恆顯示：新增關鍵字、取消清空；無「新增關鍵字」獨立按鈕。
  */
+import { t, translateKeyword } from './i18n.js';
 
 export const KEYWORD_MAX = 10;
 export const KEYWORD_MAX_LEN = 8;
@@ -19,12 +20,12 @@ export function normalizeKeywords(list, { max = KEYWORD_MAX, maxLen = KEYWORD_MA
   const out = [];
   const seen = new Set();
   for (const raw of list || []) {
-    const t = clipKeyword(raw, maxLen);
-    if (!t) continue;
-    const key = t.toLowerCase();
+    const clipped = clipKeyword(raw, maxLen);
+    if (!clipped) continue;
+    const key = clipped.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(t);
+    out.push(clipped);
     if (out.length >= max) break;
   }
   return out;
@@ -70,10 +71,11 @@ export function mountKeywordEditor(root, options = {}) {
         class="search-input kw-input py-2 text-sm"
         maxlength="${maxLen}"
         autocomplete="off"
-        placeholder="輸入後按新增"
+        data-i18n-placeholder="keywords.placeholder"
+        placeholder="${t('keywords.placeholder')}"
       />
-      <button type="button" class="kw-confirm btn-ghost text-sm">新增</button>
-      <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
+      <button type="button" class="kw-confirm btn-ghost text-sm" data-i18n="keywords.add">${t('keywords.add')}</button>
+      <button type="button" class="kw-cancel btn-ghost text-sm" data-i18n="keywords.cancel">${t('keywords.cancel')}</button>
     </div>
     <div class="kw-chips-simple hidden">
       <div class="kw-track kw-track-wrap"></div>
@@ -81,11 +83,11 @@ export function mountKeywordEditor(root, options = {}) {
   `
     : `
     <div class="kw-toolbar">
-      <button type="button" class="kw-nav kw-prev is-hidden" aria-label="往前一個關鍵字" disabled>&lt;</button>
+      <button type="button" class="kw-nav kw-prev is-hidden" disabled>&lt;</button>
       <div class="kw-viewport">
         <div class="kw-track"></div>
       </div>
-      <button type="button" class="kw-nav kw-next is-hidden" aria-label="往後一個關鍵字" disabled>&gt;</button>
+      <button type="button" class="kw-nav kw-next is-hidden" disabled>&gt;</button>
     </div>
     <div class="kw-compose">
       <input
@@ -93,10 +95,11 @@ export function mountKeywordEditor(root, options = {}) {
         class="search-input kw-input py-2 text-sm"
         maxlength="${maxLen}"
         autocomplete="off"
-        placeholder="輸入後按新增"
+        data-i18n-placeholder="keywords.placeholder"
+        placeholder="${t('keywords.placeholder')}"
       />
-      <button type="button" class="kw-confirm btn-ghost text-sm">新增</button>
-      <button type="button" class="kw-cancel btn-ghost text-sm">取消</button>
+      <button type="button" class="kw-confirm btn-ghost text-sm" data-i18n="keywords.add">${t('keywords.add')}</button>
+      <button type="button" class="kw-cancel btn-ghost text-sm" data-i18n="keywords.cancel">${t('keywords.cancel')}</button>
     </div>
   `;
 
@@ -132,17 +135,21 @@ export function mountKeywordEditor(root, options = {}) {
     });
   };
 
+  const escapeAttr = (text) =>
+    String(text ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/"/g, '&quot;');
+
   const chipHtml = (items) =>
     items
       .map((kw) => {
-        const safe = String(kw)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/"/g, '&quot;');
+        const safe = escapeAttr(kw);
+        const label = escapeAttr(translateKeyword(kw));
         return `
             <span class="kw-chip" data-kw="${safe}">
-              <span class="kw-chip-text">${safe}</span>
-              <button type="button" class="kw-remove" aria-label="移除">×</button>
+              <span class="kw-chip-text" data-keyword="${safe}">${label}</span>
+              <button type="button" class="kw-remove" aria-label="${escapeAttr(t('keywords.remove'))}">×</button>
             </span>
           `;
       })
@@ -227,6 +234,14 @@ export function mountKeywordEditor(root, options = {}) {
     if (clipped !== input.value) input.value = clipped;
   });
 
+  const onLocale = () => {
+    if (confirmBtn) confirmBtn.textContent = t('keywords.add');
+    if (cancelBtn) cancelBtn.textContent = t('keywords.cancel');
+    if (input) input.placeholder = t('keywords.placeholder');
+    render();
+  };
+  document.addEventListener('wikinb:locale-change', onLocale);
+
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => render()) : null;
   if (viewport && ro && !simple) ro.observe(viewport);
 
@@ -252,6 +267,7 @@ export function mountKeywordEditor(root, options = {}) {
       render();
     },
     destroy() {
+      document.removeEventListener('wikinb:locale-change', onLocale);
       ro?.disconnect();
       root.innerHTML = '';
     },

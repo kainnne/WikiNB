@@ -7,27 +7,28 @@ const base = import.meta.env.BASE_URL;
 <BaseLayout title="+ md." description="上傳 Markdown 到 wiki 並自動推上 GitHub">
   <div class="animate-fadeIn mx-auto max-w-2xl">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl">+ md.</h1>
-      <a href={`${base}rename`} class="btn-ghost shrink-0 text-sm">管理筆記 →</a>
+      <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl" data-i18n="add.title">+ md.</h1>
+      <a href={`${base}rename`} class="btn-ghost shrink-0 text-sm" data-i18n="add.manage">管理筆記 →</a>
     </div>
 
     <div id="add-gate" class="glass-card hidden p-6 text-center text-berry-700/80">
-      請先 <a href={`${base}login`} class="font-semibold text-pink-600">登入</a> 後使用。
+      <span data-i18n="add.gate">請先登入後使用。</span>
+      <a href={`${base}login`} class="ml-1 font-semibold text-pink-600" data-i18n="add.gateLogin">登入</a>
     </div>
 
     <div id="add-offline" class="glass-card hidden border border-amber-200 bg-amber-50/50 p-6 text-center text-amber-900">
-      本機 Bridge 未連線。請確認 Mac 已開機且已執行 <code class="rounded bg-amber-100 px-1">npm run bridge</code>。
+      <span data-i18n="add.offline">本機 Bridge 未連線。請確認 Mac 已開機且已執行 npm run bridge。</span>
     </div>
 
     <div id="add-panel" class="hidden space-y-4">
       <section class="glass-card space-y-3 p-4 sm:p-5">
         <label class="block text-sm font-semibold text-berry-800">
-          資料夾
+          <span data-i18n="add.folder">資料夾</span>
           <select id="folder-select" class="search-input mt-2 py-2 text-sm"></select>
         </label>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label class="block flex-1 text-sm font-semibold text-berry-800">
-            新建資料夾
+            <span data-i18n="add.folderNew">新建資料夾</span>
             <input
               id="folder-new"
               type="text"
@@ -37,7 +38,7 @@ const base = import.meta.env.BASE_URL;
               autocomplete="off"
             />
           </label>
-          <button id="folder-create-btn" type="button" class="btn-ghost justify-center px-4 py-2 text-sm">
+          <button id="folder-create-btn" type="button" class="btn-ghost justify-center px-4 py-2 text-sm" data-i18n="add.folderCreate">
             建立並選取
           </button>
         </div>
@@ -46,7 +47,7 @@ const base = import.meta.env.BASE_URL;
 
       <section class="glass-card space-y-3 p-4 sm:p-5">
         <div>
-          <p class="mb-2 text-sm font-semibold text-berry-800">檔案名稱</p>
+          <p class="mb-2 text-sm font-semibold text-berry-800" data-i18n="add.filename">檔案名稱</p>
           <div class="flex items-center gap-2">
             <input
               id="meta-filename"
@@ -61,7 +62,7 @@ const base = import.meta.env.BASE_URL;
           </div>
         </div>
         <label class="block text-sm font-semibold text-berry-800">
-          顯示標題
+          <span data-i18n="add.displayTitle">顯示標題</span>
           <input
             id="meta-title"
             type="text"
@@ -71,18 +72,22 @@ const base = import.meta.env.BASE_URL;
           />
         </label>
         <label class="block text-sm font-semibold text-berry-800">
-          簡述
+          <span data-i18n="add.description">簡述</span>
           <input
             id="meta-description"
             type="text"
             class="search-input mt-2 py-2 text-sm"
             style="padding-left: 1.25rem"
             placeholder="例如：一個持續把想法做成作品的人。"
+            data-i18n-placeholder="add.descriptionPlaceholder"
             autocomplete="off"
           />
         </label>
         <label class="block text-sm font-semibold text-berry-800">
-          關鍵字
+          <span data-i18n="add.keywords">關鍵字</span>
+          <span class="ml-2 text-xs font-normal text-berry-600/70" data-i18n="keywords.previewHint"
+            >僅前三個關鍵字會呈現在預覽字卡</span
+          >
           <div id="meta-keywords-editor" class="mt-2"></div>
         </label>
       </section>
@@ -94,7 +99,7 @@ const base = import.meta.env.BASE_URL;
         role="button"
         aria-label="拖入或選取 Markdown"
       >
-        <p id="drop-label" class="font-display text-lg font-bold text-berry-800">拖入或選取 md. 檔案</p>
+        <p id="drop-label" class="font-display text-lg font-bold text-berry-800" data-i18n="add.drop">拖入或選取 md. 檔案</p>
         <p id="drop-file-name" class="mt-2 hidden text-sm font-semibold text-pink-600"></p>
         <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" />
       </section>

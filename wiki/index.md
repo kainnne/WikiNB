@@ -18,5 +18,4 @@
 
 ## 元資料
 
-- [[AGENTS]] — Wiki 內容維護規則
 - [[Roadmap/01_wikinb_roadmap_20260731]] — WikiNB 後續改進路線圖
