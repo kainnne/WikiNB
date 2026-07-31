@@ -32,13 +32,13 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
       <button type="submit" class="btn-primary justify-center py-3 text-sm sm:text-base" data-i18n="search.button">
         Search
       </button>
-      <button
-        id="codex-guest-btn"
-        type="button"
-        class="btn-chroma justify-center py-3 text-sm sm:text-base"
+      <a
+        id="gemini-guest-btn"
+        href={`${base}gemini`}
+        class="btn-gemini justify-center py-3 text-sm sm:text-base"
       >
-        <span class="btn-chroma-label">Codex</span>
-      </button>
+        <span class="btn-gemini-label">Kainnne x Gemini</span>
+      </a>
     </div>
 
     <div
@@ -88,11 +88,6 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
     setAuthVisibility(document.getElementById('add-note-launch-btn'), loggedIn);
     setAuthVisibility(document.getElementById('codex-launch-btn'), loggedIn);
   }
-
-  document.getElementById('codex-guest-btn')?.addEventListener('click', () => {
-    const base = document.documentElement.dataset.base || '/';
-    window.location.href = `${base}login`.replace(/([^:]\/)\/+/g, '$1');
-  });
 
   updateSearchActions();
   document.addEventListener('wikinb:auth-change', updateSearchActions);
@@ -153,6 +148,40 @@ const searchAction = action.startsWith('http') ? action : `${base}${action.repla
   .btn-chroma:focus-visible {
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 12px 28px rgba(123, 97, 255, 0.25);
+    outline: none;
+  }
+
+  .btn-gemini {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(183, 148, 244, 0.34);
+    border-radius: 9999px;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow:
+      0 8px 24px rgba(123, 97, 255, 0.12),
+      0 0 22px rgba(110, 168, 255, 0.1);
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  }
+
+  .btn-gemini-label {
+    background: linear-gradient(105deg, #4285f4 0%, #9b72cb 38%, #d96570 67%, #34a853 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-gemini:hover,
+  .btn-gemini:focus-visible {
+    transform: translateY(-1px) scale(1.02);
+    background: #fff;
+    box-shadow:
+      0 12px 30px rgba(123, 97, 255, 0.18),
+      0 0 26px rgba(66, 133, 244, 0.14);
     outline: none;
   }
 
