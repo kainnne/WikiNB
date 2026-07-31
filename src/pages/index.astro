@@ -5,7 +5,12 @@ import WikiCard from '../components/WikiCard.astro';
 import { getAllWikiPages } from '../lib/wiki';
 
 const pages = getAllWikiPages();
-const recent = pages.slice(0, 6);
+const pinnedSlug = 'AboutMe/00-about-me';
+const pinnedPage = pages.find((page) => page.slug === pinnedSlug);
+const recent = [
+  ...(pinnedPage ? [pinnedPage] : []),
+  ...pages.filter((page) => page.slug !== pinnedSlug),
+].slice(0, 6);
 const base = import.meta.env.BASE_URL;
 ---
 
