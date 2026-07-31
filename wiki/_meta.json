@@ -7,16 +7,37 @@
   "AboutMe/welcomekaine": {
     "title": "歡迎",
     "description": "Kainnne 知識庫 — 筆記彙整與 AI 提醒助理",
-    "tags": ["指南"]
+    "tags": [
+      "指南"
+    ]
   },
   "LLM/folder-smoke-test": {
     "title": "LLM 資料夾測試",
     "description": "測試巢狀資料夾與 WikiNB 樹狀瀏覽",
-    "tags": ["測試"]
+    "tags": [
+      "測試"
+    ]
   },
   "KCIS/WikiNB-KCIS_履歷版專案簡述": {
     "title": "WikiNB · KCIS",
     "description": "康橋國際學校教學筆記知識庫與 AI 複習平台（履歷版專案簡述）。",
-    "tags": ["專案"]
+    "tags": [
+      "專案"
+    ]
+  },
+  "AboutMe/01-music": {
+    "title": "我的音樂背景",
+    "description": "一個有音樂會經歷跟專輯的業餘音樂家。",
+    "tags": [
+      "音樂",
+      "作曲",
+      "室內樂",
+      "鋼琴",
+      "長笛",
+      "指揮",
+      "音樂會",
+      "原創作品",
+      "紙本專輯"
+    ]
   }
 }
