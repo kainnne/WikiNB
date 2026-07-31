@@ -8,7 +8,7 @@ interface Props {
   description?: string;
 }
 
-const { title, description = '一個由 Kaine 設計與維護的個人知識系統。' } = Astro.props;
+const { title, description = '一個由 Kaine 設計的個人知識系統。' } = Astro.props;
 const fullTitle = title === 'Kainnne' || title === 'WikiNB' ? title : `${title} · WikiNB`;
 const bridgeJson = JSON.stringify({
   url: bridgeConfig.bridge.url,
