@@ -21,6 +21,7 @@
 
 - [[AboutMe/00-about-me]] — 我是誰
 
+- [[Projects/2026-08-03-zhuxi-reincarnation-renpy]] — 朱璽轉生錄原型
 
 ## 學習中
 
