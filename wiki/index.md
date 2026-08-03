@@ -21,6 +21,8 @@
 
 - [[AboutMe/00-about-me]] — 我是誰
 
+- [[Projects/2026-08-03-mood-classical-pick]] — 今日心情古典樂
+
 ## 學習中
 
 （尚無）
