@@ -72,15 +72,5 @@
     "title": "我是誰",
     "description": "給 AI 看的我是誰",
     "tags": []
-  },
-  "Projects/2026-08-03-mood-classical-pick": {
-    "title": "今日心情古典樂",
-    "description": "輸入今日心情，取得一首療癒的古典樂推薦。",
-    "tags": [
-      "靜態網站",
-      "古典樂",
-      "心情推薦",
-      "原型"
-    ]
   }
 }
