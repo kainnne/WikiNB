@@ -1,10 +1,34 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import matter from 'gray-matter';
 import { marked } from 'marked';
 
 const WIKI_DIR = path.join(process.cwd(), 'wiki');
 const WIKI_META_PATH = path.join(WIKI_DIR, '_meta.json');
+const gitDateCache = new Map<string, string | undefined>();
+
+/**
+ * 用該檔在 git 的最後一次提交日當日期後備。
+ * 不可用 `new Date()`：GitHub Actions 每次 build 都會變成「今天」，
+ * 導致沒寫 frontmatter date 的舊筆記全部擠進「最近更新」。
+ */
+function gitLastCommitDate(absFilePath: string): string | undefined {
+  if (gitDateCache.has(absFilePath)) return gitDateCache.get(absFilePath);
+  try {
+    const out = execFileSync('git', ['log', '-1', '--format=%cs', '--', absFilePath], {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(out) ? out : undefined;
+    gitDateCache.set(absFilePath, date);
+    return date;
+  } catch {
+    gitDateCache.set(absFilePath, undefined);
+    return undefined;
+  }
+}
 
 /** 網站／瀏覽／管理會顯示的 wiki .md（排除 index、技術用 AGENTS） */
 export function isSiteWikiMarkdown(filename: string): boolean {
@@ -258,10 +282,12 @@ function parseWikiFile(filePath: string, slug: string): WikiPage {
     linkifyWikiLinks(marked.parse(content, { async: false }) as string),
   );
   const plain = stripMarkdown(content);
+  const gitDate = gitLastCommitDate(filePath);
   const date =
     formatDateField(data.date) ||
     formatDateField(data.updated) ||
-    new Date().toISOString().slice(0, 10);
+    gitDate ||
+    '1970-01-01';
 
   const meta = getMetaEntry(slug);
   const folderKeyword = folderKeywordFromSlug(slug);
@@ -288,7 +314,8 @@ function parseWikiFile(filePath: string, slug: string): WikiPage {
     status: (data.status as WikiPage['status']) || 'active',
     tags,
     date,
-    updated: formatDateField(data.updated),
+    // 沒有 updated 欄位時，用 git 最後提交日，才能反映真實「最近更新」
+    updated: formatDateField(data.updated) || gitDate,
     priority: data.priority as WikiPage['priority'],
     progress: data.progress as number | undefined,
     targetSkill: data.targetSkill as string | undefined,

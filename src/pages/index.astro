@@ -47,7 +47,7 @@ const base = import.meta.env.BASE_URL;
             title={page.title}
             description={page.description}
             tags={page.tags}
-            date={page.date}
+            date={page.updated || page.date}
           />
         ))}
       </div>
