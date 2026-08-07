@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-08-03
+> 最後更新：2026-08-07
 
 ## 筆記
 
@@ -22,6 +22,8 @@
 - [[AboutMe/00-about-me]] — 我是誰
 
 - [[Projects/2026-08-03-zhuxi-reincarnation-renpy]] — 朱璽轉生錄原型
+
+- [[Random/ai-output-verification]] — 如何驗證 AI 產出（避免無限循環）
 
 ## 學習中
 
