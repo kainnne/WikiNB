@@ -302,6 +302,9 @@ export function mountNavAuth() {
 
   const update = () => {
     const loggedIn = isLoggedIn();
+    const visitorNav = document.body.classList.contains('visitor-nav');
+    document.body.classList.toggle('home-guest', visitorNav && !loggedIn);
+    document.body.classList.toggle('home-member', visitorNav && loggedIn);
     if (loginLink) loginLink.classList.toggle('hidden', loggedIn);
     if (logoutBtn) logoutBtn.classList.toggle('hidden', !loggedIn);
 

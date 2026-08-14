@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PublicDreamBackdrop from '../../components/PublicDreamBackdrop.astro';
 import { getAllWikiPages, getWikiPage, encodeWikiSlug } from '../../lib/wiki';
 
 export function getStaticPaths() {
@@ -21,7 +22,13 @@ const related = allPages
   .slice(0, 3);
 ---
 
-<BaseLayout title={page.title} description={page.description}>
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  pageClass="public-wiki-page"
+  visitorNav={true}
+>
+  <PublicDreamBackdrop />
   <article class="animate-fadeIn wiki-page">
     <div id="wiki-reader" class="wiki-reader">
       <div class="wiki-reader-titlebar">
@@ -174,13 +181,21 @@ const related = allPages
 </script>
 
 <style is:global>
+  .public-wiki-page .wiki-page {
+    width: min(100%, 68rem);
+    margin-inline: auto;
+  }
+
   .wiki-page .wiki-reader {
     position: relative;
     overflow: hidden;
-    border-radius: 1rem;
-    border: 1px solid rgba(251, 207, 232, 0.55);
-    background: rgba(255, 255, 255, 0.35);
-    box-shadow: 0 8px 28px rgba(236, 64, 122, 0.08);
+    border-radius: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.42);
+    box-shadow:
+      0 28px 82px rgba(103, 59, 94, 0.14),
+      inset 0 1px rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(26px) saturate(1.28);
   }
 
   .wiki-page .wiki-reader-titlebar {
@@ -188,14 +203,15 @@ const related = allPages
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.55rem 0.65rem 0.45rem;
-    border-bottom: 1px solid rgba(252, 231, 243, 0.85);
-    background: rgba(255, 255, 255, 0.45);
+    min-height: 3.75rem;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.62);
+    background: linear-gradient(100deg, rgba(218, 205, 255, 0.22), rgba(255, 206, 226, 0.2), rgba(201, 255, 240, 0.18));
   }
 
   @media (min-width: 640px) {
     .wiki-page .wiki-reader-titlebar {
-      padding: 0.6rem 0.85rem 0.5rem;
+      padding: 0.65rem 1rem;
     }
   }
 
@@ -203,7 +219,7 @@ const related = allPages
     min-width: 0;
     font-size: 0.85rem;
     font-weight: 700;
-    color: #5c2a4a;
+    color: #4a2038;
     letter-spacing: 0.02em;
     white-space: nowrap;
     overflow: hidden;
@@ -222,16 +238,17 @@ const related = allPages
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.55rem;
-    border: 1px solid rgba(244, 143, 177, 0.45);
-    background: rgba(255, 255, 255, 0.75);
-    color: #9c2d5a;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    background: rgba(255, 255, 255, 0.48);
+    color: #7d4b70;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.72);
     font-size: 1rem;
     line-height: 1;
     cursor: pointer;
-    transition: background 0.15s ease, transform 0.15s ease;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .wiki-page .wiki-copy-btn {
@@ -245,18 +262,21 @@ const related = allPages
 
   .wiki-page .wiki-fs-btn:hover,
   .wiki-page .wiki-fs-btn:focus-visible {
-    background: rgba(252, 231, 243, 0.95);
-    transform: scale(1.05);
+    background: linear-gradient(120deg, rgba(218, 205, 255, 0.58), rgba(255, 206, 226, 0.58));
+    transform: translateY(-0.12rem);
+    box-shadow:
+      0 8px 20px rgba(103, 59, 94, 0.12),
+      inset 0 1px rgba(255, 255, 255, 0.78);
     outline: none;
   }
 
   .wiki-page .wiki-reader-scroll {
-    padding: 1rem 0.85rem 1.25rem;
+    padding: clamp(1rem, 2vw, 1.5rem);
   }
 
   @media (min-width: 640px) {
     .wiki-page .wiki-reader-scroll {
-      padding: 1.25rem 1.25rem 1.5rem;
+      padding: clamp(1.4rem, 3vw, 2.2rem);
     }
   }
 
@@ -273,7 +293,10 @@ const related = allPages
     box-shadow: none;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(160deg, #fff5f8 0%, #fce4ec 35%, #f3e5f5 100%);
+    background:
+      radial-gradient(circle at 10% 18%, rgba(205, 220, 255, 0.74), transparent 30%),
+      radial-gradient(circle at 90% 12%, rgba(255, 210, 232, 0.74), transparent 31%),
+      linear-gradient(145deg, #fffafd 0%, #fff4fa 48%, #f7f2ff 100%);
   }
 
   .wiki-page .wiki-reader.is-fullscreen .wiki-reader-scroll {
@@ -297,5 +320,110 @@ const related = allPages
   html.wiki-fs-active,
   body.wiki-fs-active {
     overflow: hidden;
+  }
+
+  .public-wiki-page .wiki-reader-scroll > header {
+    padding: clamp(0.5rem, 2vw, 1rem) clamp(0.25rem, 1vw, 0.6rem) clamp(0.75rem, 2vw, 1.25rem);
+  }
+
+  .public-wiki-page .wiki-reader-scroll > header h1 {
+    color: #4a2038;
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    line-height: 1.08;
+    letter-spacing: -0.055em;
+  }
+
+  .public-wiki-page .wiki-reader-scroll > header > p {
+    color: rgba(74, 32, 56, 0.7);
+    line-height: 1.7;
+  }
+
+  .public-wiki-page .wiki-reader-scroll .tag-badge {
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.42);
+    color: #9c426f;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.7);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .public-wiki-page .wiki-reader-scroll .tag-badge:hover,
+  .public-wiki-page .wiki-reader-scroll .tag-badge:focus-visible,
+  .public-wiki-page .wiki-reader-scroll .tag-badge:active {
+    background: linear-gradient(120deg, rgba(255, 206, 226, 0.42), rgba(218, 205, 255, 0.38));
+    transform: translateY(-0.1rem);
+  }
+
+  .public-wiki-page .wiki-reader-scroll > .wiki-content {
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    border-radius: 1.65rem;
+    background: rgba(255, 255, 255, 0.52);
+    box-shadow:
+      0 18px 48px rgba(103, 59, 94, 0.08),
+      inset 0 1px rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(18px) saturate(1.2);
+  }
+
+  .public-wiki-page .wiki-page > section > h2 {
+    color: #4a2038;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    letter-spacing: -0.035em;
+  }
+
+  .public-wiki-page .wiki-page > section .glass-card-hover {
+    border: 1px solid rgba(255, 255, 255, 0.76);
+    border-radius: 1.35rem;
+    background: rgba(255, 255, 255, 0.42);
+    box-shadow:
+      0 16px 42px rgba(103, 59, 94, 0.09),
+      inset 0 1px rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(18px) saturate(1.2);
+  }
+
+  .public-wiki-page .wiki-page > section .glass-card-hover:hover,
+  .public-wiki-page .wiki-page > section .glass-card-hover:focus-visible,
+  .public-wiki-page .wiki-page > section .glass-card-hover:active {
+    border-color: rgba(255, 255, 255, 0.94);
+    background: linear-gradient(125deg, rgba(255, 206, 226, 0.3), rgba(218, 205, 255, 0.28));
+    box-shadow:
+      0 24px 58px rgba(103, 59, 94, 0.14),
+      inset 0 1px rgba(255, 255, 255, 0.82);
+  }
+
+  .public-wiki-page .wiki-page > div:last-child .btn-ghost {
+    min-height: 3rem;
+    border: 1px solid rgba(255, 255, 255, 0.76);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.44);
+    box-shadow:
+      0 12px 32px rgba(103, 59, 94, 0.09),
+      inset 0 1px rgba(255, 255, 255, 0.72);
+  }
+
+  .public-wiki-page .wiki-page > div:last-child .btn-ghost:hover,
+  .public-wiki-page .wiki-page > div:last-child .btn-ghost:focus-visible {
+    background: linear-gradient(120deg, rgba(255, 206, 226, 0.38), rgba(218, 205, 255, 0.34));
+  }
+
+  @media (max-width: 640px) {
+    .wiki-page .wiki-reader {
+      border-radius: 1.55rem;
+    }
+
+    .wiki-page .wiki-reader-scroll {
+      padding: 0.8rem;
+    }
+
+    .public-wiki-page .wiki-reader-scroll > .wiki-content {
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wiki-page .wiki-fs-btn,
+    .public-wiki-page .wiki-reader-scroll .tag-badge,
+    .public-wiki-page .wiki-page > section .glass-card-hover {
+      transition-duration: 0.001ms !important;
+    }
   }
 </style>

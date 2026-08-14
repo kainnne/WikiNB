@@ -1,11 +1,14 @@
 ---
 import sites from '../../config/sites.json';
 
+interface Props {
+  visitorNav?: boolean;
+}
+
+const { visitorNav = false } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const meUrl = sites.sites.me.url;
-const normalizedPath = Astro.url.pathname.replace(/\/index\.html$/, '').replace(/\/+$/, '') || '/';
-const normalizedBase = base.replace(/\/+$/, '') || '/';
-const aboutLabel = normalizedPath === normalizedBase ? 'kainnne.com' : 'About Me';
+const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
 ---
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">

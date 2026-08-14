@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PublicDreamBackdrop from '../components/PublicDreamBackdrop.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="找不到頁面">
-  <div class="animate-fadeIn text-center">
+<BaseLayout title="找不到頁面" pageClass="public-wiki-page" visitorNav={true}>
+  <PublicDreamBackdrop />
+  <div class="animate-fadeIn public-not-found text-center">
     <div class="mb-4 text-6xl">🌙</div>
     <h1 class="font-display text-3xl font-bold text-berry-800">找不到這個頁面</h1>
     <p class="mt-3 text-berry-700/80">這個頁面不存在。</p>
@@ -14,3 +16,47 @@ const base = import.meta.env.BASE_URL;
     </div>
   </div>
 </BaseLayout>
+
+<style>
+  .public-not-found {
+    width: min(100%, 38rem);
+    margin: clamp(3rem, 10vh, 7rem) auto 0;
+    padding: clamp(2.2rem, 6vw, 4rem);
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.44);
+    box-shadow:
+      0 28px 80px rgba(103, 59, 94, 0.13),
+      inset 0 1px rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(26px) saturate(1.28);
+  }
+
+  .public-not-found :global(.btn-primary),
+  .public-not-found :global(.btn-ghost) {
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    border-radius: 1rem;
+    box-shadow:
+      0 12px 30px rgba(103, 59, 94, 0.1),
+      inset 0 1px rgba(255, 255, 255, 0.72);
+  }
+
+  .public-not-found :global(.btn-primary) {
+    background: linear-gradient(120deg, rgba(205, 220, 255, 0.9), rgba(246, 200, 255, 0.92), rgba(255, 183, 206, 0.9));
+    color: #482039;
+  }
+
+  .public-not-found :global(.btn-ghost) {
+    background: rgba(255, 255, 255, 0.44);
+  }
+
+  @media (max-width: 520px) {
+    .public-not-found {
+      margin-top: 2rem;
+      border-radius: 1.55rem;
+    }
+
+    .public-not-found > div:last-child {
+      flex-direction: column;
+    }
+  }
+</style>

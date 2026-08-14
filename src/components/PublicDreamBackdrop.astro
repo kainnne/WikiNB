@@ -1,0 +1,137 @@
+<div class="public-dream-backdrop" aria-hidden="true">
+  <span class="public-dream-orb public-dream-orb-a"></span>
+  <span class="public-dream-orb public-dream-orb-b"></span>
+  <span class="public-dream-orb public-dream-orb-c"></span>
+  <span class="public-dream-grain"></span>
+</div>
+
+<script>
+  if (window.matchMedia('(pointer: fine)').matches) {
+    window.addEventListener(
+      'pointermove',
+      (event) => {
+        document.body.style.setProperty('--public-pointer-x', `${event.clientX}px`);
+        document.body.style.setProperty('--public-pointer-y', `${event.clientY}px`);
+      },
+      { passive: true },
+    );
+  }
+</script>
+
+<style>
+  :global(body.public-wiki-page) {
+    --public-ink: #4a2038;
+    --public-soft: #786072;
+    --public-line: rgba(255, 255, 255, 0.74);
+    --public-glass: rgba(255, 255, 255, 0.48);
+    --public-pointer-x: 50vw;
+    --public-pointer-y: 30vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at 8% 18%, rgba(205, 220, 255, 0.78), transparent 30%),
+      radial-gradient(circle at 91% 13%, rgba(255, 210, 232, 0.78), transparent 31%),
+      radial-gradient(circle at 76% 82%, rgba(201, 255, 240, 0.58), transparent 30%),
+      linear-gradient(145deg, #fffafd 0%, #fff4fa 48%, #f7f2ff 100%);
+  }
+
+  :global(body.public-wiki-page)::before,
+  :global(body.public-wiki-page)::after {
+    display: none;
+  }
+
+  :global(body.public-wiki-page main) {
+    position: relative;
+    z-index: 1;
+    max-width: 78rem;
+    padding-top: 7.75rem;
+    padding-bottom: 5rem;
+  }
+
+  .public-dream-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .public-dream-backdrop::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle 24rem at var(--public-pointer-x) var(--public-pointer-y),
+      rgba(255, 255, 255, 0.68),
+      transparent 72%
+    );
+    mix-blend-mode: soft-light;
+  }
+
+  .public-dream-orb {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.42;
+    filter: blur(4rem);
+    animation: public-dream-drift 16s ease-in-out infinite alternate;
+  }
+
+  .public-dream-orb-a {
+    top: 8%;
+    left: -12rem;
+    width: 30rem;
+    height: 30rem;
+    background: #b9cbff;
+  }
+
+  .public-dream-orb-b {
+    top: -12rem;
+    right: -3rem;
+    width: 33rem;
+    height: 33rem;
+    background: #ffc4dc;
+    animation-delay: -7s;
+  }
+
+  .public-dream-orb-c {
+    right: 15%;
+    bottom: -14rem;
+    width: 29rem;
+    height: 29rem;
+    background: #bdf7e7;
+    animation-delay: -11s;
+  }
+
+  .public-dream-grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.028;
+    background-image: radial-gradient(rgba(69, 24, 52, 0.76) 0.55px, transparent 0.75px);
+    background-size: 4px 4px;
+  }
+
+  @keyframes public-dream-drift {
+    to {
+      transform: translate3d(3rem, 2.2rem, 0) scale(1.08);
+    }
+  }
+
+  @media (max-width: 640px) {
+    :global(body.public-wiki-page main) {
+      padding-top: 6.8rem;
+      padding-inline: 1rem;
+      padding-bottom: 4rem;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .public-dream-backdrop::before {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .public-dream-orb {
+      animation: none;
+    }
+  }
+</style>

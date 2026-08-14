@@ -10,10 +10,15 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [homePage, header, geminiPage] = await Promise.all([
+const [homePage, header, geminiPage, searchPage, wikiPage, notFoundPage, baseLayout, backdrop] = await Promise.all([
   readFile(new URL('../src/pages/index.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/Header.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/search.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/wiki/[...slug].astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/404.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/layouts/BaseLayout.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/components/PublicDreamBackdrop.astro', import.meta.url), 'utf8'),
 ]);
 
 function createSessionStorage() {
@@ -135,5 +140,20 @@ assert.match(header, /#nav-wikinb[\s\S]*order: 1/);
 assert.match(header, /#btn-lang[\s\S]*order: 2/);
 assert.match(header, /#nav-menu[\s\S]*order: 3/);
 assert.doesNotMatch(geminiPage, /guest-home-hero|home-atmosphere|home-gemini-btn/);
+
+// 7. 公開搜尋、文章與 404 共用訪客視覺；Gemini 只調整解鎖卡，不改聊天區結構。
+assert.match(baseLayout, /visitorNav\?: boolean/);
+assert.match(baseLayout, /<Header visitorNav=\{visitorNav\} \/>/);
+assert.match(backdrop, /class="public-dream-backdrop"/);
+assert.match(backdrop, /body\.public-wiki-page/);
+for (const source of [searchPage, wikiPage, notFoundPage]) {
+  assert.match(source, /<PublicDreamBackdrop \/>/);
+  assert.match(source, /pageClass="public-wiki-page"/);
+  assert.match(source, /visitorNav=\{true\}/);
+}
+assert.match(geminiPage, /class="gemini-unlock-glow gemini-unlock-glow-a"/);
+assert.match(geminiPage, /#gemini-unlock \.search-input/);
+assert.match(geminiPage, /<section id="gemini-chat" class="gemini-window hidden">/);
+assert.doesNotMatch(geminiPage, /id="gemini-chat"[^>]*public-wiki-page/);
 
 console.log('OK: + md. / Codex CTAs 只在 session token 存在時顯示');

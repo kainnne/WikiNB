@@ -14,7 +14,12 @@ const recent = [
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="WikiNB" description="Kaine 的個人知識系統" pageClass="home-page home-guest">
+<BaseLayout
+  title="WikiNB"
+  description="Kaine 的個人知識系統"
+  pageClass="home-page home-guest"
+  visitorNav={true}
+>
   <div class="home-atmosphere" aria-hidden="true">
     <span class="home-glow home-glow-a"></span>
     <span class="home-glow home-glow-b"></span>

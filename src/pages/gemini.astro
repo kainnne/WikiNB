@@ -13,6 +13,8 @@ import '@fontsource/iansui/latin-400.css';
     </div>
 
     <section id="gemini-unlock" class="gemini-card mx-auto max-w-xl p-5 sm:p-7">
+      <span class="gemini-unlock-glow gemini-unlock-glow-a" aria-hidden="true"></span>
+      <span class="gemini-unlock-glow gemini-unlock-glow-b" aria-hidden="true"></span>
       <div class="mb-5 text-center">
         <h2 class="font-display text-xl font-bold text-berry-800" data-i18n="gemini.unlockTitle">
           解鎖訪客 AI
@@ -147,6 +149,18 @@ import '@fontsource/iansui/latin-400.css';
   let running = false;
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
+
+  if (unlock && window.matchMedia('(pointer: fine)').matches) {
+    unlock.addEventListener(
+      'pointermove',
+      (event) => {
+        const rect = unlock.getBoundingClientRect();
+        unlock.style.setProperty('--unlock-x', `${event.clientX - rect.left}px`);
+        unlock.style.setProperty('--unlock-y', `${event.clientY - rect.top}px`);
+      },
+      { passive: true },
+    );
+  }
 
   function showAuthMessage(text, ok = false) {
     if (!authMessage) return;
@@ -416,6 +430,143 @@ import '@fontsource/iansui/latin-400.css';
       0 18px 50px rgba(91, 70, 135, 0.1),
       0 0 32px rgba(110, 168, 255, 0.08);
     backdrop-filter: blur(16px);
+  }
+
+  #gemini-unlock {
+    --unlock-x: 50%;
+    --unlock-y: 35%;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(1.6rem, 4vw, 2.6rem);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 2rem;
+    background:
+      radial-gradient(circle 18rem at var(--unlock-x) var(--unlock-y), rgba(255, 255, 255, 0.7), transparent 74%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(255, 250, 253, 0.56));
+    box-shadow:
+      0 30px 90px rgba(103, 59, 94, 0.16),
+      0 0 45px rgba(183, 148, 255, 0.1),
+      inset 0 1px rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(28px) saturate(1.32);
+  }
+
+  #gemini-unlock::before {
+    content: '';
+    position: absolute;
+    inset: 0.55rem;
+    z-index: -1;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 1.55rem;
+    pointer-events: none;
+  }
+
+  .gemini-unlock-glow {
+    position: absolute;
+    z-index: -2;
+    width: 13rem;
+    height: 13rem;
+    border-radius: 50%;
+    opacity: 0.42;
+    filter: blur(2.7rem);
+    pointer-events: none;
+    animation: gemini-unlock-drift 9s ease-in-out infinite alternate;
+  }
+
+  .gemini-unlock-glow-a {
+    top: -6rem;
+    right: -3rem;
+    background: #ffc4dc;
+  }
+
+  .gemini-unlock-glow-b {
+    bottom: -7rem;
+    left: -3rem;
+    background: #cddcff;
+    animation-delay: -4s;
+  }
+
+  #gemini-unlock h2 {
+    display: inline-block;
+    color: transparent;
+    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 72%, #5eead4 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    font-size: clamp(1.55rem, 4vw, 2.15rem);
+    letter-spacing: -0.035em;
+    filter: drop-shadow(0 9px 20px rgba(155, 114, 203, 0.14));
+  }
+
+  #gemini-unlock form {
+    position: relative;
+    z-index: 1;
+  }
+
+  #gemini-unlock label {
+    color: #4a2038;
+    font-family: Quicksand, 'Noto Sans TC', sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  #gemini-unlock .search-input {
+    min-height: 3.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    border-radius: 1.2rem;
+    padding-inline: 1.1rem;
+    background: rgba(255, 255, 255, 0.62);
+    color: #4a2038;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(14px);
+  }
+
+  #gemini-unlock .search-input:focus {
+    border-color: rgba(183, 148, 255, 0.52);
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow:
+      0 0 0 0.25rem rgba(183, 148, 255, 0.1),
+      inset 0 1px rgba(255, 255, 255, 0.9);
+  }
+
+  #gemini-unlock .gemini-primary {
+    position: relative;
+    min-height: 3.65rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    border-radius: 1.2rem;
+    background: linear-gradient(
+      120deg,
+      rgba(205, 220, 255, 0.9),
+      rgba(246, 200, 255, 0.92) 36%,
+      rgba(255, 183, 206, 0.92) 68%,
+      rgba(201, 255, 240, 0.86)
+    );
+    color: #482039;
+    box-shadow:
+      0 12px 30px rgba(156, 78, 143, 0.17),
+      inset 0 1px rgba(255, 255, 255, 0.8);
+  }
+
+  #gemini-unlock .gemini-primary:hover:not(:disabled),
+  #gemini-unlock .gemini-primary:focus-visible:not(:disabled),
+  #gemini-unlock .gemini-primary:active:not(:disabled) {
+    transform: translateY(-0.18rem);
+    box-shadow:
+      0 18px 40px rgba(156, 78, 143, 0.24),
+      inset 0 1px rgba(255, 255, 255, 0.9);
+  }
+
+  #gemini-unlock #gemini-back {
+    min-height: 3.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    border-radius: 1.1rem;
+    background: rgba(255, 255, 255, 0.48);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.72);
+  }
+
+  #gemini-unlock #gemini-code-sent {
+    border: 1px solid rgba(167, 243, 208, 0.72);
+    background: rgba(236, 253, 245, 0.72);
+    backdrop-filter: blur(12px);
   }
 
   .gemini-primary {
@@ -692,6 +843,16 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   @media (max-width: 520px) {
+    #gemini-unlock {
+      border-radius: 1.55rem;
+      padding: 1.4rem;
+    }
+
+    #gemini-unlock::before {
+      inset: 0.4rem;
+      border-radius: 1.2rem;
+    }
+
     .gemini-output {
       min-height: 360px;
       padding: 0.75rem;
@@ -704,6 +865,18 @@ import '@fontsource/iansui/latin-400.css';
 
     .gemini-send {
       padding-inline: 0.8rem;
+    }
+  }
+
+  @keyframes gemini-unlock-drift {
+    to {
+      transform: translate3d(1.5rem, 1rem, 0) scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gemini-unlock-glow {
+      animation: none;
     }
   }
 </style>
