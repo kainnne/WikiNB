@@ -6,7 +6,7 @@ import '@fontsource/iansui/latin-400.css';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="Kainnne x Gemini" description="由公開 WikiNB 建構的 Kaine 數位分身">
+<BaseLayout title="Kainnne x Gemini" description="由公開 WikiNB 建構的 Kaine 數位助理">
   <div class="animate-fadeIn gemini-page">
     <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
@@ -21,7 +21,7 @@ const base = import.meta.env.BASE_URL;
           解鎖訪客 AI
         </h2>
         <p class="mt-2 text-sm leading-relaxed text-berry-600/75" data-i18n="gemini.unlockHint">
-          驗證後可取得 Gemini 問答權限
+          使用 Kaine 提供的 Gemini 免費 API；回答預設精簡，以節省共享額度
         </p>
       </div>
 
@@ -101,13 +101,12 @@ const base = import.meta.env.BASE_URL;
         </div>
       </div>
       <div id="gemini-output" class="gemini-output" aria-live="polite"></div>
-      <div id="gemini-quota" class="gemini-quota"></div>
       <form id="gemini-chat-form" class="gemini-input-row">
         <input
           id="gemini-input"
           type="text"
           class="gemini-input"
-          maxlength="2000"
+          maxlength="1200"
           autocomplete="off"
           data-i18n-placeholder="gemini.placeholder"
           placeholder="詢問關於 Kaine、他的作品或專業領域…"
@@ -146,14 +145,12 @@ const base = import.meta.env.BASE_URL;
   const chat = document.getElementById('gemini-chat');
   const identity = document.getElementById('gemini-identity');
   const output = document.getElementById('gemini-output');
-  const quota = document.getElementById('gemini-quota');
   const chatForm = document.getElementById('gemini-chat-form');
   const chatInput = document.getElementById('gemini-input');
   const chatSend = document.getElementById('gemini-chat-send');
 
   let pendingEmail = '';
   let running = false;
-  let remainingPercent = null;
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
 
@@ -238,14 +235,6 @@ const base = import.meta.env.BASE_URL;
     };
   }
 
-  function updateQuota() {
-    if (!quota) return;
-    quota.textContent =
-      typeof remainingPercent === 'number'
-        ? t('gemini.remaining', { n: remainingPercent })
-        : '';
-  }
-
   function appendWelcome() {
     if (!output) return;
     output.innerHTML = '';
@@ -257,6 +246,11 @@ const base = import.meta.env.BASE_URL;
     title.className = 'font-display font-bold text-berry-800';
     title.textContent = t('gemini.connected');
     box.appendChild(title);
+
+    const notice = document.createElement('p');
+    notice.className = 'mt-2 text-sm leading-relaxed text-berry-600/70';
+    notice.textContent = t('gemini.freeQuotaNotice');
+    box.appendChild(notice);
 
     const examples = document.createElement('div');
     examples.className = 'mt-3 grid gap-2';
@@ -281,11 +275,7 @@ const base = import.meta.env.BASE_URL;
     unlock?.classList.add('hidden');
     chat?.classList.remove('hidden');
     if (identity) identity.textContent = `${session.name} · ${session.email}`;
-    if (typeof session.remainingPercent === 'number') {
-      remainingPercent = session.remainingPercent;
-    }
     appendWelcome();
-    updateQuota();
     chatInput?.focus();
   }
 
@@ -328,7 +318,6 @@ const base = import.meta.env.BASE_URL;
         name: result.name,
         email: result.email,
         expiresAt: result.expiresAt,
-        remainingPercent: result.remainingPercent,
       };
       setGuestAiSession(session);
       openChat(session);
@@ -369,10 +358,7 @@ const base = import.meta.env.BASE_URL;
       appendMessage(result.answer, 'assistant');
       history.push({ role: 'user', content: message });
       history.push({ role: 'assistant', content: result.answer });
-      history = history.slice(-10);
-      const nextPercent = Number(result.remainingPercent);
-      if (Number.isFinite(nextPercent)) remainingPercent = nextPercent;
-      updateQuota();
+      history = history.slice(-4);
     } catch (error) {
       responseTimer.stop();
       const raw = error.message || '';
@@ -397,7 +383,6 @@ const base = import.meta.env.BASE_URL;
 
   document.addEventListener('wikinb:locale-change', () => {
     if (!chat?.classList.contains('hidden') && history.length === 0) appendWelcome();
-    updateQuota();
   });
 
   async function init() {
@@ -675,14 +660,6 @@ const base = import.meta.env.BASE_URL;
   :global(.gemini-example:hover) {
     transform: translateY(-1px);
     background: #fff;
-  }
-
-  .gemini-quota {
-    min-height: 1.8rem;
-    padding: 0.35rem 1rem;
-    color: rgba(92, 42, 74, 0.58);
-    font-size: 0.72rem;
-    text-align: right;
   }
 
   .gemini-input-row {
