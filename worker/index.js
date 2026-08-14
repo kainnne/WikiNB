@@ -597,7 +597,7 @@ async function chat(request, env) {
     }, 502);
   }
 
-  const model = env.GEMINI_MODEL || 'gemini-flash-latest';
+  const model = env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   let response;
   try {
@@ -706,6 +706,7 @@ export default {
         response = json({
           ok: true,
           service: 'Kainnne x Gemini',
+          model: env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
           configured: Boolean(env.GEMINI_API_KEY && env.SMTP_PASSWORD && env.TOKEN_SECRET),
         });
       } else if (request.method === 'POST' && url.pathname === '/api/guest-ai/request-code') {

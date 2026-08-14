@@ -8,8 +8,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [worker, page, zhText, enText] = await Promise.all([
+const [worker, wrangler, page, zhText, enText] = await Promise.all([
   readFile(new URL('../worker/index.js', import.meta.url), 'utf8'),
+  readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/zh-TW.json', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/en.json', import.meta.url), 'utf8'),
@@ -24,18 +25,21 @@ assert.match(worker, /slice\(0, 1300\)/);
 assert.match(worker, /\.slice\(-4\)/);
 assert.doesNotMatch(worker, /maxOutputTokens:/);
 assert.match(worker, /thinkingLevel: 'minimal'/);
+assert.match(worker, /env\.GEMINI_MODEL \|\| 'gemini-3\.1-flash-lite'/);
+assert.match(wrangler, /"GEMINI_MODEL": "gemini-3\.1-flash-lite"/);
 assert.match(worker, /const retryable = \[500, 502, 503, 504\]/);
 assert.match(worker, /數位助理/);
 assert.match(worker, /節省免費 API 額度是必要限制/);
 assert.match(worker, /完整性優先於字數/);
 
 assert.match(page, /maxlength="1200"/);
-assert.match(page, /gemini\.freeQuotaNotice/);
+assert.match(page, /appendMessage\(t\('gemini\.welcomeMessage'\), 'assistant'\)/);
 assert.doesNotMatch(page, /gemini-quota|remainingPercent|gemini\.remaining/);
 
 assert.match(zh['gemini.connected'], /數位助理/);
-assert.match(zh['gemini.freeQuotaNotice'], /免費 API 額度/);
+assert.match(zh['gemini.welcomeMessage'], /免費 API 額度/);
 assert.match(en['gemini.connected'], /digital assistant/i);
+assert.match(en['gemini.welcomeMessage'], /free Gemini API quota/i);
 assert.equal('gemini.remaining' in zh, false);
 assert.equal('gemini.remaining' in en, false);
 

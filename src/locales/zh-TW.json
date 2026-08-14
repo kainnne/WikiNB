@@ -84,7 +84,7 @@
   "gemini.back": "← 修改資料",
   "gemini.home": "← 首頁",
   "gemini.connected": "Kaine 數位助理已連線",
-  "gemini.freeQuotaNotice": "這項服務使用 Kaine 提供的 Gemini 免費 API 額度。為讓更多訪客能使用，我會優先提供簡短、重點式回答；如需細節，請一次指定一個最想深入的部分。",
+  "gemini.welcomeMessage": "你好，我是 Kaine 的數位助理。我會根據他公開的 WikiNB 筆記，簡短回答他的專案、經歷、技能與工作方式。這項服務使用 Kaine 提供的 Gemini 免費 API 額度，因此我會言簡意賅、直入重點，但會完整回答。你想先了解哪一部分？",
   "gemini.placeholder": "詢問關於 Kaine、他的作品或專業領域…",
   "gemini.send": "送出",
   "gemini.sending": "思考中…",
