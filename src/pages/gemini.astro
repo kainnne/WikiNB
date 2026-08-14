@@ -2,17 +2,14 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import '@fontsource/iansui/chinese-traditional-400.css';
 import '@fontsource/iansui/latin-400.css';
-
-const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title="Kainnne x Gemini" description="由公開 WikiNB 建構的 Kaine 數位助理">
   <div class="animate-fadeIn gemini-page">
-    <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div class="mb-5">
       <div>
         <h1 class="gemini-heading" data-i18n="gemini.title">Kainnne x Gemini</h1>
       </div>
-      <a href={base} class="btn-ghost shrink-0 text-sm" data-i18n="gemini.home">← 首頁</a>
     </div>
 
     <section id="gemini-unlock" class="gemini-card mx-auto max-w-xl p-5 sm:p-7">
@@ -20,9 +17,6 @@ const base = import.meta.env.BASE_URL;
         <h2 class="font-display text-xl font-bold text-berry-800" data-i18n="gemini.unlockTitle">
           解鎖訪客 AI
         </h2>
-        <p class="mt-2 text-sm leading-relaxed text-berry-600/75" data-i18n="gemini.unlockHint">
-          使用 Kaine 提供的 Gemini 免費 API；回答預設精簡，以節省共享額度
-        </p>
       </div>
 
       <form id="gemini-profile-form" class="space-y-4">
@@ -264,6 +258,7 @@ const base = import.meta.env.BASE_URL;
     box.appendChild(examples);
     line.appendChild(box);
     output.appendChild(line);
+    appendMessage(t('gemini.welcomeMessage'), 'assistant');
   }
 
   function openChat(session) {

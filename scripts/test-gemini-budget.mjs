@@ -34,18 +34,26 @@ assert.match(worker, /完整性優先於字數/);
 
 assert.match(page, /maxlength="1200"/);
 assert.match(page, /\['gemini\.example1', 'gemini\.example2', 'gemini\.example3'\]/);
-assert.doesNotMatch(page, /gemini\.welcomeMessage|gemini\.example4/);
+assert.match(
+  page,
+  /output\.appendChild\(line\);\s*appendMessage\(t\('gemini\.welcomeMessage'\), 'assistant'\)/,
+);
+assert.doesNotMatch(page, /gemini\.example4|gemini\.unlockHint|gemini\.home/);
 assert.doesNotMatch(page, /gemini-quota|remainingPercent|gemini\.remaining/);
 
-assert.equal(zh['gemini.connected'], 'Kaine 數位助理已連線');
+assert.equal(zh['gemini.connected'], '已連線');
+assert.match(zh['gemini.welcomeMessage'], /Kaine 的數位助理/);
 assert.equal(zh['gemini.example1'], '請簡短介紹 Kaine，以及他目前在做什麼。');
 assert.equal(zh['gemini.example2'], '請挑選 Kaine 的一個代表專案簡述。');
 assert.equal(zh['gemini.example3'], '根據 Kaine 的背景，提出一個可行的合作構想。');
-assert.match(en['gemini.connected'], /digital assistant/i);
-assert.equal('gemini.welcomeMessage' in zh, false);
-assert.equal('gemini.welcomeMessage' in en, false);
+assert.equal(en['gemini.connected'], 'Connected');
+assert.match(en['gemini.welcomeMessage'], /Kaine's digital assistant/);
 assert.equal('gemini.example4' in zh, false);
 assert.equal('gemini.example4' in en, false);
+assert.equal('gemini.unlockHint' in zh, false);
+assert.equal('gemini.unlockHint' in en, false);
+assert.equal('gemini.home' in zh, false);
+assert.equal('gemini.home' in en, false);
 assert.equal('gemini.remaining' in zh, false);
 assert.equal('gemini.remaining' in en, false);
 
