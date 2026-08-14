@@ -1537,16 +1537,6 @@ app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
   }
 });
 
-function listDirBasenames(dir, { max = 40, ext } = {}) {
-  if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir)
-    .filter((f) => !f.startsWith('.'))
-    .filter((f) => (ext ? f.endsWith(ext) : true))
-    .sort()
-    .slice(0, max);
-}
-
 function formatHistoryBlock(history) {
   if (!Array.isArray(history) || history.length === 0) return '';
   const lines = [];
@@ -1563,7 +1553,7 @@ function formatHistoryBlock(history) {
 }
 
 function buildCodexChatPrompt(message, history) {
-  const wikiFiles = listDirBasenames(path.join(PROJECT_ROOT, 'wiki'), { ext: '.md' });
+  const wikiFiles = collectWikiMdFiles();
 
   return `你是 Kainnne WikiNB 的 Codex 學習／提醒助理（本機 CLI）。
 
@@ -1575,7 +1565,7 @@ function buildCodexChatPrompt(message, history) {
 
 角色與風格：
 - 像正常、自由的 GPT：可延伸、舉例、教學、推測（推測請標明）
-- 需要時請讀 AGENTS.md、wiki/*.md
+- 需要時請讀 AGENTS.md、wiki/**/*.md；先依檔名、標題與摘要縮小範圍，再讀相關頁面
 - 只有真的沒資訊時才說不知道
 - 使用繁體中文；可用 Markdown
 

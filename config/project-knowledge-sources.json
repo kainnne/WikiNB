@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "purpose": "Track curated project sources for incremental WikiNB updates. Inclusion does not mean raw content is safe to publish.",
+  "discovery": {
+    "root": "..",
+    "ignore": ["AGENTS_Intro", "WikiNB"]
+  },
+  "sources": [
+    {
+      "id": "personal-portal",
+      "root": "../resume-website",
+      "files": ["README.md", "src/projects.json", "src/content/about.md"]
+    },
+    {
+      "id": "lumareader",
+      "root": "../Kainnne-LumaReader",
+      "files": ["README.md", "docs/HANDOFF.md"]
+    },
+    {
+      "id": "wikinb",
+      "root": ".",
+      "files": ["README.md", "docs/ecosystem.md", "docs/local-codex-bridge.md", "worker/index.js", "bridge/server.js"]
+    },
+    {
+      "id": "scopecut",
+      "root": "../ScopeCut",
+      "files": ["README.md"]
+    },
+    {
+      "id": "musicmatch",
+      "root": "../MusicMatch",
+      "files": ["README.md"]
+    },
+    {
+      "id": "geo-automation",
+      "root": "../Kainnne-GEO-Automation",
+      "files": ["README.md"]
+    },
+    {
+      "id": "forms-landing",
+      "root": "../Kainnne-Forms-Landing",
+      "files": ["README.md"]
+    },
+    {
+      "id": "wikinb-kcis",
+      "root": "../WikiNB_for_KCIS",
+      "files": ["README.md"]
+    },
+    {
+      "id": "wikinb-enterprise",
+      "root": "../WikiNB_Enterprise",
+      "files": ["README.md"]
+    },
+    {
+      "id": "house-price-regression",
+      "root": "../house_price_project",
+      "files": ["README.md"]
+    },
+    {
+      "id": "customer-message-classification",
+      "root": "../Eazy_LLMv1",
+      "files": ["customer_llm_experiment.ipynb"]
+    },
+    {
+      "id": "python-foundations",
+      "root": "../Python practice",
+      "files": ["day1.py", "day2.py", "day3.py", "day4.py", "day5.py", "day6.py", "day6_solution.py", "day7.py"]
+    },
+    {
+      "id": "ai-workshop",
+      "root": "../claude_class_0807",
+      "files": [
+        "00_請由此開啟_工作坊完成成果/README.md",
+        "00_請由此開啟_工作坊完成成果/00_我們實際做了什麼.md"
+      ]
+    },
+    {
+      "id": "ambient-ai",
+      "root": "../ScopeCut_Projects/ambient-ai",
+      "files": ["README.md"]
+    },
+    {
+      "id": "visual-novel-production-system",
+      "root": "../ScopeCut_Projects/visual-novel-production-sop",
+      "files": ["README.md"]
+    },
+    {
+      "id": "moonbase-contractor",
+      "root": "../ScopeCut_Projects/moonbase-contractor-renpy",
+      "files": ["README.md", "HANDOFF.md"]
+    }
+  ]
+}

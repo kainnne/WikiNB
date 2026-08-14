@@ -12,4 +12,6 @@ bridge/.env
 帳號密碼.md
 wiki/.obsidian/
 wiki/.trash/
-
+.wikinb-sync/
+# `agents install` 的私人中央規則副本；保留在本機，不發布到公開 WikiNB。
+/AGENTS_Intro/

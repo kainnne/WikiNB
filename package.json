@@ -8,6 +8,9 @@
     "postbuild": "node scripts/generate-sitemap.mjs",
     "preview": "astro preview",
     "test": "node scripts/test-nav-auth-visibility.mjs",
+    "wiki:check": "node scripts/validate-wiki-links.mjs",
+    "knowledge:scan": "node scripts/project-knowledge-scan.mjs",
+    "knowledge:baseline": "node scripts/project-knowledge-scan.mjs --write-state",
     "bridge:install": "npm install --prefix bridge",
     "bridge": "npm run start --prefix bridge",
     "bridge:dev": "npm run dev --prefix bridge"
