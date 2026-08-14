@@ -32,15 +32,47 @@ const current = {};
 const missing = [];
 const repositories = {};
 
-function gitOutput(root, args) {
+function gitBuffer(root, args) {
   try {
     return childProcess.execFileSync('git', ['-C', root, ...args], {
-      encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim();
+      maxBuffer: 64 * 1024 * 1024,
+    });
   } catch {
     return null;
   }
+}
+
+function gitOutput(root, args) {
+  const output = gitBuffer(root, args);
+  return output ? output.toString('utf8').trim() : null;
+}
+
+function worktreeFingerprint(root, status) {
+  const hash = crypto.createHash('sha256').update(status);
+  for (const args of [
+    ['diff', '--no-ext-diff', '--binary', '--no-color'],
+    ['diff', '--cached', '--no-ext-diff', '--binary', '--no-color'],
+  ]) {
+    const diff = gitBuffer(root, args);
+    if (diff) hash.update(diff);
+  }
+
+  const untrackedOutput = gitBuffer(root, ['ls-files', '--others', '--exclude-standard', '-z']);
+  const untracked = untrackedOutput
+    ? untrackedOutput.toString('utf8').split('\0').filter(Boolean).sort()
+    : [];
+  for (const relativeFile of untracked) {
+    const absoluteFile = path.resolve(root, relativeFile);
+    if (!absoluteFile.startsWith(`${root}${path.sep}`)) continue;
+    try {
+      const stat = fs.statSync(absoluteFile);
+      hash.update(`${relativeFile}\0${stat.size}\0${stat.mtimeMs}\0`);
+    } catch {
+      hash.update(`${relativeFile}\0missing\0`);
+    }
+  }
+  return hash.digest('hex');
 }
 
 const discoveryRoot = path.resolve(projectRoot, config.discovery?.root || '..');
@@ -64,11 +96,11 @@ for (const source of config.sources || []) {
   const sourceRoot = path.resolve(projectRoot, source.root);
   const head = gitOutput(sourceRoot, ['rev-parse', 'HEAD']);
   if (head) {
-    const status = gitOutput(sourceRoot, ['status', '--porcelain=v1', '--untracked-files=normal']) || '';
+    const status = gitOutput(sourceRoot, ['status', '--porcelain=v1', '--untracked-files=all']) || '';
     repositories[source.id] = {
       source: source.id,
       head,
-      worktreeSha256: crypto.createHash('sha256').update(status).digest('hex'),
+      worktreeSha256: worktreeFingerprint(sourceRoot, status),
       changedEntryCount: status ? status.split('\n').length : 0,
     };
   }
