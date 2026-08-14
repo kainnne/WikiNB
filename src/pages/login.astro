@@ -1,66 +1,88 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PublicDreamBackdrop from '../components/PublicDreamBackdrop.astro';
 
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="登入" description="帳號密碼與 Email 驗證碼登入 WikiNB">
-  <div class="animate-fadeIn mx-auto max-w-md">
-    <h1 class="font-display text-3xl font-bold text-berry-800">登入</h1>
+<BaseLayout
+  title="Kaine 登入"
+  description="僅供 Kaine 管理 WikiNB 使用的安全登入入口"
+  pageClass="public-wiki-page owner-login-page"
+  visitorNav={true}
+  publicSection="login"
+>
+  <PublicDreamBackdrop />
+  <div class="owner-login-shell animate-fadeIn">
+    <header class="owner-login-intro">
+      <span class="owner-access-mark" aria-hidden="true">K</span>
+      <p class="owner-access-kicker">OWNER ACCESS</p>
+      <h1 id="owner-login-title">Kaine 登入</h1>
+      <p>此入口僅供 Kaine 管理 WikiNB 使用，訪客不需要管理者帳號。</p>
+    </header>
 
-    <div id="bridge-offline" class="glass-card mt-6 hidden border border-amber-200 bg-amber-50/50 p-4 text-sm text-amber-900">
+    <div id="bridge-offline" class="owner-login-notice hidden" role="status">
       本機 Bridge 未連線。請確認 Mac 已開機且 Bridge 正在執行（<code>npm run bridge</code>）。
     </div>
 
-    <div class="glass-card mt-8 p-6 md:p-8">
+    <section class="owner-login-card" aria-labelledby="owner-login-title">
       <div id="step-credentials">
-        <label class="mb-2 block text-sm font-semibold text-berry-700">帳號</label>
+        <div class="owner-login-step-heading">
+          <span>01</span>
+          <strong>帳號驗證</strong>
+        </div>
+        <label for="input-username">帳號</label>
         <input
           id="input-username"
           type="text"
           autocomplete="username"
-          class="search-input"
+          class="search-input owner-login-input"
           placeholder="帳號"
         />
-        <label class="mb-2 mt-4 block text-sm font-semibold text-berry-700">密碼</label>
+        <label for="input-password">密碼</label>
         <input
           id="input-password"
           type="password"
           autocomplete="current-password"
-          class="search-input"
+          class="search-input owner-login-input"
           placeholder="密碼"
         />
-        <button id="btn-send-code" type="button" class="btn-primary mt-4 w-full justify-center">
+        <button id="btn-send-code" type="button" class="btn-primary owner-login-primary">
           登入並寄送驗證碼
         </button>
-        <p id="login-error" class="mt-2 hidden text-center text-sm text-red-600" role="alert"></p>
+        <p id="login-error" class="owner-login-message is-error hidden" role="alert"></p>
       </div>
 
-      <div id="step-verify" class="mt-6 hidden">
-        <label class="mb-2 block text-sm font-semibold text-berry-700">輸入 6 位數驗證碼</label>
+      <div id="step-verify" class="owner-login-verify hidden">
+        <div class="owner-login-step-heading">
+          <span>02</span>
+          <strong>Email 驗證碼</strong>
+        </div>
+        <label for="input-code">輸入 6 位數驗證碼</label>
         <input
           id="input-code"
           type="text"
           inputmode="numeric"
           maxlength="6"
-          class="search-input text-center text-2xl tracking-[0.4em]"
+          class="search-input owner-login-input owner-login-code"
           placeholder="000000"
         />
-        <button id="btn-verify" type="button" class="btn-primary mt-4 w-full justify-center">
+        <button id="btn-verify" type="button" class="btn-primary owner-login-primary">
           驗證並登入
         </button>
-        <button id="btn-resend-code" type="button" class="btn-ghost mt-3 w-full justify-center text-sm">
+        <button id="btn-resend-code" type="button" class="btn-ghost owner-login-secondary">
           重新寄送驗證碼
         </button>
-        <p id="verify-error" class="mt-2 hidden text-center text-sm text-red-600" role="alert"></p>
+        <p id="verify-error" class="owner-login-message is-error hidden" role="alert"></p>
       </div>
 
-      <p id="login-status" class="mt-4 text-center text-sm text-berry-600/80"></p>
-    </div>
+      <p id="login-status" class="owner-login-message" aria-live="polite"></p>
+    </section>
 
-    <p class="mt-6 text-center">
-      <a href={base} class="text-sm font-semibold text-pink-600 hover:text-pink-700">← 回到首頁</a>
-    </p>
+    <nav class="owner-login-actions" aria-label="其他入口">
+      <a href={`${base}gemini`} class="owner-login-guest">訪客請前往 Gemini 助理</a>
+      <a href={base} class="owner-login-home">返回公開首頁</a>
+    </nav>
   </div>
 </BaseLayout>
 
@@ -195,7 +217,304 @@ const base = import.meta.env.BASE_URL;
 </script>
 
 <style>
+  :global(body.owner-login-page main) {
+    min-height: 100vh;
+  }
+
+  .owner-login-shell {
+    width: min(100%, 36rem);
+    margin-inline: auto;
+  }
+
+  .owner-login-intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .owner-access-mark {
+    display: grid;
+    place-items: center;
+    width: 4.3rem;
+    height: 4.3rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.84);
+    border-radius: 1.45rem;
+    background: linear-gradient(135deg, rgba(205, 220, 255, 0.94), rgba(246, 200, 255, 0.94) 42%, rgba(255, 183, 206, 0.92) 72%, rgba(201, 255, 240, 0.86));
+    color: #482039;
+    box-shadow:
+      0 18px 44px rgba(156, 78, 143, 0.17),
+      inset 0 1px rgba(255, 255, 255, 0.88);
+    font-family: Comfortaa, Quicksand, sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+  }
+
+  .owner-access-kicker {
+    color: rgba(92, 42, 74, 0.58);
+    font-family: Quicksand, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+  }
+
+  .owner-login-intro h1 {
+    margin-top: 0.45rem;
+    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 72%, #5eead4 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: clamp(2.15rem, 7vw, 3.25rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 1.12;
+  }
+
+  .owner-login-intro > p:last-child {
+    max-width: 28rem;
+    margin-top: 0.8rem;
+    color: rgba(74, 32, 56, 0.7);
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+
+  .owner-login-notice {
+    margin-top: 1.4rem;
+    border: 1px solid rgba(251, 191, 36, 0.34);
+    border-radius: 1.25rem;
+    padding: 0.9rem 1rem;
+    background: rgba(255, 251, 235, 0.66);
+    color: #7c4a18;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(18px);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .owner-login-notice code {
+    border-radius: 0.4rem;
+    padding: 0.08rem 0.32rem;
+    background: rgba(255, 255, 255, 0.56);
+  }
+
+  .owner-login-card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    margin-top: 1.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    border-radius: 2rem;
+    padding: clamp(1.45rem, 5vw, 2.35rem);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 250, 253, 0.54));
+    box-shadow:
+      0 30px 90px rgba(103, 59, 94, 0.15),
+      inset 0 1px rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(28px) saturate(1.3);
+  }
+
+  .owner-login-card::before {
+    content: '';
+    position: absolute;
+    right: -6rem;
+    bottom: -7rem;
+    z-index: -1;
+    width: 15rem;
+    height: 15rem;
+    border-radius: 50%;
+    background: rgba(201, 255, 240, 0.42);
+    filter: blur(3.2rem);
+  }
+
+  .owner-login-step-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.2rem;
+    color: #4a2038;
+  }
+
+  .owner-login-step-heading span {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.76);
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, rgba(205, 220, 255, 0.7), rgba(255, 206, 226, 0.7));
+    color: #7d4b70;
+    font-family: Quicksand, sans-serif;
+    font-size: 0.66rem;
+    font-weight: 800;
+  }
+
+  .owner-login-step-heading strong {
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+  }
+
+  .owner-login-card label {
+    display: block;
+    margin: 1rem 0 0.45rem;
+    color: #4a2038;
+    font-family: Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .owner-login-input {
+    min-height: 3.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.86);
+    border-radius: 1.15rem;
+    padding-inline: 1.05rem;
+    background: rgba(255, 255, 255, 0.62);
+    color: #4a2038;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.82);
+  }
+
+  .owner-login-input:focus {
+    border-color: rgba(183, 148, 255, 0.52);
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow:
+      0 0 0 0.25rem rgba(183, 148, 255, 0.1),
+      inset 0 1px rgba(255, 255, 255, 0.9);
+  }
+
+  .owner-login-code {
+    text-align: center;
+    font-size: 1.35rem;
+    letter-spacing: 0.32em;
+  }
+
+  .owner-login-primary,
   .btn-sent {
-    @apply inline-flex w-full cursor-default items-center justify-center gap-2 rounded-full bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 px-6 py-2.5 font-display font-semibold text-white shadow-[0_0_20px_rgba(0,0,0,0.25)];
+    position: relative;
+    display: inline-flex;
+    width: 100%;
+    min-height: 3.55rem;
+    justify-content: center;
+    margin-top: 1.15rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.84);
+    border-radius: 1.15rem;
+    padding: 0.75rem 1.2rem;
+    background: linear-gradient(120deg, rgba(205, 220, 255, 0.94), rgba(246, 200, 255, 0.96) 36%, rgba(255, 183, 206, 0.94) 68%, rgba(201, 255, 240, 0.88));
+    color: #482039;
+    box-shadow:
+      0 12px 30px rgba(156, 78, 143, 0.17),
+      inset 0 1px rgba(255, 255, 255, 0.82);
+    font-family: Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 800;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .owner-login-primary:not(:disabled):hover,
+  .owner-login-primary:not(:disabled):focus-visible {
+    transform: translateY(-0.18rem);
+    box-shadow:
+      0 18px 42px rgba(156, 78, 143, 0.24),
+      inset 0 1px rgba(255, 255, 255, 0.9);
+  }
+
+  .owner-login-primary:disabled,
+  .btn-sent:disabled {
+    cursor: wait;
+    opacity: 0.72;
+    transform: none;
+  }
+
+  .owner-login-secondary {
+    width: 100%;
+    min-height: 3.2rem;
+    justify-content: center;
+    margin-top: 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.46);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.74);
+  }
+
+  .owner-login-verify {
+    margin-top: 1.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.72);
+    padding-top: 1.5rem;
+  }
+
+  .owner-login-message {
+    min-height: 0;
+    margin-top: 0.8rem;
+    color: rgba(74, 32, 56, 0.66);
+    font-size: 0.76rem;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  .owner-login-message.is-error {
+    color: #be365f;
+  }
+
+  .owner-login-actions {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 0.65rem;
+    margin-top: 1rem;
+  }
+
+  .owner-login-actions a {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.76);
+    border-radius: 1rem;
+    padding: 0.7rem 0.9rem;
+    color: #4a2038;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.74);
+    font-family: Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-align: center;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .owner-login-guest {
+    background: linear-gradient(120deg, rgba(218, 205, 255, 0.52), rgba(255, 206, 226, 0.48));
+  }
+
+  .owner-login-home {
+    background: rgba(255, 255, 255, 0.44);
+  }
+
+  .owner-login-actions a:hover,
+  .owner-login-actions a:focus-visible {
+    transform: translateY(-0.14rem);
+    background-color: rgba(255, 255, 255, 0.7);
+    box-shadow:
+      0 12px 28px rgba(103, 59, 94, 0.12),
+      inset 0 1px rgba(255, 255, 255, 0.82);
+  }
+
+  @media (max-width: 480px) {
+    .owner-login-card {
+      border-radius: 1.55rem;
+    }
+
+    .owner-login-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .owner-login-primary,
+    .owner-login-actions a {
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  .btn-sent {
+    cursor: default;
   }
 </style>

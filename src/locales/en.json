@@ -1,5 +1,7 @@
 {
   "nav.login": "Log in",
+  "nav.ownerLogin": "Kaine login",
+  "nav.guestAi": "Guest AI",
   "nav.logout": "Log out",
   "nav.lang": "中文",
   "nav.langTitle": "切換為繁體中文",

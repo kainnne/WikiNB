@@ -3,12 +3,16 @@ import sites from '../../config/sites.json';
 
 interface Props {
   visitorNav?: boolean;
+  publicSection?: 'wiki' | 'gemini' | 'login';
 }
 
-const { visitorNav = false } = Astro.props;
+const { visitorNav = false, publicSection = 'wiki' } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const meUrl = sites.sites.me.url;
 const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
+const loginLabel = visitorNav ? 'Kaine 登入' : '登入';
+const loginI18nKey = visitorNav ? 'nav.ownerLogin' : 'nav.login';
+const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSection === 'login';
 ---
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
@@ -19,11 +23,32 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
-      <a id="nav-wikinb" href={`${base}search`} class="nav-wikinb">
+      <a
+        id="nav-wikinb"
+        href={`${base}search`}
+        class:list={[
+          'nav-wikinb',
+          visitorNav && 'nav-public-link',
+          visitorNav && (publicSection === 'wiki' ? 'is-public-active' : 'is-public-muted'),
+        ]}
+      >
         <span class="nav-wikinb-label">WikiNB</span>
       </a>
-      <a id="nav-gemini" href={`${base}gemini`} class="nav-gemini">
-        <span class="nav-gemini-label">Kainnne x Gemini</span>
+      <a
+        id="nav-gemini"
+        href={`${base}gemini`}
+        class:list={[
+          'nav-gemini',
+          visitorNav && 'nav-public-link',
+          visitorNav && (publicSection === 'gemini' ? 'is-public-active' : 'is-public-muted'),
+        ]}
+        data-guest-visible={showGuestAiNav ? 'true' : 'false'}
+        hidden={!showGuestAiNav}
+      >
+        <span
+          class="nav-gemini-label"
+          data-i18n={visitorNav ? 'nav.guestAi' : undefined}
+        >{visitorNav ? '訪客 AI' : 'Kainnne x Gemini'}</span>
       </a>
       <a id="nav-add-note" href={`${base}add-note`} class="nav-chroma" hidden aria-hidden="true">
         <span class="nav-chroma-label">+ md.</span>
@@ -47,7 +72,7 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
           <span class="nav-menu-bars" aria-hidden="true"></span>
         </button>
         <div id="nav-menu-panel" class="nav-menu-panel" hidden>
-          <a id="nav-login" href={`${base}login`} class="nav-menu-item" data-i18n="nav.login">登入</a>
+          <a id="nav-login" href={`${base}login`} class="nav-menu-item" data-i18n={loginI18nKey}>{loginLabel}</a>
           <a
             id="nav-about"
             href={meUrl}
@@ -505,7 +530,6 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
   }
 
   :global(body.home-page.home-guest) .brand-link,
-  :global(body.home-page.home-guest) #nav-gemini,
   :global(body.home-page.home-guest) #nav-logout {
     display: none !important;
   }
@@ -527,19 +551,34 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
   }
 
   :global(body.home-page.home-guest) #nav-wikinb,
+  :global(body.home-page.home-guest) #nav-gemini,
   :global(body.home-page.home-guest) #btn-lang,
   :global(body.home-page.home-guest) #nav-menu {
     flex: 0 0 auto;
   }
 
-  :global(body.home-page.home-guest) #nav-wikinb {
+  :global(body.home-page.home-guest) #nav-wikinb,
+  :global(body.home-page.home-guest) #nav-gemini {
     order: 1;
-    min-width: 6.6rem;
+    min-width: 5.8rem;
     min-height: 2.75rem;
     padding: 0 1.15rem;
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 1rem;
     color: #4a2038;
+    background: transparent;
+    box-shadow: none;
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.025em;
+  }
+
+  :global(body.home-page.home-guest) #nav-gemini {
+    order: 2;
+  }
+
+  :global(body.home-page.home-guest) #nav-wikinb.is-public-active,
+  :global(body.home-page.home-guest) #nav-gemini.is-public-active {
     background: linear-gradient(
       120deg,
       rgba(246, 200, 255, 0.82),
@@ -549,21 +588,33 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
     box-shadow:
       0 9px 24px rgba(164, 91, 148, 0.14),
       inset 0 1px rgba(255, 255, 255, 0.76);
-    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
-    font-size: 0.78rem;
-    letter-spacing: 0.025em;
+  }
+
+  :global(body.home-page.home-guest) #nav-wikinb.is-public-muted,
+  :global(body.home-page.home-guest) #nav-gemini.is-public-muted {
+    border-color: transparent;
+  }
+
+  :global(body.home-page.home-guest) #nav-gemini .nav-gemini-label {
+    background: none;
+    color: #5f3c54;
+    -webkit-text-fill-color: currentColor;
   }
 
   :global(body.home-page.home-guest) #nav-wikinb:hover,
-  :global(body.home-page.home-guest) #nav-wikinb:focus-visible {
+  :global(body.home-page.home-guest) #nav-wikinb:focus-visible,
+  :global(body.home-page.home-guest) #nav-gemini:hover,
+  :global(body.home-page.home-guest) #nav-gemini:focus-visible {
     transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.58);
+    background: rgba(255, 255, 255, 0.38);
     box-shadow:
       0 14px 30px rgba(164, 91, 148, 0.2),
       inset 0 1px rgba(255, 255, 255, 0.82);
   }
 
   :global(body.home-page.home-guest) #btn-lang {
-    order: 2;
+    order: 3;
     min-width: 6.6rem;
     min-height: 2.75rem;
     padding: 0 1rem;
@@ -585,7 +636,7 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
   }
 
   :global(body.home-page.home-guest) #nav-menu {
-    order: 3;
+    order: 4;
   }
 
   :global(body.home-page.home-guest) .nav-menu-btn {
@@ -661,10 +712,11 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
     }
 
     :global(body.home-page.home-guest) #nav-wikinb,
+    :global(body.home-page.home-guest) #nav-gemini,
     :global(body.home-page.home-guest) #btn-lang {
       min-width: 0;
       min-height: 2.55rem;
-      padding-inline: 0.85rem;
+      padding-inline: 0.72rem;
     }
 
     :global(body.home-page.home-guest) #nav-wikinb {

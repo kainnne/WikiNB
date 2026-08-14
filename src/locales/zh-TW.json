@@ -1,5 +1,7 @@
 {
   "nav.login": "登入",
+  "nav.ownerLogin": "Kaine 登入",
+  "nav.guestAi": "訪客 AI",
   "nav.logout": "登出",
   "nav.lang": "English",
   "nav.langTitle": "Switch to English",

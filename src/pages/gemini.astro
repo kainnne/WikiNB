@@ -1,21 +1,36 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PublicDreamBackdrop from '../components/PublicDreamBackdrop.astro';
 import '@fontsource/iansui/chinese-traditional-400.css';
 import '@fontsource/iansui/latin-400.css';
 ---
 
-<BaseLayout title="Kainnne x Gemini" description="由公開 WikiNB 建構的 Kaine 數位助理">
+<BaseLayout
+  title="Kainnne x Gemini"
+  description="由公開 WikiNB 建構的 Kaine 數位助理"
+  pageClass="public-wiki-page gemini-public-page"
+  visitorNav={true}
+  publicSection="gemini"
+>
+  <PublicDreamBackdrop />
   <div class="animate-fadeIn gemini-page">
-    <div class="mb-5">
-      <div>
-        <h1 class="gemini-heading" data-i18n="gemini.title">Kainnne x Gemini</h1>
-      </div>
-    </div>
+    <header class="gemini-product-lockup">
+      <span class="gemini-product-orbit" aria-hidden="true">
+        <i></i>
+        <i></i>
+        <i></i>
+      </span>
+      <h1 class="gemini-heading">
+        <span>Kainnne</span>
+        <span class="gemini-heading-cross" aria-hidden="true">×</span>
+        <span>Gemini</span>
+      </h1>
+    </header>
 
     <section id="gemini-unlock" class="gemini-card mx-auto max-w-xl p-5 sm:p-7">
       <span class="gemini-unlock-glow gemini-unlock-glow-a" aria-hidden="true"></span>
       <span class="gemini-unlock-glow gemini-unlock-glow-b" aria-hidden="true"></span>
-      <div class="mb-5 text-center">
+      <div class="gemini-unlock-heading">
         <h2 class="font-display text-xl font-bold text-berry-800" data-i18n="gemini.unlockTitle">
           解鎖訪客 AI
         </h2>
@@ -407,18 +422,96 @@ import '@fontsource/iansui/latin-400.css';
 </script>
 
 <style>
+  :global(body.gemini-public-page main) {
+    max-width: 72rem;
+  }
+
   .gemini-page {
+    width: min(100%, 68rem);
+    margin-inline: auto;
     font-family: 'Iansui', 'Noto Sans TC', sans-serif;
   }
 
+  .gemini-product-lockup {
+    position: relative;
+    display: flex;
+    min-height: clamp(8rem, 17vw, 11rem);
+    align-items: center;
+    justify-content: center;
+    margin-bottom: clamp(1rem, 3vw, 1.8rem);
+    text-align: center;
+  }
+
+  .gemini-product-orbit {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: clamp(9.5rem, 24vw, 14rem);
+    height: clamp(4.8rem, 12vw, 7rem);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotate(-9deg);
+    box-shadow:
+      0 0 0 0.7rem rgba(255, 255, 255, 0.12),
+      inset 0 1px rgba(255, 255, 255, 0.68);
+    pointer-events: none;
+  }
+
+  .gemini-product-orbit i {
+    position: absolute;
+    width: 0.5rem;
+    height: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.84);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8cb5ff, #ff9fb8);
+    box-shadow: 0 5px 15px rgba(123, 97, 255, 0.24);
+  }
+
+  .gemini-product-orbit i:nth-child(1) {
+    left: 8%;
+    top: 58%;
+  }
+
+  .gemini-product-orbit i:nth-child(2) {
+    right: 11%;
+    top: 18%;
+    background: linear-gradient(135deg, #ff9fb8, #75dec9);
+  }
+
+  .gemini-product-orbit i:nth-child(3) {
+    bottom: 2%;
+    left: 58%;
+    width: 0.35rem;
+    height: 0.35rem;
+    background: #fff;
+  }
+
   .gemini-heading {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: clamp(0.45rem, 1.4vw, 0.9rem);
+    margin: 0;
     font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
-    font-size: clamp(1.8rem, 5vw, 2.7rem);
+    font-size: clamp(2.15rem, 6vw, 4.25rem);
     font-weight: 700;
     background: linear-gradient(105deg, #4285f4 0%, #9b72cb 38%, #d96570 67%, #34a853 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    letter-spacing: -0.055em;
+    line-height: 1;
+    filter: drop-shadow(0 14px 32px rgba(123, 97, 255, 0.13));
+  }
+
+  .gemini-heading-cross {
+    color: rgba(116, 83, 112, 0.46);
+    font-family: Quicksand, sans-serif;
+    font-size: 0.56em;
+    font-weight: 500;
+    -webkit-text-fill-color: rgba(116, 83, 112, 0.46);
   }
 
   .gemini-card,
@@ -497,6 +590,13 @@ import '@fontsource/iansui/latin-400.css';
     filter: drop-shadow(0 9px 20px rgba(155, 114, 203, 0.14));
   }
 
+  .gemini-unlock-heading {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.4rem;
+    text-align: center;
+  }
+
   #gemini-unlock form {
     position: relative;
     z-index: 1;
@@ -544,6 +644,17 @@ import '@fontsource/iansui/latin-400.css';
     box-shadow:
       0 12px 30px rgba(156, 78, 143, 0.17),
       inset 0 1px rgba(255, 255, 255, 0.8);
+    font-family: Quicksand, 'Noto Sans TC', sans-serif;
+    letter-spacing: 0.015em;
+  }
+
+  #gemini-unlock .gemini-primary::after {
+    content: '→';
+    margin-left: 0.65rem;
+    font-family: sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: transform 0.2s ease;
   }
 
   #gemini-unlock .gemini-primary:hover:not(:disabled),
@@ -553,6 +664,11 @@ import '@fontsource/iansui/latin-400.css';
     box-shadow:
       0 18px 40px rgba(156, 78, 143, 0.24),
       inset 0 1px rgba(255, 255, 255, 0.9);
+  }
+
+  #gemini-unlock .gemini-primary:hover:not(:disabled)::after,
+  #gemini-unlock .gemini-primary:focus-visible:not(:disabled)::after {
+    transform: translateX(0.22rem);
   }
 
   #gemini-unlock #gemini-back {
@@ -843,6 +959,16 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   @media (max-width: 520px) {
+    .gemini-product-lockup {
+      min-height: 7rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .gemini-heading {
+      gap: 0.4rem;
+      font-size: clamp(1.9rem, 10vw, 2.45rem);
+    }
+
     #gemini-unlock {
       border-radius: 1.55rem;
       padding: 1.4rem;

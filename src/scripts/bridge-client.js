@@ -317,7 +317,10 @@ export function mountNavAuth() {
     if (githubLink) githubLink.classList.toggle('hidden', loggedIn);
 
     // 訪客專屬：Kainnne x Gemini 與右上角下拉選單（登入後改用 Codex / 登出）
-    if (geminiLink) geminiLink.hidden = loggedIn;
+    if (geminiLink) {
+      const guestVisible = geminiLink.dataset.guestVisible !== 'false';
+      geminiLink.hidden = loggedIn || !guestVisible;
+    }
     if (guestMenu) {
       guestMenu.hidden = loggedIn;
       if (loggedIn) {

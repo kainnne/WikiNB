@@ -10,10 +10,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [homePage, header, geminiPage, searchPage, wikiPage, notFoundPage, baseLayout, backdrop] = await Promise.all([
+const [homePage, header, geminiPage, loginPage, searchPage, wikiPage, notFoundPage, baseLayout, backdrop] = await Promise.all([
   readFile(new URL('../src/pages/index.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/Header.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/login.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/search.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/wiki/[...slug].astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/404.astro', import.meta.url), 'utf8'),
@@ -130,20 +131,22 @@ assert.equal(isLoggedIn(), false);
 assert.equal(syncCtas(ctas), false);
 assertAllHidden(ctas, '登出後');
 
-// 6. 訪客首頁有獨立首屏；搜尋表單仍保留給登入後工作模式，Gemini 頁不改版。
+// 6. 訪客首頁有獨立首屏；搜尋表單仍保留給登入後工作模式。
 assert.match(homePage, /id="guest-home-hero"/);
 assert.match(homePage, /id="home-gemini-btn"/);
 assert.match(homePage, /id="member-home-hero"[^>]*hidden/);
 assert.match(homePage, /<HomeSearch dualMode=\{true\} \/>/);
 assert.match(homePage, /document\.body\.classList\.toggle\('home-guest', !loggedIn\)/);
 assert.match(header, /#nav-wikinb[\s\S]*order: 1/);
-assert.match(header, /#btn-lang[\s\S]*order: 2/);
-assert.match(header, /#nav-menu[\s\S]*order: 3/);
+assert.match(header, /#nav-gemini[\s\S]*order: 2/);
+assert.match(header, /#btn-lang[\s\S]*order: 3/);
+assert.match(header, /#nav-menu[\s\S]*order: 4/);
 assert.doesNotMatch(geminiPage, /guest-home-hero|home-atmosphere|home-gemini-btn/);
 
-// 7. 公開搜尋、文章與 404 共用訪客視覺；Gemini 只調整解鎖卡，不改聊天區結構。
+// 7. 公開搜尋、文章、登入、Gemini 與 404 共用訪客視覺。
 assert.match(baseLayout, /visitorNav\?: boolean/);
-assert.match(baseLayout, /<Header visitorNav=\{visitorNav\} \/>/);
+assert.match(baseLayout, /publicSection\?: 'wiki' \| 'gemini' \| 'login'/);
+assert.match(baseLayout, /<Header visitorNav=\{visitorNav\} publicSection=\{publicSection\} \/>/);
 assert.match(backdrop, /class="public-dream-backdrop"/);
 assert.match(backdrop, /body\.public-wiki-page/);
 for (const source of [searchPage, wikiPage, notFoundPage]) {
@@ -151,6 +154,18 @@ for (const source of [searchPage, wikiPage, notFoundPage]) {
   assert.match(source, /pageClass="public-wiki-page"/);
   assert.match(source, /visitorNav=\{true\}/);
 }
+for (const source of [loginPage, geminiPage]) {
+  assert.match(source, /<PublicDreamBackdrop \/>/);
+  assert.match(source, /pageClass="public-wiki-page/);
+  assert.match(source, /visitorNav=\{true\}/);
+}
+assert.match(loginPage, /publicSection="login"/);
+assert.match(loginPage, /此入口僅供 Kaine 管理 WikiNB 使用/);
+assert.match(loginPage, /訪客請前往 Gemini 助理/);
+assert.match(header, /nav\.ownerLogin/);
+assert.match(header, /data-guest-visible/);
+assert.match(geminiPage, /publicSection="gemini"/);
+assert.match(geminiPage, /class="gemini-product-lockup"/);
 assert.match(geminiPage, /class="gemini-unlock-glow gemini-unlock-glow-a"/);
 assert.match(geminiPage, /#gemini-unlock \.search-input/);
 assert.match(geminiPage, /<section id="gemini-chat" class="gemini-window hidden">/);
