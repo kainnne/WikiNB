@@ -8,6 +8,7 @@
 
 目前最具代表性的單一專案是 **LumaReader**。若要完整理解我的工作方向，可再依序閱讀 GEO、ScopeCut、CodexRules／agents CLI 與 WikiNB；這些專案已形成明確功能或可重複使用的工作方法。
 
+- [[Projects/project-overview]] — 目前公開的主要專案與能力總覽
 - [[Projects/Products/kainnne-lumareader]] — 本機優先 Markdown 閱讀器
 - [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性稽核流程
 - [[Projects/Workflow/scopecut]] — 將模糊點子轉成 Codex Project Contract
@@ -37,9 +38,7 @@
 
 ### 創作與遊戲
 
-- [[Projects/Creative/moonbase-contractor]] — 《被退婚後，我承包了整座月球》Ren’Py 視覺小說
 - [[Projects/Creative/visual-novel-production-system]] — 視覺小說模組化製作 SOP
-- [[Projects/2026-08-03-zhuxi-reincarnation-renpy]] — 朱璽轉生錄原型 Project Contract
 
 ## 關於我
 

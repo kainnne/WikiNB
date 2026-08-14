@@ -406,7 +406,7 @@ async function dailyUsage(env, email) {
 
 async function loadWikiPages(env) {
   const cache = caches.default;
-  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v4');
+  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v5');
   const cached = await cache.match(cacheKey);
   if (cached) return cached.json();
 
@@ -467,10 +467,14 @@ const REPRESENTATIVE_PROJECT_SLUGS = [
   'Projects/Knowledge/wikinb',
 ];
 
+const PROJECT_OVERVIEW_SLUG = 'Projects/project-overview';
+
 const EXCLUDED_PUBLIC_SLUGS = new Set([
   'projects/products/musicmatch',
   'projects/products/ambient-ai',
   'projects/machine-learning/house-price-regression',
+  'projects/creative/moonbase-contractor',
+  'projects/2026-08-03-zhuxi-reincarnation-renpy',
 ]);
 
 function normalizedQuestion(text) {
@@ -489,6 +493,14 @@ function asksForBroadProfile(question) {
   const text = normalizedQuestion(question);
   return /目前在做|工作方向|合作構想|背景|what (he|kaine) is working on|collaboration idea|background/i.test(
     text,
+  );
+}
+
+function asksForProjectOverview(question) {
+  const text = normalizedQuestion(question);
+  return (
+    /(所有|全部|完整).{0,8}(專案|作品)|專案.{0,6}(總覽|清單)|專案與能力/u.test(text) ||
+    /(list|overview).{0,16}(projects|work)|projects.{0,12}(capabilities|skills)/i.test(text)
   );
 }
 
@@ -516,37 +528,45 @@ function buildRelevantCorpus(pages, question, maxChars = 6500) {
   const findBySlug = (slug) =>
     availablePages.find((page) => String(page.slug || '').toLowerCase() === slug.toLowerCase());
 
+  const projectOverviewRequested = asksForProjectOverview(question);
+
   // 「一個代表專案」有明確編輯順位，避免讓目錄順序或泛用關鍵字
   // 把練習／未完成原型誤選成 Kaine 的代表作。
-  if (asksForOneRepresentativeProject(question)) {
+  if (projectOverviewRequested) {
+    add(findBySlug(PROJECT_OVERVIEW_SLUG));
+  } else if (asksForOneRepresentativeProject(question)) {
     add(findBySlug(REPRESENTATIVE_PROJECT_SLUGS[0]));
   } else if (asksForBroadProfile(question)) {
     add(findBySlug('AboutMe/02-software-development'));
     REPRESENTATIVE_PROJECT_SLUGS.slice(0, 3).forEach((slug) => add(findBySlug(slug)));
   }
 
-  ranked.filter((item) => item.score > 0).forEach((item) => add(item.page));
-  for (const slug of [
-    ...REPRESENTATIVE_PROJECT_SLUGS,
-    'AboutMe/02-software-development',
-    'AboutMe/03-ai-and-data',
-    'AboutMe/04-collaboration-and-workstyle',
-    'AboutMe/01-music',
-  ]) {
-    add(pages.find((page) => String(page.slug || '').toLowerCase() === slug.toLowerCase()));
+  if (!projectOverviewRequested) {
+    ranked.filter((item) => item.score > 0).forEach((item) => add(item.page));
+    for (const slug of [
+      ...REPRESENTATIVE_PROJECT_SLUGS,
+      'AboutMe/02-software-development',
+      'AboutMe/03-ai-and-data',
+      'AboutMe/04-collaboration-and-workstyle',
+      'AboutMe/01-music',
+    ]) {
+      add(findBySlug(slug));
+    }
+    ranked.forEach((item) => add(item.page));
   }
-  ranked.forEach((item) => add(item.page));
 
   const chunks = [];
   let used = 0;
   for (const page of selected) {
+    const excerptLength =
+      String(page.slug || '').toLowerCase() === PROJECT_OVERVIEW_SLUG.toLowerCase() ? 4000 : 1300;
     const piece = [
       '\n---',
       `筆記：${page.slug}`,
       `標題：${page.title || ''}`,
       `簡述：${page.description || ''}`,
       `關鍵字：${(page.tags || []).join('、')}`,
-      String(page.bodyText || '').slice(0, 1300),
+      String(page.bodyText || '').slice(0, excerptLength),
     ].join('\n');
     if (used + piece.length > maxChars) break;
     chunks.push(piece);
@@ -567,6 +587,7 @@ function systemPrompt(corpus) {
 回答規則：
 - 聚焦 Kaine 的經歷、專案、作品、技能、音樂、AI、軟體與工作方式；合理延伸要標示「延伸說明」。
 - 訪客未指定名稱而要求「一個代表專案」時，只介紹 LumaReader。若需要說明多個目前重點，依序優先使用 LumaReader、Kainnne GEO、ScopeCut、CodexRules／agents CLI 與 WikiNB。
+- 訪客要求條列所有／主要專案與能力時，以「Kaine 主要專案與能力總覽」為唯一權威來源；用分組短條列完整涵蓋頁面列出的項目，包含 agents CLI、LumaReader 與音樂能力，不逐項展開長篇技術細節。
 - 已撤下、僅供練習、未完成或不符合目前職涯主軸的內容，不得主動提及、推薦或用來推論 Kaine 的目前定位；只有這次檢索實際提供的公開筆記才能作為回答依據。
 - WikiNB 與 GEO 目前沒有自動排程；不得聲稱它們會每天自動更新、巡檢、修改或發布。更新與執行皆須由 Kaine 明確觸發並審閱。
 - 招募問題聚焦最有判斷價值的匹配優勢、主要落差與待面試確認事項。薪資若缺少地區、職級或即時市場資料，明說無法由 WikiNB 準確定價，不捏造行情。

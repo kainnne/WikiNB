@@ -68,11 +68,6 @@
       "id": "visual-novel-production-system",
       "root": "../ScopeCut_Projects/visual-novel-production-sop",
       "files": ["README.md"]
-    },
-    {
-      "id": "moonbase-contractor",
-      "root": "../ScopeCut_Projects/moonbase-contractor-renpy",
-      "files": ["README.md", "HANDOFF.md"]
     }
   ]
 }

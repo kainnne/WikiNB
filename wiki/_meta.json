@@ -68,16 +68,6 @@
     "description": "給 AI 看的協作方式，沒有到很重要",
     "tags": []
   },
-  "Projects/2026-08-03-zhuxi-reincarnation-renpy": {
-    "title": "朱璽轉生錄原型",
-    "description": "以 Ren'Py 製作玄幻轉生小說的可玩序章",
-    "tags": [
-      "玄幻小說",
-      "視覺小說",
-      "RenPy",
-      "互動敘事"
-    ]
-  },
   "Random/ai-output-verification": {
     "title": "如何驗證 AI 產出（避免無限循環）",
     "description": "面對主管「怎麼證明 AI 是對的」時，用規則、抽樣、金標準與確定性閘門建立可審計的驗證思維。",
