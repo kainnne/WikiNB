@@ -25,18 +25,18 @@
 
 為康橋國際學校設計的 AI 教學知識庫，包含教師筆記建立、學生教材閱讀、登入驗證、內容搜尋與 AI 問答等流程。
 
-- [查看 WikiNB-KCIS 專案完整筆記](https://zx50416.github.io/WikiNB/wiki/KCIS/WikiNB-KCIS/)
-- [GitHub Repository](https://github.com/zx50416/WikiNB-KCIS)
+- [查看 WikiNB-KCIS 專案完整筆記](https://wikinb.kainnne.com/wiki/KCIS/WikiNB-KCIS/)
+- [GitHub Repository](https://github.com/kainnne/WikiNB-KCIS)
 
 ### KCIS AI 導航網站
 
 依使用者身分、學段及需求，協助教師、行政與學生找到適合的 AI 工具。
 
-- [查看 KCIS AI 導航網站完整筆記](https://zx50416.github.io/WikiNB/wiki/KCIS/kcis-ai-navigation/)
-- [前往網站](https://zx50416.github.io/KCIS_AI_website/)
+- [查看 KCIS AI 導航網站完整筆記](https://wikinb.kainnne.com/wiki/KCIS/kcis-ai-navigation/)
+- [前往網站](https://kcis.kainnne.com/)
 
 ## 相關連結
 
-- [我的綜合作品知識庫](https://zx50416.github.io/WikiNB/)
-- [我的個人網站](https://zx50416.github.io/Me/)
-- [GitHub](https://github.com/zx50416)
+- [我的綜合作品知識庫](https://wikinb.kainnne.com/)
+- [我的個人網站](https://kainnne.com/)
+- [GitHub](https://github.com/kainnne)

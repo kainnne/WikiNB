@@ -40,7 +40,10 @@ const AUTH_EMAILS = (process.env.WIKINB_AUTH_EMAILS || 'chaos60649@gmail.com')
   .split(',')
   .map((e) => e.trim())
   .filter(Boolean);
-const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:4321,https://zx50416.github.io')
+const CORS_ORIGINS = (
+  process.env.CORS_ORIGINS ||
+  'http://localhost:4321,https://wikinb.kainnne.com,https://kainnne.github.io'
+)
   .split(',')
   .map((o) => o.trim());
 const DEV_LOG_CODE = process.env.DEV_LOG_CODE !== 'false';
@@ -60,10 +63,20 @@ const otpGuard = {
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const requestsPrivateNetwork =
+    req.headers['access-control-request-private-network'] === 'true';
+
+  if (requestsPrivateNetwork && origin && CORS_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  }
+  next();
+});
 app.use(
   cors({
     origin(origin, cb) {
-      if (!origin || CORS_ORIGINS.some((o) => origin === o || origin.startsWith(o))) {
+      if (!origin || CORS_ORIGINS.includes(origin)) {
         cb(null, true);
         return;
       }
@@ -557,7 +570,7 @@ async function runWikiSync() {
     if (token) {
       // Prefer token when provided; otherwise use Mac 既有 git 憑證
       pushEnv.GIT_ASKPASS = 'echo';
-      const remote = `https://x-access-token:${token}@github.com/zx50416/WikiNB.git`;
+      const remote = `https://x-access-token:${token}@github.com/kainnne/WikiNB.git`;
       await execFileAsync(GIT_BIN, ['push', remote, 'HEAD:main'], {
         cwd: PROJECT_ROOT,
         env: pushEnv,

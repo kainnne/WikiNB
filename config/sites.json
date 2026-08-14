@@ -7,14 +7,14 @@
     "me": {
       "name": "朱璽 · 個人網站",
       "localPath": "../resume-website",
-      "url": "https://zx50416.github.io/Me/",
-      "repo": "https://github.com/zx50416/Me",
+      "url": "https://kainnne.com/",
+      "repo": "https://github.com/kainnne/Me",
       "role": "對外展示能力與履歷"
     },
     "wikinb": {
       "name": "Kainnne",
-      "url": "https://zx50416.github.io/WikiNB/",
-      "repo": "https://github.com/zx50416/WikiNB",
+      "url": "https://wikinb.kainnne.com/",
+      "repo": "https://github.com/kainnne/WikiNB",
       "role": "筆記彙整與 AI 提醒助理"
     }
   },

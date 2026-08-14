@@ -14,7 +14,7 @@
 
 ---
 
-- [我的綜合作品知識庫](https://zx50416.github.io/WikiNB/)
-- [我的個人網站](https://zx50416.github.io/Me/)
-- [GitHub](https://github.com/zx50416)
+- [我的綜合作品知識庫](https://wikinb.kainnne.com/)
+- [我的個人網站](https://kainnne.com/)
+- [GitHub](https://github.com/kainnne)
 - [YouTube Music](https://music.youtube.com/playlist?list=OLAK5uy_mnNVxpjDw5dwcnLaquhOUxn_S_Jn6a46Q)

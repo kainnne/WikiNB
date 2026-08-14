@@ -107,6 +107,6 @@
 
 ## 專案連結
 
-- [前往康橋 AI 應用導航](https://zx50416.github.io/KCIS_AI_website/)
-- [GitHub Repository](https://github.com/zx50416/KCIS_AI_website)
-- [技術設計與實作紀錄](https://github.com/zx50416/KCIS_AI_website/blob/main/AGENT_TECHNICAL_DESIGN_LOG.md)
+- [前往康橋 AI 應用導航](https://kcis.kainnne.com/)
+- [GitHub Repository](https://github.com/kainnne/KCIS_AI_website)
+- [技術設計與實作紀錄](https://github.com/kainnne/KCIS_AI_website/blob/main/AGENT_TECHNICAL_DESIGN_LOG.md)

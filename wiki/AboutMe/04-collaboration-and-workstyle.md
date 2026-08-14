@@ -195,6 +195,6 @@
 
 ## 相關連結
 
-- [我的綜合作品知識庫](https://zx50416.github.io/WikiNB/)
-- [我的個人網站](https://zx50416.github.io/Me/)
-- [GitHub](https://github.com/zx50416)
+- [我的綜合作品知識庫](https://wikinb.kainnne.com/)
+- [我的個人網站](https://kainnne.com/)
+- [GitHub](https://github.com/kainnne)

@@ -54,10 +54,10 @@
 
 相關專案：
 
-- [康橋 AI Notebook](https://zx50416.github.io/WikiNB/wiki/KCIS/kcis-ai-navigation/)
-- [網站連結](https://zx50416.github.io/KCIS_AI_website/)
-- [WikiNB-KCIS Notebook](https://zx50416.github.io/WikiNB/wiki/KCIS/WikiNB-KCIS/)
-- [網站連結](https://zx50416.github.io/WikiNB-KCIS/)
+- [康橋 AI Notebook](https://wikinb.kainnne.com/wiki/KCIS/kcis-ai-navigation/)
+- [網站連結](https://kcis.kainnne.com/)
+- [WikiNB-KCIS Notebook](https://wikinb.kainnne.com/wiki/KCIS/WikiNB-KCIS/)
+- [網站連結](https://kainnne.github.io/WikiNB-KCIS/)
 
-- [我的綜合作品知識庫](https://zx50416.github.io/WikiNB/)
-- [GitHub](https://github.com/zx50416)
+- [我的綜合作品知識庫](https://wikinb.kainnne.com/)
+- [GitHub](https://github.com/kainnne)

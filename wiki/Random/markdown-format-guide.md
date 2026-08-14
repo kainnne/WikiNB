@@ -239,12 +239,12 @@ Markdown 中，段落之間要留一個空行。
 ## 11. 顯示網址本身
 
 ```md
-<https://github.com/zx50416>
+<https://github.com/kainnne>
 ```
 
 呈現效果：
 
-<https://github.com/zx50416>
+<https://github.com/kainnne>
 
 ---
 
@@ -632,8 +632,8 @@ AI Agent 開發
 ```md
 | 專案 | 類型 | 連結 |
 |---|---|---|
-| **WikiNB** | 知識庫 | [前往網站](https://zx50416.github.io/WikiNB/) |
-| **KCIS AI Navigator** | AI 工具導覽 | [前往網站](https://zx50416.github.io/KCIS_AI_website/) |
+| **WikiNB** | 知識庫 | [前往網站](https://wikinb.kainnne.com/) |
+| **KCIS AI Navigator** | AI 工具導覽 | [前往網站](https://kcis.kainnne.com/) |
 ```
 
 ---
@@ -756,8 +756,8 @@ Markdown 本身沒有正式註解語法，但可使用 HTML 註解：
 
 這是我的 [WikiNB][wikinb]。
 
-[github]: https://github.com/zx50416
-[wikinb]: https://zx50416.github.io/WikiNB/
+[github]: https://github.com/kainnne
+[wikinb]: https://wikinb.kainnne.com/
 ```
 
 ---

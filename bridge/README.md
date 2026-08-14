@@ -36,7 +36,7 @@ AUTO_GIT_PUSH=true
 | `WIKINB_AUTH_USER` / `WIKINB_AUTH_PASS` | 登入帳密 |
 | `WIKINB_AUTH_EMAILS` | 驗證碼收件信箱（預設只寄 `chaos60649@gmail.com`） |
 | `SMTP_USER` / `SMTP_PASS` | Gmail 應用程式密碼 |
-| `CORS_ORIGINS` | 含 `https://zx50416.github.io` |
+| `CORS_ORIGINS` | 含 `https://wikinb.kainnne.com`；保留本機與新 GitHub Pages origin |
 
 ## Codex
 

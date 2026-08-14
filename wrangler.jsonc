@@ -9,13 +9,13 @@
     "enabled": true
   },
   "vars": {
-    "ALLOWED_ORIGINS": "https://zx50416.github.io,http://localhost:4321",
+    "ALLOWED_ORIGINS": "https://wikinb.kainnne.com,https://kainnne.github.io,http://localhost:4321",
     "OWNER_EMAIL": "chaos60649@gmail.com",
     "SMTP_HOST": "smtp.gmail.com",
     "SMTP_PORT": "465",
     "SMTP_USER": "chaos60649@gmail.com",
     "SMTP_FROM": "chaos60649@gmail.com",
-    "WIKI_SEARCH_URL": "https://zx50416.github.io/WikiNB/search/",
+    "WIKI_SEARCH_URL": "https://wikinb.kainnne.com/search/",
     "GEMINI_MODEL": "gemini-flash-latest",
     "DAILY_TOKEN_LIMIT": "60000"
   },
