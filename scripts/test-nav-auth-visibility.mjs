@@ -8,6 +8,13 @@
  * Run: node scripts/test-nav-auth-visibility.mjs
  */
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+const [homePage, header, geminiPage] = await Promise.all([
+  readFile(new URL('../src/pages/index.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/components/Header.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
+]);
 
 function createSessionStorage() {
   const store = new Map();
@@ -117,5 +124,16 @@ clearSession();
 assert.equal(isLoggedIn(), false);
 assert.equal(syncCtas(ctas), false);
 assertAllHidden(ctas, '登出後');
+
+// 6. 訪客首頁有獨立首屏；搜尋表單仍保留給登入後工作模式，Gemini 頁不改版。
+assert.match(homePage, /id="guest-home-hero"/);
+assert.match(homePage, /id="home-gemini-btn"/);
+assert.match(homePage, /id="member-home-hero"[^>]*hidden/);
+assert.match(homePage, /<HomeSearch dualMode=\{true\} \/>/);
+assert.match(homePage, /document\.body\.classList\.toggle\('home-guest', !loggedIn\)/);
+assert.match(header, /#nav-wikinb[\s\S]*order: 1/);
+assert.match(header, /#btn-lang[\s\S]*order: 2/);
+assert.match(header, /#nav-menu[\s\S]*order: 3/);
+assert.doesNotMatch(geminiPage, /guest-home-hero|home-atmosphere|home-gemini-btn/);
 
 console.log('OK: + md. / Codex CTAs 只在 session token 存在時顯示');
