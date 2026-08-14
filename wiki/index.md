@@ -40,7 +40,6 @@
 
 ## 關於我
 
-- [[AboutMe/00-about-me]] — 我是誰
 - [[AboutMe/01-music]] — 音樂經歷
 - [[AboutMe/02-software-development]] — AI Agent 與軟體開發
 - [[AboutMe/03-ai-and-data]] — 機器學習與資料分析

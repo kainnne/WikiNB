@@ -68,11 +68,6 @@
     "description": "給 AI 看的協作方式，沒有到很重要",
     "tags": []
   },
-  "AboutMe/00-about-me": {
-    "title": "我是誰",
-    "description": "給 AI 看的我是誰",
-    "tags": []
-  },
   "Projects/2026-08-03-zhuxi-reincarnation-renpy": {
     "title": "朱璽轉生錄原型",
     "description": "以 Ren'Py 製作玄幻轉生小說的可玩序章",
