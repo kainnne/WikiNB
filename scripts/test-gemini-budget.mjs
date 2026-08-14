@@ -22,11 +22,12 @@ assert.match(worker, /function buildRelevantCorpus\(pages, question, maxChars = 
 assert.match(worker, /selected\.length >= 4/);
 assert.match(worker, /slice\(0, 1300\)/);
 assert.match(worker, /\.slice\(-4\)/);
-assert.match(worker, /maxOutputTokens: 600/);
+assert.doesNotMatch(worker, /maxOutputTokens:/);
 assert.match(worker, /thinkingLevel: 'minimal'/);
 assert.match(worker, /const retryable = \[500, 502, 503, 504\]/);
 assert.match(worker, /數位助理/);
 assert.match(worker, /節省免費 API 額度是必要限制/);
+assert.match(worker, /完整性優先於字數/);
 
 assert.match(page, /maxlength="1200"/);
 assert.match(page, /gemini\.freeQuotaNotice/);
