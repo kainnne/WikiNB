@@ -8,16 +8,20 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [worker, wrangler, page, zhText, enText] = await Promise.all([
+const [worker, wrangler, page, zhText, enText, sourcesText, wikiIndex, softwareProfile] = await Promise.all([
   readFile(new URL('../worker/index.js', import.meta.url), 'utf8'),
   readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/zh-TW.json', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/en.json', import.meta.url), 'utf8'),
+  readFile(new URL('../config/project-knowledge-sources.json', import.meta.url), 'utf8'),
+  readFile(new URL('../wiki/index.md', import.meta.url), 'utf8'),
+  readFile(new URL('../wiki/AboutMe/02-software-development.md', import.meta.url), 'utf8'),
 ]);
 
 const zh = JSON.parse(zhText);
 const en = JSON.parse(enText);
+const sources = JSON.parse(sourcesText);
 
 assert.match(worker, /function buildRelevantCorpus\(pages, question, maxChars = 6500\)/);
 assert.match(worker, /selected\.length >= 4/);
@@ -31,6 +35,20 @@ assert.match(worker, /const retryable = \[500, 502, 503, 504\]/);
 assert.match(worker, /數位助理/);
 assert.match(worker, /節省免費 API 額度是必要限制/);
 assert.match(worker, /完整性優先於字數/);
+assert.match(worker, /REPRESENTATIVE_PROJECT_SLUGS/);
+assert.match(worker, /EXCLUDED_PUBLIC_SLUGS/);
+assert.match(worker, /projects\/products\/musicmatch/);
+assert.match(worker, /projects\/products\/ambient-ai/);
+assert.match(worker, /projects\/machine-learning\/house-price-regression/);
+assert.match(worker, /只介紹 LumaReader/);
+assert.match(worker, /WikiNB 與 GEO 目前沒有自動排程/);
+assert.match(worker, /wiki-pages-v4/);
+
+const retiredSourceIds = new Set(['musicmatch', 'house-price-regression', 'ambient-ai']);
+assert.equal(sources.sources.some((source) => retiredSourceIds.has(source.id)), false);
+assert.match(wikiIndex, /目前最具代表性的單一專案是 \*\*LumaReader\*\*/);
+assert.doesNotMatch(wikiIndex, /MusicMatch|house-price-regression|ambient-ai/);
+assert.match(softwareProfile, /若只需要選一個代表專案，首選是 \*\*LumaReader\*\*/);
 
 assert.match(page, /maxlength="1200"/);
 assert.match(page, /\['gemini\.example1', 'gemini\.example2', 'gemini\.example3'\]/);

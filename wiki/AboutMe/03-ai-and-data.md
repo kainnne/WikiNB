@@ -1,6 +1,6 @@
 > 我是 Kaine 朱璽，國立中山大學海洋環境及工程學系學士、碩士畢業，現職 AI 工程師。
 > 
-> 我的 AI 經驗橫跨工程資料分析、機器學習研究、LLM 應用，並熟悉 AI agent 操作，持續關注 AI 趨勢並定期新增個人專案。
+> 我的 AI 經驗涵蓋機器學習、LLM 應用、知識系統與 AI Agent 協作，重點是把模型與資料方法轉成可驗證、能實際使用的流程。
 
 ## 核心能力
 
@@ -12,7 +12,6 @@
 - Feature Engineering
 - Data Preprocessing
 - Time-series Analysis
-- Engineering Data Analysis
 - Model Training／Validation／Comparison
 - Error Analysis／Model Evaluation
 - Data Analysis and Experimentation, Feature importance analysis
@@ -27,13 +26,7 @@
 - LLM Fine-tuning, LoRA／QLoRA
 - Knowledge Base and AI Q&A System Design
 
-## 研究與專案方向
-
-### 結構工程機器學習研究
-
-碩士研究以結構工程資料與機器學習為主要方向，以 ML 替代傳統的 LS-DYNA 數值模擬方法分析於波紋鋼防爆牆爆炸載重下之撓度變化，研究中誤差極低，有望未來於相關領域節省時間與金錢成本。
-
-- [論文連結](https://ethesys.lis.nsysu.edu.tw/ETD-db/ETD-search-c/view_etd?URN=etd-0723125-151645)
+## 目前研究與應用方向
 
 ### BMS Point Classification
 

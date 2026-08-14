@@ -27,11 +27,6 @@
       "files": ["README.md"]
     },
     {
-      "id": "musicmatch",
-      "root": "../MusicMatch",
-      "files": ["README.md"]
-    },
-    {
       "id": "geo-automation",
       "root": "../Kainnne-GEO-Automation",
       "files": ["README.md"]
@@ -52,11 +47,6 @@
       "files": ["README.md"]
     },
     {
-      "id": "house-price-regression",
-      "root": "../house_price_project",
-      "files": ["README.md"]
-    },
-    {
       "id": "customer-message-classification",
       "root": "../Eazy_LLMv1",
       "files": ["customer_llm_experiment.ipynb"]
@@ -73,11 +63,6 @@
         "00_請由此開啟_工作坊完成成果/README.md",
         "00_請由此開啟_工作坊完成成果/00_我們實際做了什麼.md"
       ]
-    },
-    {
-      "id": "ambient-ai",
-      "root": "../ScopeCut_Projects/ambient-ai",
-      "files": ["README.md"]
     },
     {
       "id": "visual-novel-production-system",

@@ -4,18 +4,24 @@
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
-## 專案與產品
+## 代表專案與系統
 
-### 對外產品
+目前最具代表性的單一專案是 **LumaReader**。若要完整理解我的工作方向，可再依序閱讀 GEO、ScopeCut、CodexRules／agents CLI 與 WikiNB；這些專案已形成明確功能或可重複使用的工作方法。
+
+- [[Projects/Products/kainnne-lumareader]] — 本機優先 Markdown 閱讀器
+- [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性稽核流程
+- [[Projects/Workflow/scopecut]] — 將模糊點子轉成 Codex Project Contract
+- [[Systems/codexrules-agent-system]] — CodexRules、agents CLI 與可審閱的排程邊界
+- [[Projects/Knowledge/wikinb]] — 個人知識、公開網站與 AI 問答系統
+
+## 其他專案與應用
+
+### 對外入口
 
 - [[Projects/Products/kainnne-personal-portal]] — Kainnne 個人入口網站
-- [[Projects/Products/kainnne-lumareader]] — 本機優先 Markdown 閱讀器
-- [[Projects/Products/musicmatch]] — 音樂人才與服務媒合平台
-- [[Projects/Products/ambient-ai]] — 環境感測與個人化回饋原型
 
 ### 知識系統
 
-- [[Projects/Knowledge/wikinb]] — 個人知識、公開網站與 AI 複習系統
 - [[Projects/Knowledge/wikinb-for-kcis]] — 教學情境的 WikiNB 版本
 - [[Projects/Knowledge/wikinb-enterprise]] — 多租戶白標知識庫原型
 - [[KCIS/WikiNB-KCIS]] — KCIS 版本的履歷式摘要
@@ -23,13 +29,10 @@
 
 ### AI 與工作流程
 
-- [[Projects/Workflow/scopecut]] — 將模糊點子轉成 Codex Project Contract
-- [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性自動稽核
 - [[Projects/Workflow/kainnne-forms-landing]] — 表單服務入口
 
-### 機器學習
+### AI／ML 實驗
 
-- [[Projects/Machine-Learning/house-price-regression]] — 房價迴歸模型與 FastAPI 服務
 - [[Projects/Machine-Learning/customer-message-classification]] — 小型語言模型客服分類實驗
 
 ### 創作與遊戲
@@ -53,7 +56,6 @@
 ## 系統與方法
 
 - [[Systems/wikinb-and-codexrules]] — WikiNB、CodexRules 與專案資料的分工
-- [[Systems/codexrules-agent-system]] — CodexRules 與 agents CLI 規則系統
 - [[Random/ai-output-verification]] — 如何驗證 AI 產出並避免無限循環
 - [[Random/markdown-format-guide]] — Markdown 格式教學
 
