@@ -33,13 +33,19 @@ assert.match(worker, /節省免費 API 額度是必要限制/);
 assert.match(worker, /完整性優先於字數/);
 
 assert.match(page, /maxlength="1200"/);
-assert.match(page, /appendMessage\(t\('gemini\.welcomeMessage'\), 'assistant'\)/);
+assert.match(page, /\['gemini\.example1', 'gemini\.example2', 'gemini\.example3'\]/);
+assert.doesNotMatch(page, /gemini\.welcomeMessage|gemini\.example4/);
 assert.doesNotMatch(page, /gemini-quota|remainingPercent|gemini\.remaining/);
 
-assert.match(zh['gemini.connected'], /數位助理/);
-assert.match(zh['gemini.welcomeMessage'], /免費 API 額度/);
+assert.equal(zh['gemini.connected'], 'Kaine 數位助理已連線');
+assert.equal(zh['gemini.example1'], '請簡短介紹 Kaine，以及他目前在做什麼。');
+assert.equal(zh['gemini.example2'], '請挑選 Kaine 的一個代表專案簡述。');
+assert.equal(zh['gemini.example3'], '根據 Kaine 的背景，提出一個可行的合作構想。');
 assert.match(en['gemini.connected'], /digital assistant/i);
-assert.match(en['gemini.welcomeMessage'], /free Gemini API quota/i);
+assert.equal('gemini.welcomeMessage' in zh, false);
+assert.equal('gemini.welcomeMessage' in en, false);
+assert.equal('gemini.example4' in zh, false);
+assert.equal('gemini.example4' in en, false);
 assert.equal('gemini.remaining' in zh, false);
 assert.equal('gemini.remaining' in en, false);
 
