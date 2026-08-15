@@ -134,6 +134,12 @@ assertAllHidden(ctas, '登出後');
 // 6. 訪客首頁有獨立首屏；搜尋表單仍保留給登入後工作模式。
 assert.match(homePage, /id="guest-home-hero"/);
 assert.match(homePage, /id="home-gemini-btn"/);
+assert.match(homePage, /class="home-quick-guide"/);
+assert.match(homePage, /快速認識 WikiNB/);
+assert.match(homePage, /class="home-side-art home-side-art-left"/);
+assert.match(homePage, /class="home-side-art home-side-art-right"/);
+assert.match(homePage, /Math\.random\(\)/);
+assert.match(homePage, /card\.dataset\.cardTone = tones/);
 assert.match(homePage, /id="member-home-hero"[^>]*hidden/);
 assert.match(homePage, /<HomeSearch dualMode=\{true\} \/>/);
 assert.match(homePage, /document\.body\.classList\.toggle\('home-guest', !loggedIn\)/);
@@ -141,6 +147,8 @@ assert.match(header, /#nav-wikinb[\s\S]*order: 1/);
 assert.match(header, /#nav-gemini[\s\S]*order: 2/);
 assert.match(header, /#btn-lang[\s\S]*order: 3/);
 assert.match(header, /#nav-menu[\s\S]*order: 4/);
+assert.match(header, /brandHomeLabel = visitorNav \? '\| 首頁' : '© HOME'/);
+assert.match(header, /data-always-home=\{visitorNav \? 'true' : 'false'\}/);
 assert.doesNotMatch(geminiPage, /guest-home-hero|home-atmosphere|home-gemini-btn/);
 
 // 7. 公開搜尋、文章、登入、Gemini 與 404 共用訪客視覺。

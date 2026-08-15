@@ -13,13 +13,25 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
 const loginLabel = visitorNav ? 'Kaine 登入' : '登入';
 const loginI18nKey = visitorNav ? 'nav.ownerLogin' : 'nav.login';
 const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSection === 'login';
+const brandHomeLabel = visitorNav ? '| 首頁' : '© HOME';
 ---
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
-    <a id="brand-link" href={base} class="brand-link group shrink-0">
+    <a
+      id="brand-link"
+      href={base}
+      class="brand-link group shrink-0"
+      data-always-home={visitorNav ? 'true' : 'false'}
+      aria-label={visitorNav ? 'Kainnne 首頁' : 'Kainnne'}
+    >
       <span id="brand-label" class="brand-label">Kainnne</span>
-      <span id="brand-home" class="brand-home is-home-hidden" aria-hidden="true">© HOME</span>
+      <span
+        id="brand-home"
+        class:list={['brand-home', !visitorNav && 'is-home-hidden']}
+        aria-hidden={visitorNav ? 'false' : 'true'}
+        data-i18n={visitorNav ? 'nav.homeLabel' : undefined}
+      >{brandHomeLabel}</span>
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
@@ -110,6 +122,7 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
   /** 依實際網址判斷是否在首頁；多一段 /xxx 就顯示 © HOME（不改整站架構） */
   function syncBrandHome() {
     const el = document.getElementById('brand-home');
+    const brand = document.getElementById('brand-link');
     if (!el) return;
     const base = (document.documentElement.dataset.base || '/').replace(/\/+$/, '');
     let path = window.location.pathname.replace(/\/+$/, '');
@@ -118,8 +131,10 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
     }
     const home = base || '';
     const isHome = path === home || path === '' || path === '/';
-    el.classList.toggle('is-home-hidden', isHome);
-    el.setAttribute('aria-hidden', isHome ? 'true' : 'false');
+    const alwaysHome = brand?.dataset.alwaysHome === 'true';
+    const hideHomeLabel = isHome && !alwaysHome;
+    el.classList.toggle('is-home-hidden', hideHomeLabel);
+    el.setAttribute('aria-hidden', hideHomeLabel ? 'true' : 'false');
   }
 
   syncBrandHome();
@@ -525,13 +540,55 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
 
   :global(body.home-page.home-guest) header > div {
     max-width: none;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 1rem clamp(1rem, 3vw, 2.5rem);
   }
 
-  :global(body.home-page.home-guest) .brand-link,
   :global(body.home-page.home-guest) #nav-logout {
     display: none !important;
+  }
+
+  :global(body.home-page.home-guest) .brand-link {
+    display: inline-flex;
+    min-height: 3.45rem;
+    align-items: center;
+    align-self: flex-start;
+    gap: 0.52rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.42);
+    box-shadow:
+      0 16px 48px rgba(112, 66, 104, 0.09),
+      inset 0 1px rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(24px) saturate(1.35);
+    pointer-events: auto;
+  }
+
+  :global(body.home-page.home-guest) .brand-label {
+    font-size: 1.05rem;
+    letter-spacing: 0.035em;
+  }
+
+  :global(body.home-page.home-guest) .brand-home {
+    position: relative;
+    padding: 0;
+    color: rgba(74, 32, 56, 0.66);
+    background: none;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  :global(body.home-page.home-guest) .brand-link:hover,
+  :global(body.home-page.home-guest) .brand-link:focus-visible {
+    border-color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.58);
+    transform: translateY(-2px);
+    box-shadow:
+      0 20px 54px rgba(112, 66, 104, 0.14),
+      inset 0 1px rgba(255, 255, 255, 0.82);
+    outline: none;
   }
 
   :global(body.home-page.home-guest) header nav {
@@ -701,12 +758,30 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
 
   @media (max-width: 540px) {
     :global(body.home-page.home-guest) header > div {
+      gap: 0.4rem;
       padding: 0.65rem;
     }
 
+    :global(body.home-page.home-guest) .brand-link {
+      min-height: 2.95rem;
+      gap: 0.3rem;
+      padding: 0.45rem 0.62rem;
+      border-radius: 1rem;
+    }
+
+    :global(body.home-page.home-guest) .brand-label {
+      font-size: 0.82rem;
+    }
+
+    :global(body.home-page.home-guest) .brand-home {
+      font-size: 0.55rem;
+    }
+
     :global(body.home-page.home-guest) header nav {
-      width: 100%;
-      max-width: none;
+      width: auto;
+      min-width: 0;
+      max-width: calc(100% - 7.4rem);
+      flex: 1 1 auto;
       justify-content: flex-end;
       border-radius: 1.15rem;
     }
@@ -716,7 +791,8 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
     :global(body.home-page.home-guest) #btn-lang {
       min-width: 0;
       min-height: 2.55rem;
-      padding-inline: 0.72rem;
+      padding-inline: 0.55rem;
+      font-size: 0.66rem;
     }
 
     :global(body.home-page.home-guest) #nav-wikinb {
