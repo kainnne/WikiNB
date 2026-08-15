@@ -134,8 +134,12 @@ assertAllHidden(ctas, '登出後');
 // 6. 訪客首頁有獨立首屏；搜尋表單仍保留給登入後工作模式。
 assert.match(homePage, /id="guest-home-hero"/);
 assert.match(homePage, /id="home-gemini-btn"/);
+assert.match(homePage, /images\/home\/gemini-portal-v1\.webp/);
+assert.match(homePage, /class="home-gemini-art"/);
 assert.match(homePage, /class="home-quick-guide"/);
-assert.match(homePage, /快速認識 WikiNB/);
+assert.match(homePage, /How to use WikiNB/);
+assert.match(homePage, /<details class="home-guide-item" name="wikinb-guide" open>/);
+assert.match(homePage, />Q1<[\s\S]*>Q2<[\s\S]*>Q3</);
 assert.match(homePage, /class="home-side-art home-side-art-left"/);
 assert.match(homePage, /class="home-side-art home-side-art-right"/);
 assert.match(homePage, /Math\.random\(\)/);
@@ -148,6 +152,9 @@ assert.match(header, /#nav-gemini[\s\S]*order: 2/);
 assert.match(header, /#btn-lang[\s\S]*order: 3/);
 assert.match(header, /#nav-menu[\s\S]*order: 4/);
 assert.match(header, /brandHomeLabel = visitorNav \? '\| 首頁' : '© HOME'/);
+assert.match(header, /justify-content: space-between/);
+assert.match(header, /#nav-menu \{[\s\S]*flex: 1 1 0/);
+assert.match(header, /loginLabel = visitorNav \? '私人登入' : '登入'/);
 assert.match(header, /data-always-home=\{visitorNav \? 'true' : 'false'\}/);
 assert.doesNotMatch(geminiPage, /guest-home-hero|home-atmosphere|home-gemini-btn/);
 
@@ -168,6 +175,7 @@ for (const source of [loginPage, geminiPage]) {
   assert.match(source, /visitorNav=\{true\}/);
 }
 assert.match(loginPage, /publicSection="login"/);
+assert.match(loginPage, /<h1 id="owner-login-title">私人登入<\/h1>/);
 assert.match(loginPage, /此入口僅供 Kaine 管理 WikiNB 使用/);
 assert.match(loginPage, /訪客請前往 Gemini 助理/);
 assert.match(header, /nav\.ownerLogin/);
