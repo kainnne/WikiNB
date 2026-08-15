@@ -13,7 +13,7 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
 const loginLabel = visitorNav ? '私人登入' : '登入';
 const loginI18nKey = visitorNav ? 'nav.ownerLogin' : 'nav.login';
 const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSection === 'login';
-const brandHomeLabel = visitorNav ? '首頁' : '© HOME';
+const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
 ---
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
@@ -603,33 +603,28 @@ const brandHomeLabel = visitorNav ? '首頁' : '© HOME';
     text-shadow: 0 4px 14px rgba(77, 36, 70, 0.2);
   }
 
-  :global(body.home-page.home-guest) .brand-label {
-    color: #562d49;
-    background: none;
+  :global(body.home-page.home-guest) .brand-label,
+  :global(body.home-page.home-guest) .brand-home {
+    color: transparent;
+    background: linear-gradient(105deg, #6ea8ff 0%, #a990f1 36%, #da8fc4 70%, #55cdb8 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
     font-family: Georgia, 'Times New Roman', serif;
     font-size: 1.34rem;
     font-style: italic;
     font-weight: 600;
     letter-spacing: -0.025em;
-    -webkit-text-fill-color: currentColor;
+    -webkit-text-fill-color: transparent;
   }
 
   :global(body.home-page.home-guest) .brand-home {
     position: relative;
-    min-height: 1.55rem;
+    min-height: 1.7rem;
     display: inline-flex;
     align-items: center;
-    margin-left: -0.18rem;
-    padding: 0 0.62rem;
-    border-left: 1px solid rgba(94, 45, 75, 0.2);
+    margin-left: -0.28rem;
+    padding: 0 0.42rem 0 0;
     border-radius: 0;
-    color: rgba(74, 32, 56, 0.62);
-    background: none;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    -webkit-text-fill-color: currentColor;
   }
 
   :global(body.home-page.home-guest) .brand-link:hover,
@@ -835,9 +830,9 @@ const brandHomeLabel = visitorNav ? '首頁' : '© HOME';
     }
 
     :global(body.home-page.home-guest) .brand-home {
-      min-height: 1.2rem;
-      padding-inline: 0.38rem;
-      font-size: 0.52rem;
+      min-height: 1.3rem;
+      padding-right: 0.12rem;
+      font-size: 0.94rem;
     }
 
     :global(body.home-page.home-guest) header nav {

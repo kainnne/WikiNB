@@ -134,8 +134,10 @@ assertAllHidden(ctas, '登出後');
 // 6. 訪客首頁有獨立首屏；搜尋表單仍保留給登入後工作模式。
 assert.match(homePage, /id="guest-home-hero"/);
 assert.match(homePage, /id="home-gemini-btn"/);
-assert.match(homePage, /images\/home\/gemini-portal-v1\.webp/);
-assert.match(homePage, /class="home-gemini-art"/);
+assert.doesNotMatch(homePage, /gemini-portal-v1|class="home-gemini-art"|content: '↗'/);
+assert.match(homePage, /class="home-gemini-aura"/);
+assert.match(homePage, /class="home-gemini-orbit home-gemini-orbit-a"/);
+assert.match(homePage, /class="home-gemini-particles"/);
 assert.match(homePage, /class="home-quick-guide"/);
 assert.match(homePage, /How to use WikiNB/);
 assert.match(homePage, /<details class="home-guide-master">/);
@@ -154,7 +156,7 @@ assert.match(header, /#nav-wikinb[\s\S]*order: 1/);
 assert.match(header, /#nav-gemini[\s\S]*order: 2/);
 assert.match(header, /#btn-lang[\s\S]*order: 3/);
 assert.match(header, /#nav-menu[\s\S]*order: 4/);
-assert.match(header, /brandHomeLabel = visitorNav \? '首頁' : '© HOME'/);
+assert.match(header, /brandHomeLabel = visitorNav \? '\/ 首頁' : '© HOME'/);
 assert.match(header, /class="brand-sigil"/);
 assert.match(header, /justify-content: space-between/);
 assert.match(header, /#nav-menu \{[\s\S]*flex: 1 1 0/);
@@ -164,6 +166,9 @@ assert.doesNotMatch(geminiPage, /guest-home-hero|home-atmosphere|home-gemini-btn
 
 // 7. 公開搜尋、文章、登入、Gemini 與 404 共用訪客視覺。
 assert.match(baseLayout, /visitorNav\?: boolean/);
+assert.match(baseLayout, /favicon-32\.png/);
+assert.match(baseLayout, /apple-touch-icon\.png/);
+assert.doesNotMatch(baseLayout, /data:image\/svg\+xml/);
 assert.match(baseLayout, /publicSection\?: 'wiki' \| 'gemini' \| 'login'/);
 assert.match(baseLayout, /<Header visitorNav=\{visitorNav\} publicSection=\{publicSection\} \/>/);
 assert.match(backdrop, /class="public-dream-backdrop"/);
