@@ -61,64 +61,66 @@ const base = import.meta.env.BASE_URL;
         fetchpriority="high"
       />
       <span class="home-gemini-copy">
-        <span class="home-gemini-eyebrow">FEATURED EXPERIENCE</span>
         <span class="home-gemini-label">Kainnne x Gemini</span>
       </span>
       <span class="home-gemini-light" aria-hidden="true"></span>
     </a>
 
-    <section class="home-quick-guide" aria-labelledby="home-guide-title">
-      <div class="home-guide-heading">
-        <p>How to use WikiNB</p>
-        <h2 id="home-guide-title" data-i18n="home.guideTitle">快速認識 WikiNB</h2>
-      </div>
-      <div class="home-guide-list">
-        <details class="home-guide-item" name="wikinb-guide" open>
-          <summary>
-            <span class="home-guide-number">Q1</span>
-            <span class="home-guide-question" data-i18n="home.guideBrowseQ">第一次來，要怎麼開始瀏覽？</span>
-            <span class="home-guide-toggle" aria-hidden="true"></span>
-          </summary>
-          <div class="home-guide-answer">
-            <p data-i18n="home.guideBrowseA">不用登入也能閱讀公開內容；你可以依照想了解的深度，從三個入口開始。</p>
-            <ul>
-              <li data-i18n="home.guideBrowsePoint1">點選右上方 WikiNB，依巢狀分類探索完整筆記。</li>
-              <li data-i18n="home.guideBrowsePoint2">從下方「最近更新」快速查看 Kaine 近期整理的主題。</li>
-              <li data-i18n="home.guideBrowsePoint3">每篇筆記都可獨立閱讀，再沿著相關連結延伸。</li>
-            </ul>
-          </div>
-        </details>
-        <details class="home-guide-item" name="wikinb-guide">
-          <summary>
-            <span class="home-guide-number">Q2</span>
-            <span class="home-guide-question" data-i18n="home.guideAiQ">Kainnne x Gemini 可以怎麼用？</span>
-            <span class="home-guide-toggle" aria-hidden="true"></span>
-          </summary>
-          <div class="home-guide-answer">
-            <p data-i18n="home.guideAiA">它是理解 Kaine 的訪客 AI 助理，回答會以公開 WikiNB 為主要依據。</p>
-            <ul>
-              <li data-i18n="home.guideAiPoint1">完成名稱與 Email 驗證後即可開始對話。</li>
-              <li data-i18n="home.guideAiPoint2">適合詢問代表專案、能力背景、工作方式與合作方向。</li>
-              <li data-i18n="home.guideAiPoint3">回答預設言簡意賅；需要更多脈絡時會引導你閱讀對應筆記。</li>
-            </ul>
-          </div>
-        </details>
-        <details class="home-guide-item" name="wikinb-guide">
-          <summary>
-            <span class="home-guide-number">Q3</span>
-            <span class="home-guide-question" data-i18n="home.guideSourceQ">公開瀏覽與私人登入有什麼不同？</span>
-            <span class="home-guide-toggle" aria-hidden="true"></span>
-          </summary>
-          <div class="home-guide-answer">
-            <p data-i18n="home.guideSourceA">訪客可以閱讀公開知識庫並使用訪客 AI；私人登入只提供 Kaine 維護系統。</p>
-            <ul>
-              <li data-i18n="home.guideSourcePoint1">公開頁面是唯讀內容，不需要管理者帳號。</li>
-              <li data-i18n="home.guideSourcePoint2">私人登入包含筆記管理、同步與 Codex 工作區功能。</li>
-              <li data-i18n="home.guideSourcePoint3">若只是想認識 Kaine，直接瀏覽或使用 Gemini 即可。</li>
-            </ul>
-          </div>
-        </details>
-      </div>
+    <section class="home-quick-guide" aria-label="How to use WikiNB">
+      <details class="home-guide-master">
+        <summary class="home-guide-master-toggle">
+          <span class="home-guide-master-title">Q&A</span>
+          <span class="home-guide-master-label">How to use WikiNB</span>
+          <span class="home-guide-master-arrow" aria-hidden="true"></span>
+        </summary>
+        <div class="home-guide-list">
+          <details class="home-guide-item" name="wikinb-guide">
+            <summary>
+              <span class="home-guide-number">Q1</span>
+              <span class="home-guide-question" data-i18n="home.guideBrowseQ">第一次來，要怎麼開始瀏覽？</span>
+              <span class="home-guide-toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="home-guide-answer">
+              <p data-i18n="home.guideBrowseA">不用登入也能閱讀公開內容；你可以依照想了解的深度，從三個入口開始。</p>
+              <ul>
+                <li data-i18n="home.guideBrowsePoint1">點選右上方 WikiNB，依巢狀分類探索完整筆記。</li>
+                <li data-i18n="home.guideBrowsePoint2">從下方「最近更新」快速查看 Kaine 近期整理的主題。</li>
+                <li data-i18n="home.guideBrowsePoint3">每篇筆記都可獨立閱讀，再沿著相關連結延伸。</li>
+              </ul>
+            </div>
+          </details>
+          <details class="home-guide-item" name="wikinb-guide">
+            <summary>
+              <span class="home-guide-number">Q2</span>
+              <span class="home-guide-question" data-i18n="home.guideAiQ">Kainnne x Gemini 可以怎麼用？</span>
+              <span class="home-guide-toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="home-guide-answer">
+              <p data-i18n="home.guideAiA">它是理解 Kaine 的訪客 AI 助理，回答會以公開 WikiNB 為主要依據。</p>
+              <ul>
+                <li data-i18n="home.guideAiPoint1">完成名稱與 Email 驗證後即可開始對話。</li>
+                <li data-i18n="home.guideAiPoint2">適合詢問代表專案、能力背景、工作方式與合作方向。</li>
+                <li data-i18n="home.guideAiPoint3">回答預設言簡意賅；需要更多脈絡時會引導你閱讀對應筆記。</li>
+              </ul>
+            </div>
+          </details>
+          <details class="home-guide-item" name="wikinb-guide">
+            <summary>
+              <span class="home-guide-number">Q3</span>
+              <span class="home-guide-question" data-i18n="home.guideSourceQ">公開瀏覽與私人登入有什麼不同？</span>
+              <span class="home-guide-toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="home-guide-answer">
+              <p data-i18n="home.guideSourceA">訪客可以閱讀公開知識庫並使用訪客 AI；私人登入只提供 Kaine 維護系統。</p>
+              <ul>
+                <li data-i18n="home.guideSourcePoint1">公開頁面是唯讀內容，不需要管理者帳號。</li>
+                <li data-i18n="home.guideSourcePoint2">私人登入包含筆記管理、同步與 Codex 工作區功能。</li>
+                <li data-i18n="home.guideSourcePoint3">若只是想認識 Kaine，直接瀏覽或使用 Gemini 即可。</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </details>
     </section>
   </section>
 
@@ -369,8 +371,8 @@ const base = import.meta.env.BASE_URL;
 
   .home-gemini-btn {
     position: relative;
-    width: min(39rem, calc(100vw - 3rem));
-    min-height: 7.4rem;
+    width: min(43rem, calc(100vw - 3rem));
+    min-height: 8rem;
     margin-top: clamp(2.3rem, 5vh, 3.4rem);
     padding: 0.52rem;
     display: inline-flex;
@@ -422,11 +424,11 @@ const base = import.meta.env.BASE_URL;
     position: relative;
     z-index: 3;
     display: inline-flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.28rem;
-    min-width: min(21rem, calc(100% - 3rem));
-    padding: 0.72rem 1.5rem 0.78rem;
+    justify-content: center;
+    min-width: min(32rem, calc(100% - 3rem));
+    min-height: 4.25rem;
+    padding: 0.82rem 2rem;
     border: 1px solid rgba(255, 255, 255, 0.76);
     border-radius: 1.15rem;
     background: rgba(255, 251, 253, 0.55);
@@ -436,21 +438,13 @@ const base = import.meta.env.BASE_URL;
     backdrop-filter: blur(12px) saturate(1.2);
   }
 
-  .home-gemini-eyebrow {
-    color: rgba(93, 41, 72, 0.58);
-    font-family: Quicksand, sans-serif;
-    font-size: 0.58rem;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-  }
-
   .home-gemini-label {
     position: relative;
     color: #482039;
     font-family: Quicksand, 'Noto Sans TC', sans-serif;
-    font-size: clamp(1.05rem, 2vw, 1.32rem);
+    font-size: clamp(1.55rem, 3.2vw, 2.15rem);
     font-weight: 700;
-    letter-spacing: 0.035em;
+    letter-spacing: -0.015em;
   }
 
   .home-gemini-label::after {
@@ -520,36 +514,129 @@ const base = import.meta.env.BASE_URL;
     text-align: left;
   }
 
-  .home-guide-heading {
-    padding: 1.5rem 1.7rem 1.25rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+  .home-guide-master-toggle {
+    position: relative;
+    min-height: clamp(9rem, 16vw, 12.5rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: clamp(1rem, 3vw, 2rem);
+    align-items: center;
+    overflow: hidden;
+    padding: clamp(1.8rem, 5vw, 3.5rem);
+    cursor: pointer;
+    list-style: none;
+    background:
+      radial-gradient(circle at 13% 20%, rgba(255, 255, 255, 0.68), transparent 35%),
+      linear-gradient(120deg, rgba(183, 148, 255, 0.09), rgba(255, 143, 171, 0.14), rgba(94, 234, 212, 0.09));
+    transition: background 0.28s ease;
   }
 
-  .home-guide-heading p {
-    margin: 0 0 0.48rem;
-    color: rgba(109, 60, 93, 0.62);
-    font-family: Quicksand, sans-serif;
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+  .home-guide-master-toggle::-webkit-details-marker {
+    display: none;
   }
 
-  .home-guide-heading h2 {
-    margin: 0;
-    color: #4a2038;
+  .home-guide-master-toggle::before {
+    content: '';
+    position: absolute;
+    right: -5rem;
+    bottom: -8rem;
+    width: 15rem;
+    height: 15rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6ea8ff, #b794ff 40%, #ff8fab 72%, #5eead4);
+    opacity: 0.13;
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+  }
+
+  .home-guide-master-toggle:hover::before,
+  .home-guide-master-toggle:focus-visible::before,
+  .home-guide-master[open] > .home-guide-master-toggle::before {
+    opacity: 0.22;
+    transform: translate(-1.4rem, -1rem) scale(1.15);
+  }
+
+  .home-guide-master-toggle:focus-visible {
+    outline: 2px solid rgba(183, 148, 255, 0.55);
+    outline-offset: -0.45rem;
+  }
+
+  .home-guide-master-title {
+    position: relative;
+    z-index: 1;
+    color: transparent;
+    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 38%, #ff8fab 72%, #5eead4 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
     font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
-    font-size: clamp(1.35rem, 2.7vw, 1.85rem);
+    font-size: clamp(3.8rem, 8vw, 6.8rem);
     font-weight: 700;
-    letter-spacing: 0.015em;
+    line-height: 0.9;
+    letter-spacing: -0.08em;
+    filter: drop-shadow(0 15px 34px rgba(178, 115, 191, 0.14));
+  }
+
+  .home-guide-master-label {
+    position: relative;
+    z-index: 1;
+    color: rgba(74, 32, 56, 0.7);
+    font-family: Quicksand, sans-serif;
+    font-size: clamp(0.78rem, 1.65vw, 1rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .home-guide-master-arrow {
+    position: relative;
+    z-index: 1;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.78);
+  }
+
+  .home-guide-master-arrow::before,
+  .home-guide-master-arrow::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.92rem;
+    height: 1px;
+    background: #754e69;
+    transform: translate(-50%, -50%);
+    transition: transform 0.28s ease;
+  }
+
+  .home-guide-master-arrow::after {
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
+  .home-guide-master[open] .home-guide-master-arrow::after {
+    transform: translate(-50%, -50%) rotate(0deg);
   }
 
   .home-guide-list {
+    display: grid;
+    gap: 0.6rem;
     margin: 0;
+    padding: 0 1.15rem 1.15rem;
+    animation: home-guide-open 0.32s ease both;
   }
 
-  .home-guide-item + .home-guide-item {
-    border-top: 1px solid rgba(255, 255, 255, 0.6);
+  .home-guide-item {
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.64);
+    border-radius: 1.35rem;
+    background: rgba(255, 255, 255, 0.2);
+    transition: background 0.24s ease, box-shadow 0.24s ease;
+  }
+
+  .home-guide-item[open] {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 14px 36px rgba(105, 53, 91, 0.07);
   }
 
   .home-guide-item summary {
@@ -926,7 +1013,7 @@ const base = import.meta.env.BASE_URL;
     }
 
     .home-gemini-btn {
-      min-height: 6.35rem;
+      min-height: 6.8rem;
       margin-top: 2.4rem;
       border-radius: 1.55rem;
     }
@@ -937,8 +1024,13 @@ const base = import.meta.env.BASE_URL;
     }
 
     .home-gemini-copy {
-      min-width: min(18rem, calc(100% - 2rem));
-      padding-inline: 1rem;
+      min-width: calc(100% - 1.5rem);
+      min-height: 3.9rem;
+      padding-inline: 0.8rem;
+    }
+
+    .home-gemini-label {
+      font-size: clamp(1.35rem, 6.4vw, 1.72rem);
     }
 
     .home-quick-guide {
@@ -947,8 +1039,36 @@ const base = import.meta.env.BASE_URL;
       border-radius: 1.65rem;
     }
 
-    .home-guide-heading {
-      padding: 1.25rem 1.1rem 1rem;
+    .home-guide-master-toggle {
+      min-height: 8.4rem;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 0.7rem;
+      padding: 1.5rem 1.05rem;
+    }
+
+    .home-guide-master-title {
+      font-size: clamp(3.2rem, 16vw, 4.6rem);
+    }
+
+    .home-guide-master-label {
+      max-width: 7.4rem;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      white-space: normal;
+    }
+
+    .home-guide-master-arrow {
+      width: 2.55rem;
+      height: 2.55rem;
+    }
+
+    .home-guide-list {
+      gap: 0.45rem;
+      padding: 0 0.65rem 0.65rem;
+    }
+
+    .home-guide-item {
+      border-radius: 1.1rem;
     }
 
     .home-guide-item summary {

@@ -13,7 +13,7 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
 const loginLabel = visitorNav ? '私人登入' : '登入';
 const loginI18nKey = visitorNav ? 'nav.ownerLogin' : 'nav.login';
 const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSection === 'login';
-const brandHomeLabel = visitorNav ? '| 首頁' : '© HOME';
+const brandHomeLabel = visitorNav ? '首頁' : '© HOME';
 ---
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
@@ -25,6 +25,11 @@ const brandHomeLabel = visitorNav ? '| 首頁' : '© HOME';
       data-always-home={visitorNav ? 'true' : 'false'}
       aria-label={visitorNav ? 'Kainnne 首頁' : 'Kainnne'}
     >
+      {visitorNav && (
+        <span class="brand-sigil" aria-hidden="true">
+          <span>K</span>
+        </span>
+      )}
       <span id="brand-label" class="brand-label">Kainnne</span>
       <span
         id="brand-home"
@@ -549,46 +554,94 @@ const brandHomeLabel = visitorNav ? '| 首頁' : '© HOME';
   }
 
   :global(body.home-page.home-guest) .brand-link {
+    position: relative;
     display: inline-flex;
-    min-height: 3.45rem;
+    min-height: 3.65rem;
     align-items: center;
     align-self: flex-start;
-    gap: 0.52rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    border-radius: 1.25rem;
-    background: rgba(255, 255, 255, 0.42);
-    box-shadow:
-      0 16px 48px rgba(112, 66, 104, 0.09),
-      inset 0 1px rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(24px) saturate(1.35);
+    gap: 0.68rem;
+    padding: 0.2rem 0.35rem;
     pointer-events: auto;
   }
 
+  :global(body.home-page.home-guest) .brand-sigil {
+    position: relative;
+    width: 3.2rem;
+    height: 3.2rem;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.86);
+    border-radius: 44% 56% 52% 48% / 48% 44% 56% 52%;
+    background: linear-gradient(135deg, rgba(110, 168, 255, 0.82), rgba(183, 148, 255, 0.88) 40%, rgba(255, 143, 171, 0.88) 72%, rgba(94, 234, 212, 0.76));
+    box-shadow:
+      0 13px 30px rgba(118, 76, 123, 0.2),
+      inset 0 1px rgba(255, 255, 255, 0.82);
+    transform: rotate(-8deg);
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.35s ease;
+  }
+
+  :global(body.home-page.home-guest) .brand-sigil::before {
+    content: '';
+    position: absolute;
+    inset: 0.32rem;
+    border: 1px solid rgba(255, 255, 255, 0.64);
+    border-radius: inherit;
+    background: rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(8px);
+  }
+
+  :global(body.home-page.home-guest) .brand-sigil > span {
+    position: relative;
+    z-index: 1;
+    color: rgba(255, 255, 255, 0.96);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.35rem;
+    font-style: italic;
+    font-weight: 700;
+    transform: rotate(8deg) translateX(-0.04rem);
+    text-shadow: 0 4px 14px rgba(77, 36, 70, 0.2);
+  }
+
   :global(body.home-page.home-guest) .brand-label {
-    font-size: 1.05rem;
-    letter-spacing: 0.035em;
+    color: #562d49;
+    background: none;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.34rem;
+    font-style: italic;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    -webkit-text-fill-color: currentColor;
   }
 
   :global(body.home-page.home-guest) .brand-home {
     position: relative;
-    padding: 0;
-    color: rgba(74, 32, 56, 0.66);
+    min-height: 1.55rem;
+    display: inline-flex;
+    align-items: center;
+    margin-left: -0.18rem;
+    padding: 0 0.62rem;
+    border-left: 1px solid rgba(94, 45, 75, 0.2);
+    border-radius: 0;
+    color: rgba(74, 32, 56, 0.62);
     background: none;
-    font-size: 0.68rem;
-    letter-spacing: 0.04em;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
     -webkit-text-fill-color: currentColor;
   }
 
   :global(body.home-page.home-guest) .brand-link:hover,
   :global(body.home-page.home-guest) .brand-link:focus-visible {
-    border-color: rgba(255, 255, 255, 0.92);
-    background: rgba(255, 255, 255, 0.58);
     transform: translateY(-2px);
-    box-shadow:
-      0 20px 54px rgba(112, 66, 104, 0.14),
-      inset 0 1px rgba(255, 255, 255, 0.82);
     outline: none;
+  }
+
+  :global(body.home-page.home-guest) .brand-link:hover .brand-sigil,
+  :global(body.home-page.home-guest) .brand-link:focus-visible .brand-sigil {
+    border-radius: 56% 44% 46% 54% / 42% 56% 44% 58%;
+    transform: rotate(4deg) scale(1.055);
   }
 
   :global(body.home-page.home-guest) header nav {
@@ -763,24 +816,34 @@ const brandHomeLabel = visitorNav ? '| 首頁' : '© HOME';
     }
 
     :global(body.home-page.home-guest) .brand-link {
-      min-height: 2.95rem;
-      gap: 0.3rem;
-      padding: 0.45rem 0.62rem;
-      border-radius: 1rem;
+      min-height: 2.85rem;
+      gap: 0.38rem;
+      padding: 0.16rem;
+    }
+
+    :global(body.home-page.home-guest) .brand-sigil {
+      width: 2.55rem;
+      height: 2.55rem;
+    }
+
+    :global(body.home-page.home-guest) .brand-sigil > span {
+      font-size: 1.08rem;
     }
 
     :global(body.home-page.home-guest) .brand-label {
-      font-size: 0.82rem;
+      font-size: 0.94rem;
     }
 
     :global(body.home-page.home-guest) .brand-home {
-      font-size: 0.55rem;
+      min-height: 1.2rem;
+      padding-inline: 0.38rem;
+      font-size: 0.52rem;
     }
 
     :global(body.home-page.home-guest) header nav {
       width: auto;
       min-width: 0;
-      max-width: calc(100% - 7.4rem);
+      max-width: calc(100% - 8.8rem);
       flex: 1 1 auto;
       justify-content: stretch;
       gap: 0.25rem;
