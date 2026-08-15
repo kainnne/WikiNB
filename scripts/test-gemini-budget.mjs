@@ -12,6 +12,7 @@ const [
   worker,
   wrangler,
   page,
+  guestClient,
   zhText,
   enText,
   sourcesText,
@@ -22,6 +23,7 @@ const [
   readFile(new URL('../worker/index.js', import.meta.url), 'utf8'),
   readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/scripts/guest-gemini-client.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/zh-TW.json', import.meta.url), 'utf8'),
   readFile(new URL('../src/locales/en.json', import.meta.url), 'utf8'),
   readFile(new URL('../config/project-knowledge-sources.json', import.meta.url), 'utf8'),
@@ -92,6 +94,12 @@ assert.match(
 );
 assert.doesNotMatch(page, /gemini\.unlockHint|gemini\.home/);
 assert.doesNotMatch(page, /gemini-quota|remainingPercent|gemini\.remaining/);
+assert.match(guestClient, /\['請等待 1 分鐘後再重新寄送', 'gemini\.errorResendWait'\]/);
+assert.match(guestClient, /function describeGuestAiMessage/);
+assert.match(page, /describeGuestAiMessage\(text, fallbackKey\)/);
+assert.match(page, /renderMessageState\(authMessage, authMessageState\)/);
+assert.equal(zh['gemini.errorResendWait'], '請等待 1 分鐘後再重新寄送');
+assert.equal(en['gemini.errorResendWait'], 'Please wait 1 minute before requesting another code.');
 
 assert.equal(zh['gemini.connected'], '已連線');
 assert.match(zh['gemini.welcomeMessage'], /Kaine 的數位助理/);

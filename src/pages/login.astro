@@ -17,11 +17,11 @@ const base = import.meta.env.BASE_URL;
     <header class="owner-login-intro">
       <span class="owner-access-mark" aria-hidden="true">K</span>
       <p class="owner-access-kicker">OWNER ACCESS</p>
-      <h1 id="owner-login-title">私人登入</h1>
-      <p>此入口僅供 Kaine 管理 WikiNB 使用，訪客不需要管理者帳號。</p>
+      <h1 id="owner-login-title" data-i18n="login.privateTitle">私人登入</h1>
+      <p data-i18n="login.privateIntro">此入口僅供 Kaine 管理 WikiNB 使用，訪客不需要管理者帳號。</p>
     </header>
 
-    <div id="bridge-offline" class="owner-login-notice hidden" role="status">
+    <div id="bridge-offline" class="owner-login-notice hidden" role="status" data-i18n-html="login.offlineHtml">
       本機 Bridge 未連線。請確認 Mac 已開機且 Bridge 正在執行（<code>npm run bridge</code>）。
     </div>
 
@@ -29,25 +29,27 @@ const base = import.meta.env.BASE_URL;
       <div id="step-credentials">
         <div class="owner-login-step-heading">
           <span>01</span>
-          <strong>帳號驗證</strong>
+          <strong data-i18n="login.accountVerification">帳號驗證</strong>
         </div>
-        <label for="input-username">帳號</label>
+        <label for="input-username" data-i18n="login.username">帳號</label>
         <input
           id="input-username"
           type="text"
           autocomplete="username"
           class="search-input owner-login-input"
           placeholder="帳號"
+          data-i18n-placeholder="login.username"
         />
-        <label for="input-password">密碼</label>
+        <label for="input-password" data-i18n="login.password">密碼</label>
         <input
           id="input-password"
           type="password"
           autocomplete="current-password"
           class="search-input owner-login-input"
           placeholder="密碼"
+          data-i18n-placeholder="login.password"
         />
-        <button id="btn-send-code" type="button" class="btn-primary owner-login-primary">
+        <button id="btn-send-code" type="button" class="btn-primary owner-login-primary" data-i18n="login.sendCode">
           登入並寄送驗證碼
         </button>
         <p id="login-error" class="owner-login-message is-error hidden" role="alert"></p>
@@ -56,9 +58,9 @@ const base = import.meta.env.BASE_URL;
       <div id="step-verify" class="owner-login-verify hidden">
         <div class="owner-login-step-heading">
           <span>02</span>
-          <strong>Email 驗證碼</strong>
+          <strong data-i18n="login.emailCode">Email 驗證碼</strong>
         </div>
-        <label for="input-code">輸入 6 位數驗證碼</label>
+        <label for="input-code" data-i18n="login.codeLabel">輸入 6 位數驗證碼</label>
         <input
           id="input-code"
           type="text"
@@ -67,10 +69,10 @@ const base = import.meta.env.BASE_URL;
           class="search-input owner-login-input owner-login-code"
           placeholder="000000"
         />
-        <button id="btn-verify" type="button" class="btn-primary owner-login-primary">
+        <button id="btn-verify" type="button" class="btn-primary owner-login-primary" data-i18n="login.verifyLogin">
           驗證並登入
         </button>
-        <button id="btn-resend-code" type="button" class="btn-ghost owner-login-secondary">
+        <button id="btn-resend-code" type="button" class="btn-ghost owner-login-secondary" data-i18n="login.resendCode">
           重新寄送驗證碼
         </button>
         <p id="verify-error" class="owner-login-message is-error hidden" role="alert"></p>
@@ -79,9 +81,9 @@ const base = import.meta.env.BASE_URL;
       <p id="login-status" class="owner-login-message" aria-live="polite"></p>
     </section>
 
-    <nav class="owner-login-actions" aria-label="其他入口">
-      <a href={`${base}gemini`} class="owner-login-guest">訪客請前往 Gemini 助理</a>
-      <a href={base} class="owner-login-home">返回公開首頁</a>
+    <nav class="owner-login-actions" aria-label="其他入口" data-i18n-aria="login.otherEntrances">
+      <a href={`${base}gemini`} class="owner-login-guest" data-i18n="login.guestLink">訪客請前往 Gemini 助理</a>
+      <a href={base} class="owner-login-home" data-i18n="login.homeLink">返回公開首頁</a>
     </nav>
   </div>
 </BaseLayout>
@@ -94,25 +96,70 @@ const base = import.meta.env.BASE_URL;
     setSession,
     getBridgeUrl,
   } from '../scripts/bridge-client.js';
+  import { t } from '../scripts/i18n.js';
+
+  const runtimeMessages = new Map();
+
+  function renderRuntimeMessage(el) {
+    const parts = runtimeMessages.get(el);
+    if (!el || !parts) return;
+    el.textContent = parts.map(({ key, vars }) => t(key, vars)).join('');
+  }
+
+  function setRuntimeMessage(el, key, vars = {}) {
+    if (!el) return;
+    runtimeMessages.set(el, [{ key, vars }]);
+    renderRuntimeMessage(el);
+  }
+
+  function setRuntimeMessages(el, parts) {
+    if (!el) return;
+    runtimeMessages.set(el, parts);
+    renderRuntimeMessage(el);
+  }
+
+  function clearRuntimeMessage(el) {
+    if (!el) return;
+    runtimeMessages.delete(el);
+    el.textContent = '';
+  }
+
+  function describeLoginError(message, fallbackKey) {
+    const raw = String(message || '').trim();
+    let match = raw.match(/^登入已暫停，請約 (\d+) 分鐘後再試（累積錯誤 (\d+) 次）$/);
+    if (match) return { key: 'login.loginLocked', vars: { minutes: match[1], count: match[2] } };
+
+    match = raw.match(/^累積錯誤 (\d+) 次，登入已暫停 10 分鐘，並已寄送通知信$/);
+    if (match) return { key: 'login.loginLockedNotice', vars: { count: match[1] } };
+
+    match = raw.match(/^驗證碼錯誤（累積錯誤 (\d+) 次，達 (\d+) 次將暫停登入 10 分鐘）$/);
+    if (match) return { key: 'login.wrongCode', vars: { count: match[1], max: match[2] } };
+
+    if (/帳號或密碼/.test(raw)) return { key: 'login.invalidCredentials', vars: {} };
+    if (/Bridge 尚未設定/.test(raw)) return { key: 'login.bridgeNotConfigured', vars: {} };
+    if (/驗證碼已過期/.test(raw)) return { key: 'login.codeExpired', vars: {} };
+    if (/寄送驗證碼失敗/.test(raw)) return { key: 'login.sendFailed', vars: {} };
+    return { key: fallbackKey, vars: {} };
+  }
 
   function homeUrl() {
     return document.documentElement.dataset.base || '/';
   }
 
-  function showError(el, message) {
+  function showError(el, descriptor) {
     if (!el) return;
-    if (message) {
-      el.textContent = message;
+    if (descriptor?.key) {
+      setRuntimeMessage(el, descriptor.key, descriptor.vars);
       el.classList.remove('hidden');
     } else {
-      el.textContent = '';
+      clearRuntimeMessage(el);
       el.classList.add('hidden');
     }
   }
 
   function markCodeSent(btn) {
     if (!btn) return;
-    btn.textContent = '驗證碼已寄送';
+    setRuntimeMessage(btn, 'login.codeSent');
     btn.classList.remove('btn-primary');
     btn.classList.add('btn-sent');
     btn.setAttribute('disabled', 'true');
@@ -133,7 +180,7 @@ const base = import.meta.env.BASE_URL;
   checkHealth().then((h) => {
     if (!h.online) {
       offlineEl?.classList.remove('hidden');
-      showError(loginError, `無法連線 Bridge（${getBridgeUrl()}）`);
+      showError(loginError, { key: 'login.bridgeUnavailable', vars: { url: getBridgeUrl() } });
     }
   });
 
@@ -141,47 +188,58 @@ const base = import.meta.env.BASE_URL;
     const username = inputUsername?.value?.trim() || '';
     const password = inputPassword?.value || '';
     if (!username || !password) {
-      showError(fromResend ? verifyError : loginError, '請輸入帳號與密碼');
+      showError(fromResend ? verifyError : loginError, { key: 'login.credentialsRequired', vars: {} });
       return;
     }
 
     const busyBtn = fromResend ? btnResend : btnSend;
     busyBtn?.setAttribute('disabled', 'true');
     if (!fromResend && btnSend) {
-      btnSend.textContent = '寄送中…';
+      setRuntimeMessage(btnSend, 'login.sending');
     }
     if (fromResend && btnResend) {
-      btnResend.textContent = '寄送中…';
+      setRuntimeMessage(btnResend, 'login.sending');
     }
-    if (statusEl) statusEl.textContent = '驗證帳密並寄送中…';
-    showError(loginError, '');
-    showError(verifyError, '');
+    setRuntimeMessage(statusEl, 'login.checkingAndSending');
+    showError(loginError, null);
+    showError(verifyError, null);
 
     try {
       const res = await sendLoginCode(username, password);
       markCodeSent(btnSend);
       if (statusEl) {
-        statusEl.textContent = res.message || '驗證碼已寄出，請查收信箱';
-        if (typeof res.failCount === 'number' && res.failCount > 0) {
-          statusEl.textContent += `（目前累積錯誤 ${res.failCount} 次，重新寄送不會歸零）`;
+        const messageParts = [];
+        if (res.dev && /Gmail 寄信失敗/.test(String(res.message || ''))) {
+          messageParts.push({ key: 'login.codeSentMailFallback', vars: {} });
+        } else if (res.dev) {
+          const count = String(res.message || '').match(/將寄至 (\d+) 個信箱/)?.[1] || '0';
+          messageParts.push({ key: 'login.codeSentTerminal', vars: { count } });
+        } else {
+          const count = String(res.message || '').match(/寄送至 (\d+) 個信箱/)?.[1] || '1';
+          messageParts.push({ key: 'login.codeSentInbox', vars: { count } });
         }
+        if (typeof res.failCount === 'number' && res.failCount > 0) {
+          messageParts.push({ key: 'login.failureCount', vars: { count: res.failCount } });
+        }
+        setRuntimeMessages(statusEl, messageParts);
       }
       stepVerify?.classList.remove('hidden');
       inputCode?.focus();
     } catch (err) {
-      const msg = err?.message || '登入失敗';
-      const isAuthFail = /帳號或密碼/.test(msg);
-      showError(fromResend ? verifyError : loginError, isAuthFail ? '帳號或密碼不正確' : msg);
-      if (statusEl) statusEl.textContent = '';
+      showError(
+        fromResend ? verifyError : loginError,
+        describeLoginError(err?.message, 'login.signInFailed'),
+      );
+      clearRuntimeMessage(statusEl);
       if (!fromResend && btnSend) {
-        btnSend.textContent = '登入並寄送驗證碼';
+        setRuntimeMessage(btnSend, 'login.sendCode');
         btnSend.classList.add('btn-primary');
         btnSend.classList.remove('btn-sent');
         btnSend.removeAttribute('disabled');
       }
     } finally {
       if (fromResend && btnResend) {
-        btnResend.textContent = '重新寄送驗證碼';
+        setRuntimeMessage(btnResend, 'login.resendCode');
         btnResend.removeAttribute('disabled');
       }
     }
@@ -196,23 +254,27 @@ const base = import.meta.env.BASE_URL;
   });
 
   btnVerify?.addEventListener('click', async () => {
-    showError(verifyError, '');
+    showError(verifyError, null);
     const code = inputCode?.value?.trim();
     if (!code || code.length !== 6) {
-      showError(verifyError, '請輸入 6 位數驗證碼');
+      showError(verifyError, { key: 'login.codeRequired', vars: {} });
       return;
     }
     btnVerify.setAttribute('disabled', 'true');
-    if (statusEl) statusEl.textContent = '驗證中…';
+    setRuntimeMessage(statusEl, 'login.verifying');
     try {
       const res = await verifyLoginCode(code);
       setSession({ token: res.token, expiresAt: res.expiresAt });
       window.location.href = homeUrl();
     } catch (err) {
-      showError(verifyError, err?.message || '驗證失敗');
-      if (statusEl) statusEl.textContent = '';
+      showError(verifyError, describeLoginError(err?.message, 'login.verifyFailed'));
+      clearRuntimeMessage(statusEl);
       btnVerify.removeAttribute('disabled');
     }
+  });
+
+  document.addEventListener('wikinb:locale-change', () => {
+    for (const el of runtimeMessages.keys()) renderRuntimeMessage(el);
   });
 </script>
 

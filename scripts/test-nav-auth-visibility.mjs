@@ -138,6 +138,8 @@ assert.doesNotMatch(homePage, /gemini-portal-v1|class="home-gemini-art"|content:
 assert.match(homePage, /class="home-gemini-aura"/);
 assert.match(homePage, /class="home-gemini-orbit home-gemini-orbit-a"/);
 assert.match(homePage, /class="home-gemini-particles"/);
+assert.match(homePage, /\.home-gemini-copy \{[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
+assert.doesNotMatch(homePage, /min-width: min\(29rem/);
 assert.match(homePage, /class="home-quick-guide"/);
 assert.match(homePage, /How to use WikiNB/);
 assert.match(homePage, /<details class="home-guide-master">/);
@@ -184,9 +186,13 @@ for (const source of [loginPage, geminiPage]) {
   assert.match(source, /visitorNav=\{true\}/);
 }
 assert.match(loginPage, /publicSection="login"/);
-assert.match(loginPage, /<h1 id="owner-login-title">私人登入<\/h1>/);
-assert.match(loginPage, /此入口僅供 Kaine 管理 WikiNB 使用/);
-assert.match(loginPage, /訪客請前往 Gemini 助理/);
+assert.match(loginPage, /<h1 id="owner-login-title" data-i18n="login\.privateTitle">/);
+assert.match(loginPage, /data-i18n="login\.privateIntro"/);
+assert.match(loginPage, /data-i18n-html="login\.offlineHtml"/);
+assert.match(loginPage, /data-i18n="login\.sendCode"/);
+assert.match(loginPage, /data-i18n="login\.guestLink"/);
+assert.match(loginPage, /describeLoginError/);
+assert.match(loginPage, /wikinb:locale-change/);
 assert.match(header, /nav\.ownerLogin/);
 assert.match(header, /data-guest-visible/);
 assert.match(geminiPage, /publicSection="gemini"/);

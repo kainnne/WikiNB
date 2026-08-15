@@ -138,6 +138,7 @@ import '@fontsource/iansui/latin-400.css';
     fetchGuestAiMe,
     getGuestAiSession,
     requestGuestAiCode,
+    describeGuestAiMessage,
     setGuestAiSession,
     verifyGuestAiCode,
   } from '../scripts/guest-gemini-client.js';
@@ -162,6 +163,8 @@ import '@fontsource/iansui/latin-400.css';
 
   let pendingEmail = '';
   let running = false;
+  let authMessageState = null;
+  let codeSentState = null;
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
 
@@ -177,15 +180,27 @@ import '@fontsource/iansui/latin-400.css';
     );
   }
 
-  function showAuthMessage(text, ok = false) {
+  function renderMessageState(element, state) {
+    if (!element || !state) return;
+    element.textContent = state.key ? t(state.key, state.vars) : state.raw;
+  }
+
+  function showAuthMessage(text, ok = false, fallbackKey = '') {
     if (!authMessage) return;
-    authMessage.textContent = text;
+    authMessageState = describeGuestAiMessage(text, fallbackKey);
+    renderMessageState(authMessage, authMessageState);
     authMessage.className = ok
       ? 'mt-4 text-center text-sm text-emerald-700'
       : 'mt-4 text-center text-sm text-red-600';
   }
 
+  function showCodeSent(text) {
+    codeSentState = describeGuestAiMessage(text, 'gemini.codeSent');
+    renderMessageState(codeSent, codeSentState);
+  }
+
   function clearAuthMessage() {
+    authMessageState = null;
     authMessage?.classList.add('hidden');
     if (authMessage) authMessage.textContent = '';
   }
@@ -314,12 +329,12 @@ import '@fontsource/iansui/latin-400.css';
     try {
       const result = await requestGuestAiCode({ name, email });
       pendingEmail = email;
-      if (codeSent) codeSent.textContent = result.message || '驗證碼已寄出';
+      showCodeSent(result.message);
       profileForm.classList.add('hidden');
       codeForm?.classList.remove('hidden');
       codeInput?.focus();
     } catch (error) {
-      showAuthMessage(error.message || '驗證碼寄送失敗');
+      showAuthMessage(error.message, false, 'gemini.errorSendCode');
     } finally {
       setBusy(sendCodeBtn, false, t('gemini.sendCode'));
     }
@@ -341,7 +356,7 @@ import '@fontsource/iansui/latin-400.css';
       setGuestAiSession(session);
       openChat(session);
     } catch (error) {
-      showAuthMessage(error.message || '驗證失敗');
+      showAuthMessage(error.message, false, 'gemini.errorVerify');
     } finally {
       setBusy(verifyBtn, false, t('gemini.verify'));
     }
@@ -381,12 +396,15 @@ import '@fontsource/iansui/latin-400.css';
     } catch (error) {
       responseTimer.stop();
       const raw = error.message || '';
+      const described = describeGuestAiMessage(raw);
       const friendly =
         /暫時無法回應|暫時無法讀取|服務暫時發生錯誤/.test(raw)
           ? t('gemini.tempError')
-          : raw || t('gemini.tempError');
+          : described.key
+            ? t(described.key, described.vars)
+            : raw || t('gemini.tempError');
       appendMessage(friendly, 'error');
-      if (/驗證已過期/.test(raw)) openUnlock();
+      if (described.key === 'gemini.errorSessionExpired') openUnlock();
     } finally {
       running = false;
       if (chatInput) {
@@ -401,6 +419,8 @@ import '@fontsource/iansui/latin-400.css';
   });
 
   document.addEventListener('wikinb:locale-change', () => {
+    renderMessageState(authMessage, authMessageState);
+    renderMessageState(codeSent, codeSentState);
     if (!chat?.classList.contains('hidden') && history.length === 0) appendWelcome();
   });
 
