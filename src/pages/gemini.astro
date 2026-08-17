@@ -34,6 +34,9 @@ import '@fontsource/iansui/latin-400.css';
         <h2 class="font-display text-xl font-bold text-berry-800" data-i18n="gemini.unlockTitle">
           解鎖訪客 AI
         </h2>
+        <p class="gemini-unlock-note" data-i18n="gemini.unlockPrivacy">
+          Email 僅用於訪客登入紀錄，不會額外蒐集或保存其他個人資訊。名字可以填寫暱稱，不需要使用真實姓名。
+        </p>
       </div>
 
       <form id="gemini-profile-form" class="space-y-4">
@@ -615,6 +618,15 @@ import '@fontsource/iansui/latin-400.css';
     z-index: 1;
     margin-bottom: 1.4rem;
     text-align: center;
+  }
+
+  .gemini-unlock-note {
+    max-width: 28rem;
+    margin: 0.75rem auto 0;
+    color: rgba(74, 32, 56, 0.7);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.65;
   }
 
   #gemini-unlock form {

@@ -122,6 +122,7 @@
   "codex.title": "Codex",
   "gemini.title": "Kainnne x Gemini",
   "gemini.unlockTitle": "Unlock guest AI",
+  "gemini.unlockPrivacy": "Your email is used only for the guest sign-in record. No additional personal information is collected or stored. You may use a nickname—your real name is not required.",
   "gemini.name": "Your name",
   "gemini.namePlaceholder": "Enter your name",
   "gemini.email": "Email",
