@@ -41,6 +41,14 @@ const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
       <a
+        id="nav-management"
+        href={`${base}rename`}
+        class="nav-management"
+        hidden
+        aria-hidden="true"
+        data-i18n="home.management"
+      >Management</a>
+      <a
         id="nav-wikinb"
         href={`${base}search`}
         class:list={[
@@ -90,6 +98,24 @@ const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
         </button>
         <div id="nav-menu-panel" class="nav-menu-panel" hidden>
           <a id="nav-login" href={`${base}login`} class="nav-menu-item" data-i18n={loginI18nKey}>{loginLabel}</a>
+          <a
+            id="nav-menu-search"
+            href={`${base}search`}
+            class="nav-menu-item nav-member-menu-item hidden"
+            data-i18n="nav.browseWiki"
+          >瀏覽 WikiNB</a>
+          <a
+            id="nav-menu-add-note"
+            href={`${base}add-note`}
+            class="nav-menu-item nav-member-menu-item hidden"
+            data-i18n="nav.addNote"
+          >新增 MD</a>
+          <button
+            id="nav-menu-logout"
+            type="button"
+            class="nav-menu-item nav-member-menu-item hidden w-full text-left"
+            data-i18n="nav.logout"
+          >登出</button>
           <a
             id="nav-about"
             href={meUrl}
@@ -182,6 +208,41 @@ const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
 <style>
   .nav-link {
     @apply rounded-full px-2.5 py-1.5 text-xs font-semibold text-berry-700 transition-colors hover:bg-pink-100/60 hover:text-pink-700 sm:px-3 sm:py-2 sm:text-sm md:px-4;
+  }
+
+  .nav-management {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 9999px;
+    padding: 0.45rem 1rem;
+    color: #5f3c54;
+    background: linear-gradient(120deg, rgba(246, 200, 255, 0.82), rgba(255, 183, 206, 0.86), rgba(201, 255, 240, 0.76));
+    box-shadow:
+      0 9px 24px rgba(164, 91, 148, 0.14),
+      inset 0 1px rgba(255, 255, 255, 0.76);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .nav-management.is-auth-visible {
+    display: inline-flex;
+  }
+
+  .nav-management[hidden] {
+    display: none !important;
+  }
+
+  .nav-management:hover,
+  .nav-management:focus-visible {
+    transform: translateY(-2px);
+    box-shadow:
+      0 14px 30px rgba(164, 91, 148, 0.2),
+      inset 0 1px rgba(255, 255, 255, 0.82);
+    outline: none;
   }
 
   /* 品牌：恆為彩字（登入前後相同） */
@@ -448,6 +509,13 @@ const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
     white-space: nowrap;
   }
 
+  button.nav-menu-item {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
   .nav-menu-item.hidden {
     display: none;
   }
@@ -657,6 +725,7 @@ const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
 
   :global(body.home-page.home-guest) #nav-wikinb,
   :global(body.home-page.home-guest) #nav-gemini,
+  :global(body.home-page.home-guest) #nav-management,
   :global(body.home-page.home-guest) #btn-lang,
   :global(body.home-page.home-guest) #nav-menu {
     flex: 0 0 auto;
@@ -680,6 +749,17 @@ const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
 
   :global(body.home-page.home-guest) #nav-gemini {
     order: 2;
+  }
+
+  :global(body.home-page.home-guest) #nav-management {
+    order: 1;
+    min-width: 7.2rem;
+    min-height: 2.75rem;
+    padding: 0 1.15rem;
+    border-radius: 1rem;
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
   }
 
   :global(body.home-page.home-guest) #nav-wikinb.is-public-active,
@@ -848,6 +928,7 @@ const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
 
     :global(body.home-page.home-guest) #nav-wikinb,
     :global(body.home-page.home-guest) #nav-gemini,
+    :global(body.home-page.home-guest) #nav-management,
     :global(body.home-page.home-guest) #btn-lang,
     :global(body.home-page.home-guest) #nav-menu {
       flex: 1 1 0;
@@ -857,6 +938,7 @@ const brandHomeLabel = visitorNav ? '/ 首頁' : '© HOME';
 
     :global(body.home-page.home-guest) #nav-wikinb,
     :global(body.home-page.home-guest) #nav-gemini,
+    :global(body.home-page.home-guest) #nav-management,
     :global(body.home-page.home-guest) #btn-lang {
       min-height: 2.55rem;
       padding-inline: 0.3rem;

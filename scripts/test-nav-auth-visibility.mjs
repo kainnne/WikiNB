@@ -131,7 +131,7 @@ assert.equal(isLoggedIn(), false);
 assert.equal(syncCtas(ctas), false);
 assertAllHidden(ctas, '登出後');
 
-// 6. 訪客首頁有獨立首屏；搜尋表單仍保留給登入後工作模式。
+// 6. 訪客與登入後首頁共用視覺系統；登入後只保留 Codex 主入口。
 assert.match(homePage, /id="guest-home-hero"/);
 assert.match(homePage, /id="home-gemini-btn"/);
 assert.doesNotMatch(homePage, /gemini-portal-v1|class="home-gemini-art"|content: '↗'/);
@@ -152,8 +152,16 @@ assert.match(homePage, /class="home-side-art home-side-art-right"/);
 assert.match(homePage, /Math\.random\(\)/);
 assert.match(homePage, /card\.dataset\.cardTone = tones/);
 assert.match(homePage, /id="member-home-hero"[^>]*hidden/);
-assert.match(homePage, /<HomeSearch dualMode=\{true\} \/>/);
-assert.match(homePage, /document\.body\.classList\.toggle\('home-guest', !loggedIn\)/);
+assert.match(homePage, /id="home-codex-btn"/);
+assert.match(homePage, /class="home-gemini-btn home-codex-btn"/);
+assert.match(homePage, />Kainnne x Codex</);
+assert.match(homePage, /pageClass="home-page home-guest wikinb-home"/);
+assert.doesNotMatch(homePage, /HomeSearch|search-actions-logged|add-note-launch-btn/);
+assert.match(homePage, /document\.body\.classList\.add\('home-guest'\)/);
+assert.match(header, /id="nav-management"/);
+assert.match(header, /id="nav-menu-search"/);
+assert.match(header, /id="nav-menu-add-note"/);
+assert.match(header, /id="nav-menu-logout"/);
 assert.match(header, /#nav-wikinb[\s\S]*order: 1/);
 assert.match(header, /#nav-gemini[\s\S]*order: 2/);
 assert.match(header, /#btn-lang[\s\S]*order: 3/);
@@ -202,4 +210,4 @@ assert.match(geminiPage, /#gemini-unlock \.search-input/);
 assert.match(geminiPage, /<section id="gemini-chat" class="gemini-window hidden">/);
 assert.doesNotMatch(geminiPage, /id="gemini-chat"[^>]*public-wiki-page/);
 
-console.log('OK: + md. / Codex CTAs 只在 session token 存在時顯示');
+console.log('OK: 公開與登入後首頁維持正確的權限與導覽介面');
