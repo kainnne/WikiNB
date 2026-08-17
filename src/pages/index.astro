@@ -136,7 +136,6 @@ const base = import.meta.env.BASE_URL;
       <span class="home-art-spark home-art-spark-b"></span>
     </div>
 
-    <p class="member-home-kicker" data-i18n="home.memberKicker">PRIVATE WORKSPACE</p>
     <h1 class="guest-home-title" aria-label="WikiNB">
       {Array.from('WikiNB').map((letter, index) => (
         <span style={`--letter-index: ${index}`} aria-hidden="true">{letter}</span>
@@ -154,7 +153,6 @@ const base = import.meta.env.BASE_URL;
       </span>
       <span class="home-gemini-light" aria-hidden="true"></span>
     </a>
-    <p class="member-home-note" data-i18n="home.memberNote">整理、回想並繼續推進你的知識工作。</p>
   </section>
 
   {recent.length > 0 && (
@@ -352,23 +350,6 @@ const base = import.meta.env.BASE_URL;
   .guest-home-hero[hidden],
   #member-home-hero[hidden] {
     display: none !important;
-  }
-
-  .member-home-kicker {
-    margin: 0 0 1rem;
-    color: rgba(95, 60, 84, 0.62);
-    font-family: Quicksand, 'Noto Sans TC', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.22em;
-  }
-
-  .member-home-note {
-    margin: 1.25rem 0 0;
-    color: rgba(95, 60, 84, 0.72);
-    font-family: Quicksand, 'Noto Sans TC', sans-serif;
-    font-size: 0.86rem;
-    letter-spacing: 0.025em;
   }
 
   .home-gemini-btn.home-codex-btn::before {

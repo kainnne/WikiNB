@@ -155,6 +155,7 @@ assert.match(homePage, /id="member-home-hero"[^>]*hidden/);
 assert.match(homePage, /id="home-codex-btn"/);
 assert.match(homePage, /class="home-gemini-btn home-codex-btn"/);
 assert.match(homePage, />Kainnne x Codex</);
+assert.doesNotMatch(homePage, /member-home-kicker|member-home-note/);
 assert.match(homePage, /pageClass="home-page home-guest wikinb-home"/);
 assert.doesNotMatch(homePage, /HomeSearch|search-actions-logged|add-note-launch-btn/);
 assert.match(homePage, /document\.body\.classList\.add\('home-guest'\)/);
@@ -183,6 +184,7 @@ assert.match(managementPage, /<ManagementUploader \/>/);
 assert.match(managementPage, /id="management-tab-add"/);
 assert.match(managementPage, /id="management-tab-library"/);
 assert.match(managementPage, /wikinb:management-updated/);
+assert.doesNotMatch(managementPage, /manage\.workspaceIntro|management-home-link|keywords\.previewHint|manage\.replaceHint/);
 assert.match(addPage, /<ManagementUploader \/>/);
 for (const source of [codexPage, addPage, managementPage]) {
   assert.match(source, /pageClass="private-workspace-page"/);
@@ -191,6 +193,7 @@ for (const source of [codexPage, addPage, managementPage]) {
 assert.match(uploader, /createWikiFolder/);
 assert.match(uploader, /uploadWikiNote/);
 assert.match(uploader, /autoSync: true/);
+assert.doesNotMatch(uploader, /manage\.addIntro|keywords\.previewHint/);
 assert.doesNotMatch(uploader, /linear-gradient\(#111111, #111111\)/);
 
 // 8. 公開搜尋、文章、登入、Gemini 與 404 共用訪客視覺。

@@ -14,7 +14,6 @@
         <p class="management-uploader-kicker" data-i18n="manage.addKicker">新增內容</p>
         <h2 data-i18n="manage.addTitle">上傳 Markdown</h2>
       </div>
-      <p data-i18n="manage.addIntro">選擇資料夾、補齊顯示資訊，再拖入 Markdown；完成後會沿用既有同步流程發布。</p>
     </div>
 
     <section class="management-form-card space-y-3 p-4 sm:p-5">
@@ -75,7 +74,6 @@
       </label>
       <label class="block text-sm font-semibold text-berry-800">
         <span data-i18n="add.keywords">關鍵字</span>
-        <span class="ml-2 text-xs font-normal text-berry-600/70" data-i18n="keywords.previewHint">僅前三個關鍵字會呈現在預覽字卡</span>
         <div id="meta-keywords-editor" class="mt-2"></div>
       </label>
     </section>
@@ -321,9 +319,6 @@
 
 <style>
   .management-uploader-intro {
-    display: grid;
-    gap: 0.8rem 1.5rem;
-    align-items: end;
     padding: 0.2rem 0.2rem 0.6rem;
   }
 
@@ -341,13 +336,6 @@
     font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
     font-size: clamp(1.45rem, 4vw, 2rem);
     font-weight: 700;
-  }
-
-  .management-uploader-intro > p {
-    max-width: 30rem;
-    color: rgba(95, 60, 84, 0.72);
-    font-size: 0.84rem;
-    line-height: 1.65;
   }
 
   .management-form-card,
@@ -418,9 +406,4 @@
     font-weight: 800;
   }
 
-  @media (min-width: 640px) {
-    .management-uploader-intro {
-      grid-template-columns: minmax(0, 0.8fr) minmax(16rem, 1.2fr);
-    }
-  }
 </style>
