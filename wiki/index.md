@@ -40,6 +40,10 @@
 
 - [[Projects/Creative/visual-novel-production-system]] — 視覺小說模組化製作 SOP
 
+## 技術文件
+
+- [[Technical/technical-documentation]] — 各專案的架構、資料流、測試、部署與公開邊界
+
 ## 關於我
 
 - [[AboutMe/01-music]] — 音樂經歷

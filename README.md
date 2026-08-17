@@ -1,6 +1,6 @@
 # Kainnne / WikiNB
 
-WikiNB 是 Kaine 的公開 Markdown 知識庫、訪客 AI 助理與私人維護工作台。
+WikiNB 是 Kaine 的公開 Markdown 知識庫、訪客限定聊天與私人維護工作台。
 
 **正式網站：** [https://wikinb.kainnne.com/](https://wikinb.kainnne.com/)
 
@@ -10,7 +10,8 @@ WikiNB 是 Kaine 的公開 Markdown 知識庫、訪客 AI 助理與私人維護�
 
 - 從首頁、最近更新、巢狀 Wiki 與搜尋閱讀公開筆記。
 - 使用繁體中文／英文介面；登入、Gemini 驗證與錯誤提示也會跟著語言切換。
-- 以 Email 驗證解鎖 **Kainnne x Gemini**，詢問 Kaine 的專案、能力、工作方式與合作方向。
+- 以 Email 驗證解鎖 **Kainnne x Gemini**，由 Kaine 的第一人稱角度詢問公開專案、能力、工作方式與合作方向。
+- 每個已驗證 Email 每天最多 5 則訊息；無關的一般問答由 Worker 直接婉拒，不呼叫 Gemini。
 
 ### Kaine 私人維護
 

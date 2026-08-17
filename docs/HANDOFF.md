@@ -23,7 +23,7 @@ WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astr
 | 公開 Wiki／搜尋 | `src/pages/wiki/`、`src/pages/search.astro`、`src/scripts/wiki-search.js`、`wiki/` |
 | 中英文 | `src/scripts/i18n.js`、`src/locales/zh-TW.json`、`src/locales/en.json` |
 | 訪客 Gemini UI | `src/pages/gemini.astro`、`src/scripts/guest-gemini-client.js` |
-| Gemini 後端／檢索／額度 | `worker/index.js`、`wrangler.jsonc`、`worker/schema.sql`、`worker/migrations/` |
+| Gemini 後端／檢索／額度 | `worker/index.js`、`worker/chat-policy.js`、`wrangler.jsonc`、`worker/schema.sql`、`worker/migrations/` |
 | 私人登入／Wiki 管理／Codex | `src/pages/login.astro`、`src/scripts/bridge-client.js`、`bridge/server.js` |
 | Pages 部署 | `.github/workflows/deploy.yml`、`astro.config.mjs` |
 | 公開專案選材 | `wiki/Projects/project-overview.md`、`config/project-knowledge-sources.json` |
@@ -48,7 +48,11 @@ WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astr
 ### 訪客 Gemini
 
 - 訪客以名稱、Email、6 位數 OTP 解鎖；session 與管理者登入完全分離。
-- Worker 使用 D1 保存 OTP、訪客 session、rate limit 與每日 token 使用量。
+- Worker 使用簽章訪客 token；D1 保存 OTP、rate limit、每日對話次數與 token 使用量。
+- 對外角色以第一人稱「Kaine」回答，不再自稱數位助理或分身；公開 WikiNB 是唯一事實邊界，不能生成未公開私人事實或真實承諾。
+- 每個已驗證 Email 依台北日期最多 5 則訊息；以 Email hash 的 D1 原子計數強制執行，重新整理或重新驗證不會重置。
+- 明顯與 Kaine 公開內容無關的問題由 Worker 直接回覆固定說明，不載入 Wiki corpus、不呼叫 Gemini，但仍計入當日 5 則訊息。
+- 預設使用 repository 內不含個人事實的公開安全語氣規則；只有取得私人衍生內容的明確外部傳送授權後，才可用 `KAINE_PERSONA_PROMPT` secret 覆蓋並截短。原始私人 persona 文件不得進 repository、Wiki、前端 bundle、第三方服務或 log。
 - 目前模型由 `wrangler.jsonc` 的 `GEMINI_MODEL` 指定為 `gemini-3.1-flash-lite`。
 - 每次只選最多 4 份相關 Wiki 內容，corpus 約 6,500 字元；送入模型的對話 history 只保留最近 4 則訊息。
 - 使用 minimal thinking，沒有設定 `maxOutputTokens` 硬截斷；Prompt 要求短而完整。
@@ -100,6 +104,7 @@ npx wrangler d1 execute wikinb-guest-ai --remote --file=worker/migrations/0002_d
 Cloudflare secrets 必須留在平台，不得寫入 Markdown、Git 或前端：
 
 - `GEMINI_API_KEY`
+- `KAINE_PERSONA_PROMPT`（可選；只可存放已取得明確外部傳送授權的精簡內容）
 - `SMTP_PASSWORD`
 - `TOKEN_SECRET`
 
@@ -114,6 +119,7 @@ git diff --check
 
 - `scripts/test-nav-auth-visibility.mjs`：公開首頁、權限可見性、品牌介面、登入 i18n。
 - `scripts/test-gemini-budget.mjs`：模型、檢索預算、節流 Prompt、代表專案與錯誤翻譯。
+- `scripts/test-kaine-chat-policy.mjs`：限定聊天 scope、雙語拒絕與 4–5 則設定邊界。
 - `npm run build`：Astro 靜態頁面與 sitemap。
 - `npm run wiki:check`：巢狀 Wiki link 是否有效。
 

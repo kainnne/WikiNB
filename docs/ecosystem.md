@@ -7,7 +7,7 @@
 | 產品 | 主要用途 | Source of truth |
 |---|---|---|
 | [Kainnne.com](https://kainnne.com/) | 履歷、作品與對外能力證明 | Me repository 的網站資料 |
-| [WikiNB](https://wikinb.kainnne.com/) | 公開筆記、專案說明與 Kaine 數位助理 | 本 repository 的 `wiki/` |
+| [WikiNB](https://wikinb.kainnne.com/) | 公開筆記、專案說明與 Kaine 限定聊天 | 本 repository 的 `wiki/` |
 
 Kainnne.com 負責「快速認識 Kaine」，WikiNB 負責「閱讀可追溯的脈絡並繼續提問」。兩站共用粉紅夢幻、輕量互動的視覺語言，但內容責任不同，不應互相複製整份資料。
 
@@ -27,11 +27,14 @@ Kainnne.com 負責「快速認識 Kaine」，WikiNB 負責「閱讀可追溯的�
 - 首頁、搜尋、文章、404、訪客 AI 與私人登入共用公開視覺系統、品牌 favicon 與響應式導覽。
 - 語言按鈕支援靜態介面與動態驗證／錯誤訊息；新增後端提示時，必須同步補齊語系映射。
 
-## Gemini 定位
+## Kaine 限定聊天定位
 
-`Kainnne x Gemini` 是 Kaine 的數位助理，不是 Kaine 本人、數位分身或通用聊天機器人。
+`Kainnne x Gemini` 是由公開 WikiNB 與 Gemini 驅動、以第一人稱 Kaine 回答的限定聊天。介面與模型不使用「數位助理」或「分身」自稱，也不提供通用問答；公開筆記事實仍是回答邊界，不能代替 Kaine 在真實世界承諾或創造未公開立場。
 
 - 只依公開 WikiNB 索引選取少量相關內容，不把完整知識庫送入單次請求。
+- 每個已驗證 Email 依台北日期最多 5 則訊息；第 5 則回覆後結束，重新整理或重寄 OTP 不會重置當日次數。
+- 明顯無關的一般教學、作業或通用問答由 Worker 固定婉拒，不送入 Gemini。
+- 預設採用不含個人事實的公開安全語氣規則；只有取得明確外部傳送授權後，才以 Cloudflare secret 覆蓋。原始私人 persona 文件不進 repository、Wiki、前端 bundle 或第三方服務。
 - 未指定代表專案時優先介紹 LumaReader；多專案總覽以 `wiki/Projects/project-overview.md` 為準。
 - 回答預設言簡意賅，但不設定硬性的輸出截斷長度；完整回答核心問題優先。
 - 訪客要求長篇細節時，仍提供精簡重點、相關 WikiNB 文件與聯絡方式。

@@ -7,7 +7,7 @@ import '@fontsource/iansui/latin-400.css';
 
 <BaseLayout
   title="Kainnne x Gemini"
-  description="由公開 WikiNB 建構的 Kaine 數位助理"
+  description="由公開 WikiNB 驅動的 Kaine 限定聊天"
   pageClass="public-wiki-page gemini-public-page"
   visitorNav={true}
   publicSection="gemini"
@@ -132,7 +132,7 @@ import '@fontsource/iansui/latin-400.css';
           maxlength="1200"
           autocomplete="off"
           data-i18n-placeholder="gemini.placeholder"
-          placeholder="詢問關於 Kaine、他的作品或專業領域…"
+          placeholder="問我關於作品、專案或專業方向…"
         />
         <button id="gemini-chat-send" type="submit" class="gemini-send" data-i18n="gemini.send">
           送出
@@ -180,8 +180,30 @@ import '@fontsource/iansui/latin-400.css';
   let authMessageState = null;
   let codeSentState = null;
   let fullscreen = false;
+  let submittedTurns = 0;
+  let conversationEnded = false;
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
+
+  function syncConversationControls() {
+    const disabled = running || conversationEnded;
+    if (chatInput) {
+      chatInput.disabled = disabled;
+      chatInput.setAttribute(
+        'data-i18n-placeholder',
+        conversationEnded ? 'gemini.endedPlaceholder' : 'gemini.placeholder',
+      );
+      chatInput.placeholder = t(
+        conversationEnded ? 'gemini.endedPlaceholder' : 'gemini.placeholder',
+      );
+    }
+    if (chatSend) {
+      chatSend.disabled = disabled;
+      const key = conversationEnded ? 'gemini.ended' : running ? 'gemini.sending' : 'gemini.send';
+      chatSend.setAttribute('data-i18n', key);
+      chatSend.textContent = t(key);
+    }
+  }
 
   function setFullscreen(on) {
     fullscreen = Boolean(on);
@@ -341,8 +363,12 @@ import '@fontsource/iansui/latin-400.css';
     unlock?.classList.add('hidden');
     chat?.classList.remove('hidden');
     if (identity) identity.textContent = `${session.name} · ${session.email}`;
+    submittedTurns = Math.max(0, Number(session.chatTurnsUsed || 0));
+    conversationEnded = Boolean(session.conversationEnded);
     appendWelcome();
-    chatInput?.focus();
+    if (conversationEnded) appendMessage(t('gemini.limitMessage'), 'system');
+    syncConversationControls();
+    if (!conversationEnded) chatInput?.focus();
   }
 
   function openUnlock() {
@@ -385,6 +411,9 @@ import '@fontsource/iansui/latin-400.css';
         name: result.name,
         email: result.email,
         expiresAt: result.expiresAt,
+        chatTurnsUsed: result.chatTurnsUsed,
+        chatTurnLimit: result.chatTurnLimit,
+        conversationEnded: result.conversationEnded,
       };
       setGuestAiSession(session);
       openChat(session);
@@ -403,7 +432,7 @@ import '@fontsource/iansui/latin-400.css';
 
   chatForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (running) return;
+    if (running || conversationEnded) return;
     const message = String(chatInput?.value || '').trim();
     if (!message) return;
 
@@ -423,9 +452,13 @@ import '@fontsource/iansui/latin-400.css';
       const result = await askGuestGemini({ message, history });
       responseTimer.stop();
       appendMessage(result.answer, 'assistant');
-      history.push({ role: 'user', content: message });
-      history.push({ role: 'assistant', content: result.answer });
-      history = history.slice(-4);
+      submittedTurns = Math.max(submittedTurns + 1, Number(result.chatTurnsUsed || 0));
+      if (result.kind === 'answer') {
+        history.push({ role: 'user', content: message });
+        history.push({ role: 'assistant', content: result.answer });
+        history = history.slice(-4);
+      }
+      conversationEnded = Boolean(result.conversationEnded);
     } catch (error) {
       responseTimer.stop();
       const raw = error.message || '';
@@ -440,21 +473,18 @@ import '@fontsource/iansui/latin-400.css';
       if (described.key === 'gemini.errorSessionExpired') openUnlock();
     } finally {
       running = false;
-      if (chatInput) {
-        chatInput.disabled = false;
-        chatInput.focus();
-      }
-      if (chatSend) {
-        chatSend.disabled = false;
-        chatSend.textContent = t('gemini.send');
-      }
+      syncConversationControls();
+      if (!conversationEnded) chatInput?.focus();
     }
   });
 
   document.addEventListener('wikinb:locale-change', () => {
     renderMessageState(authMessage, authMessageState);
     renderMessageState(codeSent, codeSentState);
-    if (!chat?.classList.contains('hidden') && history.length === 0) appendWelcome();
+    syncConversationControls();
+    if (!chat?.classList.contains('hidden') && submittedTurns === 0 && !conversationEnded) {
+      appendWelcome();
+    }
   });
 
   async function init() {

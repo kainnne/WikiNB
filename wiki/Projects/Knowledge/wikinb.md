@@ -28,7 +28,7 @@ WikiNB 是我的筆記彙整、作品說明與 AI 提醒助理。它把 Markdown
 
 ## 公開網站體驗
 
-公開首頁以 WikiNB 與 Kainnne x Gemini 為主要入口，搭配可收合的 `How to use WikiNB` 說明、最近更新與巢狀搜尋。訪客不需要管理者帳號就能閱讀；通過 Email 驗證後，可以使用 Kaine 的數位助理詢問公開專案、能力、工作方式與合作方向。
+公開首頁以 WikiNB 與 Kainnne x Gemini 為主要入口，搭配可收合的 `How to use WikiNB` 說明、最近更新與巢狀搜尋。訪客不需要管理者帳號就能閱讀；通過 Email 驗證後，可以在限定聊天中由第一人稱 Kaine 回答公開專案、能力、工作方式與合作方向。
 
 介面支援繁體中文與英文。語言切換不只處理標題和按鈕，也包含訪客驗證、等待重新寄送、額度限制、API 狀態與私人登入提示，讓不同語言的訪客能理解目前狀態。
 
@@ -36,7 +36,7 @@ WikiNB 是我的筆記彙整、作品說明與 AI 提醒助理。它把 Markdown
 
 ## AI 回答與額度原則
 
-Kainnne x Gemini 會從公開 WikiNB 選取少量相關內容，再生成言簡意賅但完整的回答。它不會把整個知識庫塞進每次請求，也不會為了節省額度在核心答案中途硬切斷。若訪客要求長篇細節，系統會先整理必要重點，再指向相關 WikiNB 文件。
+Kainnne x Gemini 會從公開 WikiNB 選取少量相關內容，再生成言簡意賅但完整的回答。它不會把整個知識庫塞進每次請求，也不會為了節省額度在核心答案中途硬切斷。每個已驗證 Email 每天最多使用 5 則訊息；明顯無關的一般問答會直接婉拒，不呼叫模型。若訪客要求長篇細節，系統會先整理必要重點，再指向相關 WikiNB 文件。
 
 目前代表專案以 LumaReader 為優先；若詢問多個主要方向，才延伸到 Kainnne GEO、ScopeCut、CodexRules／agents CLI、WikiNB 與音樂能力。已撤下的練習、未完成原型或不符合目前職涯主軸的內容不會被主動推薦。
 
@@ -54,3 +54,4 @@ WikiNB 不再由排程自動監測或更新。需要整理時，先由 Kaine 明
 
 - [[Systems/wikinb-and-codexrules]]
 - [[Systems/codexrules-agent-system]]
+- [[Technical/wikinb/01_system_architecture_20260817]]

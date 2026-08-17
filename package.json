@@ -7,7 +7,7 @@
     "build": "astro build",
     "postbuild": "node scripts/generate-sitemap.mjs",
     "preview": "astro preview",
-    "test": "node scripts/test-nav-auth-visibility.mjs && node scripts/test-gemini-budget.mjs",
+    "test": "node scripts/test-nav-auth-visibility.mjs && node scripts/test-gemini-budget.mjs && node scripts/test-kaine-chat-policy.mjs",
     "wiki:check": "node scripts/validate-wiki-links.mjs",
     "knowledge:scan": "node scripts/project-knowledge-scan.mjs",
     "knowledge:baseline": "node scripts/project-knowledge-scan.mjs --write-state",

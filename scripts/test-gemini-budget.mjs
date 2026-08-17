@@ -10,6 +10,7 @@ import { readFile } from 'node:fs/promises';
 
 const [
   worker,
+  chatPolicy,
   wrangler,
   page,
   guestClient,
@@ -21,6 +22,7 @@ const [
   projectOverview,
 ] = await Promise.all([
   readFile(new URL('../worker/index.js', import.meta.url), 'utf8'),
+  readFile(new URL('../worker/chat-policy.js', import.meta.url), 'utf8'),
   readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/scripts/guest-gemini-client.js', import.meta.url), 'utf8'),
@@ -45,7 +47,10 @@ assert.match(worker, /thinkingLevel: 'minimal'/);
 assert.match(worker, /env\.GEMINI_MODEL \|\| 'gemini-3\.1-flash-lite'/);
 assert.match(wrangler, /"GEMINI_MODEL": "gemini-3\.1-flash-lite"/);
 assert.match(worker, /const retryable = \[500, 502, 503, 504\]/);
-assert.match(worker, /數位助理/);
+assert.match(worker, /你就是 Kaine/);
+assert.match(worker, /不要稱自己為數位助理、分身、模擬器或 Gemini/);
+assert.match(worker, /env\.KAINE_PERSONA_PROMPT/);
+assert.match(worker, /\.slice\(0, 1600\)/);
 assert.match(worker, /節省免費 API 額度是必要限制/);
 assert.match(worker, /完整性優先於字數/);
 assert.match(worker, /REPRESENTATIVE_PROJECT_SLUGS/);
@@ -62,12 +67,20 @@ assert.match(worker, /wiki-pages-v5/);
 assert.match(worker, /function requestsExpandedDetail\(text\)/);
 assert.match(worker, /我要\.\{0,4\}更詳細/);
 assert.match(worker, /function retrievalQuestion\(message, history\)/);
-assert.match(worker, /function systemPrompt\(corpus, expandedDetailRequested = false\)/);
+assert.match(worker, /function systemPrompt\(corpus, expandedDetailRequested = false, personaPrompt = ''\)/);
 assert.match(worker, /這裡無法提供長篇詳細回答；以下先整理必要重點/);
 assert.match(worker, /最相關的 1–3 份 WikiNB 文件/);
 assert.match(worker, /Instagram @kaine_z_/);
 assert.match(worker, /Gmail chaos60649@gmail\.com/);
-assert.match(worker, /systemPrompt\(corpus, expandedDetailRequested\)/);
+assert.match(worker, /systemPrompt\([\s\S]*corpus,[\s\S]*expandedDetailRequested,[\s\S]*env\.KAINE_PERSONA_PROMPT/);
+assert.match(worker, /reserveChatTurn\(env, session\.email, turnLimit\)/);
+assert.match(worker, /ON CONFLICT\(rate_key\) DO UPDATE SET count = rate_limits\.count \+ 1/);
+assert.match(worker, /kind: 'out_of_scope'/);
+assert.match(worker, /conversationEnded/);
+assert.match(chatPolicy, /DEFAULT_MAX_CHAT_TURNS = 5/);
+assert.match(chatPolicy, /isKaineScopeQuestion/);
+assert.match(chatPolicy, /outOfScopeMessage/);
+assert.match(wrangler, /"MAX_CHAT_TURNS": "5"/);
 
 const retiredSourceIds = new Set([
   'musicmatch',
@@ -84,6 +97,11 @@ assert.match(projectOverview, /\*\*LumaReader\*\*/);
 assert.match(projectOverview, /\*\*音樂能力\*\*/);
 
 assert.match(page, /maxlength="1200"/);
+assert.match(page, /let submittedTurns = 0/);
+assert.match(page, /let conversationEnded = false/);
+assert.match(page, /if \(running \|\| conversationEnded\) return/);
+assert.match(page, /result\.kind === 'answer'/);
+assert.match(page, /gemini\.endedPlaceholder/);
 assert.match(
   page,
   /\['gemini\.example1', 'gemini\.example2', 'gemini\.example3', 'gemini\.example4'\]/,
@@ -101,14 +119,20 @@ assert.match(page, /renderMessageState\(authMessage, authMessageState\)/);
 assert.equal(zh['gemini.errorResendWait'], '請等待 1 分鐘後再重新寄送');
 assert.equal(en['gemini.errorResendWait'], 'Please wait 1 minute before requesting another code.');
 
-assert.equal(zh['gemini.connected'], '已連線');
-assert.match(zh['gemini.welcomeMessage'], /Kaine 的數位助理/);
+assert.equal(zh['gemini.connected'], 'Kaine 已上線');
+assert.match(zh['gemini.welcomeMessage'], /嗨，我是 Kaine/);
+assert.doesNotMatch(zh['gemini.welcomeMessage'], /數位助理|分身/);
+assert.match(zh['gemini.limitMessage'], /每天只開放 5 則訊息/);
+assert.equal(zh['gemini.ended'], '本次對話已結束');
 assert.equal(zh['gemini.example1'], '請簡短介紹 Kaine，以及他目前在做什麼。');
 assert.equal(zh['gemini.example2'], '請挑選 Kaine 的一個代表專案簡述。');
 assert.equal(zh['gemini.example3'], '根據 Kaine 的背景，提出一個可行的合作構想。');
 assert.equal(zh['gemini.example4'], '請簡短條列 Kaine 目前公開的主要專案與能力。');
-assert.equal(en['gemini.connected'], 'Connected');
-assert.match(en['gemini.welcomeMessage'], /Kaine's digital assistant/);
+assert.equal(en['gemini.connected'], 'Kaine is here');
+assert.match(en['gemini.welcomeMessage'], /Hi, I'm Kaine/);
+assert.doesNotMatch(en['gemini.welcomeMessage'], /digital assistant|digital twin/i);
+assert.match(en['gemini.limitMessage'], /5 messages per day/i);
+assert.equal(en['gemini.ended'], 'Conversation ended');
 assert.equal(en['gemini.example4'], "Briefly list Kaine's current public projects and capabilities.");
 assert.equal('gemini.unlockHint' in zh, false);
 assert.equal('gemini.unlockHint' in en, false);
@@ -117,4 +141,4 @@ assert.equal('gemini.home' in en, false);
 assert.equal('gemini.remaining' in zh, false);
 assert.equal('gemini.remaining' in en, false);
 
-console.log('OK: Gemini 數位助理維持免費額度節流與不顯示百分比');
+console.log('OK: Kaine 限定聊天維持免費額度節流與不顯示百分比');
