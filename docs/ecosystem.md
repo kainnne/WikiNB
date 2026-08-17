@@ -32,9 +32,9 @@ Kainnne.com 負責「快速認識 Kaine」，WikiNB 負責「閱讀可追溯的�
 `Kainnne x Gemini` 是由公開 WikiNB 與 Gemini 驅動、以第一人稱 Kaine 回答的限定聊天。介面與模型不使用「數位助理」或「分身」自稱，也不提供通用問答；公開筆記事實仍是回答邊界，不能代替 Kaine 在真實世界承諾或創造未公開立場。
 
 - 只依公開 WikiNB 索引選取少量相關內容，不把完整知識庫送入單次請求。
-- 每個已驗證 Email 依台北日期最多 5 則訊息；第 5 則回覆後結束，重新整理或重寄 OTP 不會重置當日次數。
+- 每個已驗證 Email 依台北日期先開放 5 則訊息；第 5 則回覆後詢問是否續聊。訪客確認後，Worker 寄一封不含對話內容的通知信給 Kaine，再解除則數門檻；每日 token 總上限仍有效。
 - 明顯無關的一般教學、作業或通用問答由 Worker 固定婉拒，不送入 Gemini。
-- 預設採用不含個人事實的公開安全語氣規則；只有取得明確外部傳送授權後，才以 Cloudflare secret 覆蓋。原始私人 persona 文件不進 repository、Wiki、前端 bundle 或第三方服務。
+- 只採用 repository 內不含個人資料的通用回答風格；私人 persona 原文或摘要不會送入 repository、Wiki、前端、Gemini 或其他第三方服務。
 - 未指定代表專案時優先介紹 LumaReader；多專案總覽以 `wiki/Projects/project-overview.md` 為準。
 - 回答預設言簡意賅，但不設定硬性的輸出截斷長度；完整回答核心問題優先。
 - 訪客要求長篇細節時，仍提供精簡重點、相關 WikiNB 文件與聯絡方式。

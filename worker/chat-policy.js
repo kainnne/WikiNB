@@ -62,12 +62,12 @@ export function outOfScopeMessage(english = false) {
     : '這個小聊天只開放聊我的公開經歷、作品、專案、技能與合作方向。像微積分教學這類一般問答會消耗共用的 Gemini 免費 API 額度，所以這裡先不回答，抱歉；你可以改問我做過什麼，或某個專案怎麼運作。';
 }
 
-export function conversationLimitMessage(limit, english = false) {
+export function continuationPromptMessage(limit, english = false) {
   return english
-    ? `Let's stop here—sorry. This chat uses the free Gemini API quota I provide, so each verified email gets ${limit} messages per day to keep it available for other visitors. You can still browse WikiNB or contact me directly.`
-    : `先聊到這裡，抱歉。這個聊天使用我提供的 Gemini 免費 API 額度；為了讓其他訪客也能使用，每個已驗證 Email 每天只開放 ${limit} 則訊息。你仍然可以直接瀏覽 WikiNB，或聯絡我。`;
+    ? `You have used the first ${limit} messages. Would you like to continue? If you choose to continue, the system will email Kaine to let him know that you requested more chat time. The email will not include your conversation.`
+    : `你已使用前 ${limit} 則訊息。要繼續聊嗎？如果你選擇繼續，系統會寄一封通知信給 Kaine，讓他知道你希望延長聊天；信中不會附上對話內容。`;
 }
 
-export function appendConversationLimit(answer, limit, english = false) {
-  return `${String(answer || '').trim()}\n\n---\n${conversationLimitMessage(limit, english)}`.trim();
+export function appendContinuationPrompt(answer, limit, english = false) {
+  return `${String(answer || '').trim()}\n\n---\n${continuationPromptMessage(limit, english)}`.trim();
 }

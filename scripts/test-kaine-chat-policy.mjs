@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 
 import {
-  appendConversationLimit,
-  conversationLimitMessage,
+  appendContinuationPrompt,
+  continuationPromptMessage,
   isKaineScopeQuestion,
   maxChatTurns,
   outOfScopeMessage,
@@ -45,8 +45,10 @@ assert.equal(maxChatTurns({ MAX_CHAT_TURNS: '99' }), 5);
 assert.equal(maxChatTurns({ MAX_CHAT_TURNS: '1' }), 4);
 assert.match(outOfScopeMessage(false), /微積分教學/);
 assert.match(outOfScopeMessage(true), /calculus tutoring/i);
-assert.match(conversationLimitMessage(5, false), /每天只開放 5 則訊息/);
-assert.match(conversationLimitMessage(5, true), /5 messages per day/i);
-assert.match(appendConversationLimit('回答', 5, false), /^回答[\s\S]*5 則訊息/);
+assert.match(continuationPromptMessage(5, false), /前 5 則訊息/);
+assert.match(continuationPromptMessage(5, false), /寄一封通知信給 Kaine/);
+assert.match(continuationPromptMessage(5, true), /first 5 messages/i);
+assert.match(continuationPromptMessage(5, true), /email Kaine/i);
+assert.match(appendContinuationPrompt('回答', 5, false), /^回答[\s\S]*前 5 則訊息/);
 
-console.log('OK: Kaine 限定聊天範圍與 5 則訊息政策');
+console.log('OK: Kaine 限定聊天範圍與 5 則續聊確認政策');

@@ -46,11 +46,11 @@ WikiNB 同時包含三個權限與部署完全不同的執行層：
 ### Kaine 限定聊天
 
 - **第一人稱定位**：system prompt 明確把模型定位為「Kaine」，以「我」回答公開經歷、作品、專案、技能與合作方向；不自稱數位助理、分身或 Gemini。
-- **私人人格壓縮**：原始 persona 不進 repository、Wiki 或前端。Worker 只在執行期接收一份公開安全、經壓縮的表達摘要，並限制注入長度；沒有該摘要時使用不含私人事實的 fallback。
+- **不使用私人人格資料**：Worker 只使用 repository 內不含個人資料的通用回答風格；沒有 runtime persona secret，也不讀取或上傳私人 persona 原文／摘要。
 - **非通用聊天**：Worker 在呼叫 Gemini 前先以固定規則判斷問題是否屬於 Kaine 公開內容。微積分教學、作業代寫等一般問答直接回覆額度說明，不把請求送到模型。
-- **4–5 則上限**：程式允許設定 4 或 5，超出範圍會被 clamp；目前公開設定為每個已驗證 Email、每個台北日期最多 5 則訊息。
-- **結束行為**：第 5 則仍會得到回答，回覆末端再加入免費 API 額度與對話結束說明；之後輸入欄停用。重新整理、重新寄 OTP 或重新驗證不會重置當日計數。
-- **額外成本保護**：無關問題也計入對話則數，但不呼叫 Gemini；超過上限後由 Worker 回固定訊息。
+- **4–5 則確認門檻**：程式允許設定 4 或 5，超出範圍會被 clamp；目前公開設定為每個已驗證 Email、每個台北日期先開放 5 則訊息。
+- **續聊行為**：第 5 則仍會得到回答，回覆末端詢問是否續聊。訪客選擇繼續前，介面先說明系統會寄信通知 Kaine；信中不附聊天內容。寄信成功後解除則數門檻，同一 Email 每日只通知一次。
+- **額外成本保護**：無關問題也計入前 5 則，但不呼叫 Gemini；續聊後仍受每日 token 總上限與 burst rate limit 保護。
 
 ### RAG 與模型請求
 
@@ -118,12 +118,14 @@ Worker 驗證 token、burst、每日 token 與當日則數
           └─ 是
               ↓ 載入／快取公開搜尋索引
             最多 4 頁、約 6,500 字元 corpus
-              ↓ system prompt + 精簡 persona + 最近 history
+              ↓ system prompt + 通用回答風格 + 最近 history
             Gemini generateContent（minimal thinking）
               ↓
        記錄使用量 → 回傳 answer 與剩餘狀態
               ↓ 若為第 5 則
-       附加結束說明並鎖定前端輸入
+       詢問是否續聊並暫停前端輸入
+              ↓ 訪客確認且通知信寄送成功
+       解除則數門檻；保留每日 token 上限
 ```
 
 ### 私人維護與發布
@@ -146,7 +148,7 @@ Worker 驗證 token、burst、每日 token 與當日則數
 3. **先分類、再呼叫模型**：無關的一般問答在 Worker 終止，節省免費 API 額度，也讓產品定位保持聚焦。
 4. **短對話而不是永久聊天紀錄**：伺服端只維護每日則數與 token 統計；模型 history 只取最近四則，不建立公開聊天內容資料庫。
 5. **Kaine 身分與事實邊界同時存在**：模型以第一人稱表達，但只能依公開 Wiki 事實回答，不得代替本人作現實承諾。
-6. **persona 與知識分離**：persona 只提供語氣與判斷風格；專案、經歷與能力事實仍必須由公開檢索內容支持。
+6. **不使用私人人格資料**：通用回答風格直接寫在公開程式中；專案、經歷與能力事實仍必須由公開檢索內容支持。
 7. **Pages 與 Worker 分開部署**：靜態內容變更不會誤觸 AI backend；相對地，Worker 修改也必須明確獨立發布。
 8. **不以硬輸出長度截斷答案**：先縮小 corpus、history、thinking 與回答規則，避免核心句子因固定 token cap 被截斷。
 
@@ -163,8 +165,8 @@ npm run build
 `npm test` 目前串接三組檢查：
 
 - **導覽與權限 smoke test**：以假的 DOM／sessionStorage 驗證登入前後可見性，並用 source assertions 固定公開頁、管理頁與聊天 UI 的責任邊界。
-- **Gemini budget regression**：確認四頁／6,500 字元 corpus、四則 history、minimal thinking、重試策略、Kaine 定位、persona 注入、5 則限制與 UI 文字沒有回退。
-- **聊天政策 unit test**：直接執行 scope classifier、語言判斷、4–5 clamp、無關婉拒與結束訊息。
+- **Gemini budget regression**：確認四頁／6,500 字元 corpus、四則 history、minimal thinking、重試策略、Kaine 定位、沒有私人 persona 入口、5 則續聊確認與 UI 文字沒有回退。
+- **聊天政策 unit test**：直接執行 scope classifier、語言判斷、4–5 clamp、無關婉拒與續聊提示。
 
 `wiki:check` 檢查巢狀 Wiki links；`build` 實際產生 Astro 靜態頁與 sitemap。
 
@@ -183,9 +185,9 @@ npm run build
 
 ### Cloudflare Worker
 
-- `worker/index.js`、聊天 policy、模型設定、D1 綁定與 runtime persona 的變更需要獨立 Worker deploy。
+- `worker/index.js`、聊天 policy、模型設定與 D1 綁定的變更需要獨立 Worker deploy。
 - 新資料表或欄位需要另外套用 D1 schema／migration；只發布 Worker 不會自動修正既有資料庫結構。
-- API key、SMTP 密碼、token 簽章材料與 persona 摘要只存在執行平台，不放進 Git 或前端 bundle。
+- API key、SMTP 密碼與 token 簽章材料只存在執行平台，不放進 Git 或前端 bundle；私人 persona 原文／摘要不送入執行平台。
 
 ### 本機 Bridge
 
@@ -209,7 +211,7 @@ npm run build
 
 可公開：三層架構、API 職責、Markdown parser、RAG 預算、對話上限原則、驗證模型、測試方法與部署分線。
 
-不公開：Email、資料庫識別碼、API key、SMTP 密碼、token 簽章材料、私人 persona 原文或摘要全文、Bridge `.env`、本機絕對路徑、訪客身分／IP、私人 Agent 規則與未公開筆記。人格設定只能描述「如何隔離與壓縮」，不能把私人檔案複製到公開文件。
+不公開：Email、資料庫識別碼、API key、SMTP 密碼、token 簽章材料、私人 persona 原文或摘要、Bridge `.env`、本機絕對路徑、訪客身分／IP、私人 Agent 規則與未公開筆記。私人 persona 不複製到公開文件，也不傳給模型或其他第三方服務。
 
 ## Source of truth
 

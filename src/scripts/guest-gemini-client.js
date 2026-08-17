@@ -20,6 +20,9 @@ const GUEST_AI_MESSAGE_KEYS = new Map([
   ['問題太長，請縮短到 1,200 字以內', 'gemini.errorQuestionLong'],
   ['請稍等幾秒再送出下一個問題', 'gemini.errorQuestionRate'],
   ['今天的訪客 AI 共享額度已達上限，請明天再來', 'gemini.errorDailyChatLimit'],
+  ['尚未達到續聊確認門檻', 'gemini.continueNotReady'],
+  ['續聊通知正在寄送，請稍候再試', 'gemini.continuePending'],
+  ['無法寄送續聊通知，請稍後再試', 'gemini.continueError'],
   ['Gemini API 設定目前無法使用，已停止這次請求', 'gemini.errorApiConfig'],
   ['Gemini 沒有產生回答，請換個方式再問一次', 'gemini.errorEmptyAnswer'],
 ]);
@@ -132,6 +135,17 @@ export function askGuestGemini({ message, history }) {
     {
       method: 'POST',
       body: JSON.stringify({ message, history }),
+    },
+    true,
+  );
+}
+
+export function continueGuestGemini() {
+  return guestAiFetch(
+    '/api/guest-ai/continue',
+    {
+      method: 'POST',
+      body: JSON.stringify({}),
     },
     true,
   );

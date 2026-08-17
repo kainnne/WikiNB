@@ -1,7 +1,7 @@
 import { sendMail } from 'cloudflare-smtp';
 import {
-  appendConversationLimit,
-  conversationLimitMessage,
+  appendContinuationPrompt,
+  continuationPromptMessage,
   isKaineScopeQuestion,
   maxChatTurns,
   outOfScopeMessage,
@@ -286,7 +286,7 @@ async function requestOtp(request, env) {
         `你的 Kainnne x Gemini 驗證碼是：${code}`,
         '',
         '驗證碼 10 分鐘內有效。',
-        '這會解鎖 Gemini 筆記助理問答，不是 WikiNB 管理員登入。',
+        '這會解鎖 Kaine 限定聊天，不是 WikiNB 管理員登入。',
         '若不是你本人操作，請忽略此信。',
       ].join('\n'),
     );
@@ -333,6 +333,8 @@ async function verifyOtp(request, env, ctx) {
   const token = await issueGuestToken({ email, name: pending.name }, env);
   const turnLimit = maxChatTurns(env);
   const chatTurnsUsed = await chatTurnUsage(env, email);
+  const continuationApproved = await hasContinuationApproval(env, email);
+  const continuationRequired = chatTurnsUsed >= turnLimit && !continuationApproved;
   await env.DB.prepare('DELETE FROM otp_requests WHERE email = ?').bind(email).run();
 
   const when = new Date().toLocaleString('zh-TW', {
@@ -365,7 +367,9 @@ async function verifyOtp(request, env, ctx) {
     expiresAt: now + SESSION_TTL_MS,
     chatTurnsUsed,
     chatTurnLimit: turnLimit,
-    conversationEnded: chatTurnsUsed >= turnLimit,
+    continuationApproved,
+    continuationRequired,
+    conversationEnded: continuationRequired,
   });
 }
 
@@ -383,6 +387,8 @@ async function me(request, env) {
   if (!session) return json({ error: 'AI 訪客驗證已過期' }, 401);
   const turnLimit = maxChatTurns(env);
   const chatTurnsUsed = await chatTurnUsage(env, session.email);
+  const continuationApproved = await hasContinuationApproval(env, session.email);
+  const continuationRequired = chatTurnsUsed >= turnLimit && !continuationApproved;
   return json({
     ok: true,
     unlocked: true,
@@ -391,7 +397,9 @@ async function me(request, env) {
     expiresAt: Number(session.expires_at),
     chatTurnsUsed,
     chatTurnLimit: turnLimit,
-    conversationEnded: chatTurnsUsed >= turnLimit,
+    continuationApproved,
+    continuationRequired,
+    conversationEnded: continuationRequired,
   });
 }
 
@@ -460,6 +468,42 @@ async function reserveChatTurn(env, email, limit) {
 
   if (row) return { ok: true, count: Number(row.count || 1) };
   return { ok: false, count: await chatTurnUsage(env, email) };
+}
+
+async function incrementChatTurn(env, email) {
+  const key = await chatTurnRateKey(email);
+  const row = await env.DB.prepare(
+    `INSERT INTO rate_limits (rate_key, window_start, count)
+     VALUES (?, ?, 1)
+     ON CONFLICT(rate_key) DO UPDATE SET count = rate_limits.count + 1
+     RETURNING count`,
+  )
+    .bind(key, Date.now())
+    .first();
+  return { ok: true, count: Math.max(1, Number(row?.count || 1)) };
+}
+
+async function continuationRateKey(email) {
+  return `chat-continuation:${taipeiDay()}:${await sha256(normalizeEmail(email))}`;
+}
+
+async function continuationApprovalState(env, email) {
+  const key = await continuationRateKey(email);
+  const row = await env.DB.prepare(
+    'SELECT window_start, count FROM rate_limits WHERE rate_key = ?',
+  )
+    .bind(key)
+    .first();
+  return {
+    key,
+    pending: Number(row?.count || 0) === 1,
+    approved: Number(row?.count || 0) >= 2,
+    updatedAt: Number(row?.window_start || 0),
+  };
+}
+
+async function hasContinuationApproval(env, email) {
+  return (await continuationApprovalState(env, email)).approved;
 }
 
 async function loadWikiPages(env) {
@@ -657,17 +701,14 @@ function buildRelevantCorpus(pages, question, maxChars = 6500) {
   return chunks.join('\n') || '（目前沒有可用的公開筆記）';
 }
 
-const PUBLIC_SAFE_PERSONA_FALLBACK = `
+const PUBLIC_SAFE_STYLE = `
 - 使用繁體中文與自然的台灣口語，技術詞可以保留英文。
 - 先說結論、有明確立場，再補最少但足夠的理由；不要像客服。
 - 同時從工程可行性、成本、維護與作品感思考，點子發散後要主動收斂 scope。
 - 不捏造公開筆記沒有提供的私人事實、立場、關係或承諾。
 `.trim();
 
-function systemPrompt(corpus, expandedDetailRequested = false, personaPrompt = '') {
-  const compactPersona = String(personaPrompt || PUBLIC_SAFE_PERSONA_FALLBACK)
-    .trim()
-    .slice(0, 1600);
+function systemPrompt(corpus, expandedDetailRequested = false) {
   const expandedDetailRule = expandedDetailRequested
     ? `
 詳細請求處理（本次最高優先）：
@@ -680,8 +721,8 @@ function systemPrompt(corpus, expandedDetailRequested = false, personaPrompt = '
     : '';
   return `你就是 Kaine。在「Kainnne x Gemini」這個限定聊天中，根據自己的公開 WikiNB 筆記，以第一人稱「我」回答。不要稱自己為數位助理、分身、模擬器或 Gemini，也不是通用聊天機器人；不要代表真實世界中的 Kaine 做承諾或捏造未公開事實。
 
-精簡人格與表達方式：
-${compactPersona}
+通用回答風格（不含私人 persona 資料）：
+${PUBLIC_SAFE_STYLE}
 
 節省免費 API 額度是必要限制：
 1. 先直接回答，不重述問題、不寫開場套話、不列完整履歷。
@@ -746,6 +787,105 @@ function cleanHistory(history) {
     .filter((turn) => turn.parts[0].text);
 }
 
+async function continueChat(request, env) {
+  const session = await guestSession(request, env);
+  if (!session) return json({ error: 'AI 訪客驗證已過期，請重新驗證' }, 401);
+
+  const turnLimit = maxChatTurns(env);
+  const chatTurnsUsed = await chatTurnUsage(env, session.email);
+  if (chatTurnsUsed < turnLimit) {
+    return json({ error: '尚未達到續聊確認門檻' }, 400);
+  }
+  const usage = await dailyUsage(env, session.email);
+  if (usage.tokenCount >= dailyTokenLimit(env)) {
+    return json({ error: '今天的訪客 AI 共享額度已達上限，請明天再來' }, 429);
+  }
+
+  const current = await continuationApprovalState(env, session.email);
+  if (current.approved) {
+    return json({
+      ok: true,
+      continuationApproved: true,
+      continuationRequired: false,
+      conversationEnded: false,
+      notificationSent: false,
+      chatTurnsUsed,
+      chatTurnLimit: turnLimit,
+    });
+  }
+
+  const now = Date.now();
+  const staleBefore = now - 60 * 1000;
+  const claimed = await env.DB.prepare(
+    `INSERT INTO rate_limits (rate_key, window_start, count)
+     VALUES (?, ?, 1)
+     ON CONFLICT(rate_key) DO UPDATE SET window_start = excluded.window_start, count = 1
+     WHERE rate_limits.count < 2 AND rate_limits.window_start < ?
+     RETURNING count`,
+  )
+    .bind(current.key, now, staleBefore)
+    .first();
+
+  if (!claimed) {
+    const latest = await continuationApprovalState(env, session.email);
+    if (latest.approved) {
+      return json({
+        ok: true,
+        continuationApproved: true,
+        continuationRequired: false,
+        conversationEnded: false,
+        notificationSent: false,
+        chatTurnsUsed,
+        chatTurnLimit: turnLimit,
+      });
+    }
+    return json({ error: '續聊通知正在寄送，請稍候再試' }, 409);
+  }
+
+  const when = new Date().toLocaleString('zh-TW', {
+    timeZone: 'Asia/Taipei',
+    hour12: false,
+  });
+  try {
+    await sendTextEmail(
+      env,
+      env.OWNER_EMAIL,
+      'Kainnne x Gemini 訪客要求續聊',
+      [
+        `有訪客使用完前 ${turnLimit} 則訊息，並主動確認希望繼續聊天。`,
+        '',
+        `名稱：${session.name}`,
+        `電子信箱：${session.email}`,
+        `時間：${when}（台北時間）`,
+        `已送出訊息：${chatTurnsUsed} 則`,
+        '',
+        '通知信不包含訪客的聊天內容。每日 Gemini token 總上限仍然有效。',
+      ].join('\n'),
+    );
+    await env.DB.prepare(
+      'UPDATE rate_limits SET count = 2, window_start = ? WHERE rate_key = ? AND count = 1',
+    )
+      .bind(Date.now(), current.key)
+      .run();
+  } catch (error) {
+    await env.DB.prepare('DELETE FROM rate_limits WHERE rate_key = ? AND count = 1')
+      .bind(current.key)
+      .run();
+    console.error('Continuation notification failed', error);
+    return json({ error: '無法寄送續聊通知，請稍後再試' }, 502);
+  }
+
+  return json({
+    ok: true,
+    continuationApproved: true,
+    continuationRequired: false,
+    conversationEnded: false,
+    notificationSent: true,
+    chatTurnsUsed,
+    chatTurnLimit: turnLimit,
+  });
+}
+
 async function chat(request, env) {
   const session = await guestSession(request, env);
   if (!session) return json({ error: 'AI 訪客驗證已過期，請重新驗證' }, 401);
@@ -767,12 +907,17 @@ async function chat(request, env) {
     return json({ error: '今天的訪客 AI 共享額度已達上限，請明天再來' }, 429);
   }
 
-  const turn = await reserveChatTurn(env, session.email, turnLimit);
+  const continuationApproved = await hasContinuationApproval(env, session.email);
+  const turn = continuationApproved
+    ? await incrementChatTurn(env, session.email)
+    : await reserveChatTurn(env, session.email, turnLimit);
   if (!turn.ok) {
     return json({
       ok: true,
-      kind: 'limit',
-      answer: conversationLimitMessage(turnLimit, english),
+      kind: 'continuation_required',
+      answer: continuationPromptMessage(turnLimit, english),
+      continuationApproved: false,
+      continuationRequired: true,
       conversationEnded: true,
       limitReached: true,
       chatTurnsUsed: turn.count,
@@ -780,20 +925,22 @@ async function chat(request, env) {
     });
   }
   const chatTurnsUsed = turn.count;
-  const conversationEnded = chatTurnsUsed >= turnLimit;
+  const continuationRequired = chatTurnsUsed >= turnLimit && !continuationApproved;
 
   if (!isKaineScopeQuestion(message, history)) {
     await recordDailyUsage(env, session.email, usage.day);
     let answer = outOfScopeMessage(english);
-    if (conversationEnded) {
-      answer = appendConversationLimit(answer, turnLimit, english);
+    if (continuationRequired) {
+      answer = appendContinuationPrompt(answer, turnLimit, english);
     }
     return json({
       ok: true,
       kind: 'out_of_scope',
       answer,
-      conversationEnded,
-      limitReached: conversationEnded,
+      continuationApproved,
+      continuationRequired,
+      conversationEnded: continuationRequired,
+      limitReached: continuationRequired,
       chatTurnsUsed,
       chatTurnLimit: turnLimit,
     });
@@ -826,11 +973,7 @@ async function chat(request, env) {
         systemInstruction: {
           parts: [
             {
-              text: systemPrompt(
-                corpus,
-                expandedDetailRequested,
-                env.KAINE_PERSONA_PROMPT,
-              ),
+              text: systemPrompt(corpus, expandedDetailRequested),
             },
           ],
         },
@@ -902,16 +1045,18 @@ async function chat(request, env) {
 
   await recordDailyUsage(env, session.email, usage.day, consumedTokens);
 
-  if (conversationEnded) {
-    answer = appendConversationLimit(answer, turnLimit, english);
+  if (continuationRequired) {
+    answer = appendContinuationPrompt(answer, turnLimit, english);
   }
 
   return json({
     ok: true,
     kind: 'answer',
     answer,
-    conversationEnded,
-    limitReached: conversationEnded,
+    continuationApproved,
+    continuationRequired,
+    conversationEnded: continuationRequired,
+    limitReached: continuationRequired,
     chatTurnsUsed,
     chatTurnLimit: turnLimit,
   });
@@ -941,6 +1086,8 @@ export default {
         response = await verifyOtp(request, env, ctx);
       } else if (request.method === 'GET' && url.pathname === '/api/guest-ai/me') {
         response = await me(request, env);
+      } else if (request.method === 'POST' && url.pathname === '/api/guest-ai/continue') {
+        response = await continueChat(request, env);
       } else if (request.method === 'POST' && url.pathname === '/api/guest-ai/chat') {
         response = await chat(request, env);
       } else {

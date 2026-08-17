@@ -147,6 +147,7 @@ import '@fontsource/iansui/latin-400.css';
   import { t } from '../scripts/i18n.js';
   import {
     askGuestGemini,
+    continueGuestGemini,
     fetchGuestAiMe,
     getGuestAiSession,
     requestGuestAiCode,
@@ -181,25 +182,35 @@ import '@fontsource/iansui/latin-400.css';
   let codeSentState = null;
   let fullscreen = false;
   let submittedTurns = 0;
-  let conversationEnded = false;
+  let continuationRequired = false;
+  let continuationDismissed = false;
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
 
   function syncConversationControls() {
-    const disabled = running || conversationEnded;
+    const disabled = running || continuationRequired || continuationDismissed;
     if (chatInput) {
       chatInput.disabled = disabled;
+      const placeholderKey = continuationDismissed
+        ? 'gemini.endedPlaceholder'
+        : continuationRequired
+          ? 'gemini.continuePlaceholder'
+          : 'gemini.placeholder';
       chatInput.setAttribute(
         'data-i18n-placeholder',
-        conversationEnded ? 'gemini.endedPlaceholder' : 'gemini.placeholder',
+        placeholderKey,
       );
-      chatInput.placeholder = t(
-        conversationEnded ? 'gemini.endedPlaceholder' : 'gemini.placeholder',
-      );
+      chatInput.placeholder = t(placeholderKey);
     }
     if (chatSend) {
       chatSend.disabled = disabled;
-      const key = conversationEnded ? 'gemini.ended' : running ? 'gemini.sending' : 'gemini.send';
+      const key = continuationDismissed
+        ? 'gemini.ended'
+        : continuationRequired
+          ? 'gemini.continueRequired'
+          : running
+            ? 'gemini.sending'
+            : 'gemini.send';
       chatSend.setAttribute('data-i18n', key);
       chatSend.textContent = t(key);
     }
@@ -312,6 +323,75 @@ import '@fontsource/iansui/latin-400.css';
     return bubble;
   }
 
+  function rememberContinuationState(approved) {
+    const session = getGuestAiSession();
+    if (!session) return;
+    setGuestAiSession({
+      ...session,
+      continuationApproved: approved,
+      continuationRequired: !approved,
+      conversationEnded: !approved,
+    });
+  }
+
+  function appendContinuationActions() {
+    if (!output || output.querySelector('.gemini-continuation-actions')) return;
+    const line = document.createElement('div');
+    line.className = 'gemini-line gemini-line-system gemini-continuation-actions';
+    const actions = document.createElement('div');
+    actions.className = 'grid gap-2 sm:grid-cols-2';
+
+    const continueButton = document.createElement('button');
+    continueButton.type = 'button';
+    continueButton.className = 'gemini-example';
+    continueButton.setAttribute('data-i18n', 'gemini.continueAndNotify');
+    continueButton.textContent = t('gemini.continueAndNotify');
+
+    const stopButton = document.createElement('button');
+    stopButton.type = 'button';
+    stopButton.className = 'gemini-example';
+    stopButton.setAttribute('data-i18n', 'gemini.stopHere');
+    stopButton.textContent = t('gemini.stopHere');
+
+    continueButton.addEventListener('click', async () => {
+      if (running) return;
+      running = true;
+      continueButton.disabled = true;
+      stopButton.disabled = true;
+      continueButton.textContent = t('gemini.notifying');
+      try {
+        const result = await continueGuestGemini();
+        continuationRequired = false;
+        continuationDismissed = false;
+        rememberContinuationState(Boolean(result.continuationApproved));
+        line.remove();
+        appendMessage(t('gemini.continueApproved'), 'system');
+      } catch (error) {
+        const described = describeGuestAiMessage(error.message || '', 'gemini.continueError');
+        appendMessage(t(described.key, described.vars), 'error');
+        continueButton.disabled = false;
+        stopButton.disabled = false;
+        continueButton.textContent = t('gemini.continueAndNotify');
+      } finally {
+        running = false;
+        syncConversationControls();
+        if (!continuationRequired) chatInput?.focus();
+      }
+    });
+
+    stopButton.addEventListener('click', () => {
+      line.remove();
+      continuationDismissed = true;
+      appendMessage(t('gemini.stopConfirmed'), 'system');
+      syncConversationControls();
+    });
+
+    actions.append(continueButton, stopButton);
+    line.appendChild(actions);
+    output.appendChild(line);
+    output.scrollTo({ top: output.scrollHeight, behavior: 'smooth' });
+  }
+
   function startResponseTimer() {
     let seconds = 1;
     const bubble = appendMessage(t('gemini.elapsed', { n: seconds }), 'system');
@@ -364,11 +444,17 @@ import '@fontsource/iansui/latin-400.css';
     chat?.classList.remove('hidden');
     if (identity) identity.textContent = `${session.name} · ${session.email}`;
     submittedTurns = Math.max(0, Number(session.chatTurnsUsed || 0));
-    conversationEnded = Boolean(session.conversationEnded);
+    continuationRequired = Boolean(
+      session.continuationRequired ?? session.conversationEnded,
+    );
+    continuationDismissed = false;
     appendWelcome();
-    if (conversationEnded) appendMessage(t('gemini.limitMessage'), 'system');
+    if (continuationRequired) {
+      appendMessage(t('gemini.limitMessage'), 'system');
+      appendContinuationActions();
+    }
     syncConversationControls();
-    if (!conversationEnded) chatInput?.focus();
+    if (!continuationRequired) chatInput?.focus();
   }
 
   function openUnlock() {
@@ -413,6 +499,8 @@ import '@fontsource/iansui/latin-400.css';
         expiresAt: result.expiresAt,
         chatTurnsUsed: result.chatTurnsUsed,
         chatTurnLimit: result.chatTurnLimit,
+        continuationApproved: result.continuationApproved,
+        continuationRequired: result.continuationRequired,
         conversationEnded: result.conversationEnded,
       };
       setGuestAiSession(session);
@@ -432,7 +520,7 @@ import '@fontsource/iansui/latin-400.css';
 
   chatForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (running || conversationEnded) return;
+    if (running || continuationRequired) return;
     const message = String(chatInput?.value || '').trim();
     if (!message) return;
 
@@ -458,7 +546,13 @@ import '@fontsource/iansui/latin-400.css';
         history.push({ role: 'assistant', content: result.answer });
         history = history.slice(-4);
       }
-      conversationEnded = Boolean(result.conversationEnded);
+      continuationRequired = Boolean(
+        result.continuationRequired ?? result.conversationEnded,
+      );
+      if (continuationRequired) {
+        continuationDismissed = false;
+        appendContinuationActions();
+      }
     } catch (error) {
       responseTimer.stop();
       const raw = error.message || '';
@@ -474,7 +568,7 @@ import '@fontsource/iansui/latin-400.css';
     } finally {
       running = false;
       syncConversationControls();
-      if (!conversationEnded) chatInput?.focus();
+      if (!continuationRequired) chatInput?.focus();
     }
   });
 
@@ -482,7 +576,7 @@ import '@fontsource/iansui/latin-400.css';
     renderMessageState(authMessage, authMessageState);
     renderMessageState(codeSent, codeSentState);
     syncConversationControls();
-    if (!chat?.classList.contains('hidden') && submittedTurns === 0 && !conversationEnded) {
+    if (!chat?.classList.contains('hidden') && submittedTurns === 0 && !continuationRequired) {
       appendWelcome();
     }
   });

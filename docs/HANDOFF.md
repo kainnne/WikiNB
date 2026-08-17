@@ -50,9 +50,10 @@ WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astr
 - 訪客以名稱、Email、6 位數 OTP 解鎖；session 與管理者登入完全分離。
 - Worker 使用簽章訪客 token；D1 保存 OTP、rate limit、每日對話次數與 token 使用量。
 - 對外角色以第一人稱「Kaine」回答，不再自稱數位助理或分身；公開 WikiNB 是唯一事實邊界，不能生成未公開私人事實或真實承諾。
-- 每個已驗證 Email 依台北日期最多 5 則訊息；以 Email hash 的 D1 原子計數強制執行，重新整理或重新驗證不會重置。
+- 每個已驗證 Email 依台北日期先開放 5 則訊息；以 Email hash 的 D1 原子計數強制執行。第 5 則回答後前端要求訪客選擇是否續聊。
+- 訪客明確選擇續聊時，Worker 先寄一封不含對話內容的通知信給 Kaine，同一 Email 每日只通知一次；成功後解除則數門檻，但每日 token 總上限仍有效。
 - 明顯與 Kaine 公開內容無關的問題由 Worker 直接回覆固定說明，不載入 Wiki corpus、不呼叫 Gemini，但仍計入當日 5 則訊息。
-- 預設使用 repository 內不含個人事實的公開安全語氣規則；只有取得私人衍生內容的明確外部傳送授權後，才可用 `KAINE_PERSONA_PROMPT` secret 覆蓋並截短。原始私人 persona 文件不得進 repository、Wiki、前端 bundle、第三方服務或 log。
+- Worker 只使用 repository 內不含個人資料的通用回答風格；不提供私人 persona secret 入口，也不讀取或上傳私人 persona 原文／摘要。
 - 目前模型由 `wrangler.jsonc` 的 `GEMINI_MODEL` 指定為 `gemini-3.1-flash-lite`。
 - 每次只選最多 4 份相關 Wiki 內容，corpus 約 6,500 字元；送入模型的對話 history 只保留最近 4 則訊息。
 - 使用 minimal thinking，沒有設定 `maxOutputTokens` 硬截斷；Prompt 要求短而完整。
@@ -104,7 +105,6 @@ npx wrangler d1 execute wikinb-guest-ai --remote --file=worker/migrations/0002_d
 Cloudflare secrets 必須留在平台，不得寫入 Markdown、Git 或前端：
 
 - `GEMINI_API_KEY`
-- `KAINE_PERSONA_PROMPT`（可選；只可存放已取得明確外部傳送授權的精簡內容）
 - `SMTP_PASSWORD`
 - `TOKEN_SECRET`
 
