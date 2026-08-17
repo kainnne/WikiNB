@@ -1,0 +1,426 @@
+<div class="management-uploader">
+  <div id="add-gate" class="glass-card hidden p-6 text-center text-berry-700/80">
+    <span data-i18n="add.gate">請先登入後使用。</span>
+    <a href={`${import.meta.env.BASE_URL}login`} class="ml-1 font-semibold text-pink-600" data-i18n="add.gateLogin">登入</a>
+  </div>
+
+  <div id="add-offline" class="glass-card hidden border border-amber-200 bg-amber-50/50 p-6 text-center text-amber-900">
+    <span data-i18n="add.offline">本機 Bridge 未連線。請確認 Mac 已開機且已執行 npm run bridge。</span>
+  </div>
+
+  <div id="add-panel" class="hidden space-y-4">
+    <div class="management-uploader-intro">
+      <div>
+        <p class="management-uploader-kicker" data-i18n="manage.addKicker">新增內容</p>
+        <h2 data-i18n="manage.addTitle">上傳 Markdown</h2>
+      </div>
+      <p data-i18n="manage.addIntro">選擇資料夾、補齊顯示資訊，再拖入 Markdown；完成後會沿用既有同步流程發布。</p>
+    </div>
+
+    <section class="management-form-card space-y-3 p-4 sm:p-5">
+      <label class="block text-sm font-semibold text-berry-800">
+        <span data-i18n="add.folder">資料夾</span>
+        <select id="folder-select" class="search-input mt-2 py-2 text-sm"></select>
+      </label>
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <label class="block flex-1 text-sm font-semibold text-berry-800">
+          <span data-i18n="add.folderNew">新建資料夾</span>
+          <input
+            id="folder-new"
+            type="text"
+            class="search-input mt-2 py-2 text-sm"
+            placeholder="例如：AboutMe"
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </label>
+        <button id="folder-create-btn" type="button" class="management-soft-btn justify-center px-4 py-2 text-sm" data-i18n="add.folderCreate">
+          建立並選取
+        </button>
+      </div>
+      <p id="folder-msg" class="text-sm text-berry-600/80"></p>
+    </section>
+
+    <section class="management-form-card space-y-3 p-4 sm:p-5">
+      <div>
+        <p class="mb-2 text-sm font-semibold text-berry-800" data-i18n="add.filename">檔案名稱</p>
+        <div class="flex items-center gap-2">
+          <input
+            id="meta-filename"
+            type="text"
+            class="search-input flex-1 py-2 text-sm"
+            style="padding-left: 1.25rem"
+            placeholder="例如：about-kaine"
+            spellcheck="false"
+            autocomplete="off"
+          />
+          <span class="shrink-0 text-sm font-semibold text-berry-600/70">.md</span>
+        </div>
+      </div>
+      <label class="block text-sm font-semibold text-berry-800">
+        <span data-i18n="add.displayTitle">顯示標題</span>
+        <input id="meta-title" type="text" class="search-input mt-2 py-2 text-sm" style="padding-left: 1.25rem" autocomplete="off" />
+      </label>
+      <label class="block text-sm font-semibold text-berry-800">
+        <span data-i18n="add.description">簡述</span>
+        <input
+          id="meta-description"
+          type="text"
+          class="search-input mt-2 py-2 text-sm"
+          style="padding-left: 1.25rem"
+          placeholder="例如：一個持續把想法做成作品的人。"
+          data-i18n-placeholder="add.descriptionPlaceholder"
+          autocomplete="off"
+        />
+      </label>
+      <label class="block text-sm font-semibold text-berry-800">
+        <span data-i18n="add.keywords">關鍵字</span>
+        <span class="ml-2 text-xs font-normal text-berry-600/70" data-i18n="keywords.previewHint">僅前三個關鍵字會呈現在預覽字卡</span>
+        <div id="meta-keywords-editor" class="mt-2"></div>
+      </label>
+    </section>
+
+    <section
+      id="drop-zone"
+      class="management-drop-zone cursor-pointer p-8 text-center transition"
+      tabindex="0"
+      role="button"
+      aria-label="拖入或選取 Markdown"
+    >
+      <span class="management-drop-mark" aria-hidden="true">md.</span>
+      <p id="drop-label" class="font-display text-lg font-bold text-berry-800" data-i18n="add.drop">拖入或選取 md. 檔案</p>
+      <p id="drop-file-name" class="mt-2 hidden text-sm font-semibold text-pink-600"></p>
+      <input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" />
+    </section>
+
+    <div class="flex justify-end">
+      <button id="btn-publish" type="button" class="management-primary-btn" data-i18n="manage.publish">新增並發布</button>
+    </div>
+    <p id="add-status" class="text-sm text-berry-600/80"></p>
+  </div>
+</div>
+
+<script>
+  import {
+    isLoggedIn,
+    checkHealth,
+    listWikiTree,
+    createWikiFolder,
+    uploadWikiNote,
+  } from '../scripts/bridge-client.js';
+  import { mountKeywordEditor } from '../scripts/keyword-chips.js';
+  import { t } from '../scripts/i18n.js';
+
+  const gate = document.getElementById('add-gate');
+  const offline = document.getElementById('add-offline');
+  const panel = document.getElementById('add-panel');
+  const folderSelect = document.getElementById('folder-select') as HTMLSelectElement | null;
+  const folderNew = document.getElementById('folder-new') as HTMLInputElement | null;
+  const folderBtn = document.getElementById('folder-create-btn') as HTMLButtonElement | null;
+  const folderMsg = document.getElementById('folder-msg');
+  const metaFilename = document.getElementById('meta-filename') as HTMLInputElement | null;
+  const metaTitle = document.getElementById('meta-title') as HTMLInputElement | null;
+  const metaDescription = document.getElementById('meta-description') as HTMLInputElement | null;
+  const keywordsRoot = document.getElementById('meta-keywords-editor');
+  const dropZone = document.getElementById('drop-zone');
+  const dropLabel = document.getElementById('drop-label');
+  const dropFileName = document.getElementById('drop-file-name');
+  const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+  const publishBtn = document.getElementById('btn-publish') as HTMLButtonElement | null;
+  const statusEl = document.getElementById('add-status');
+  const DEFAULT_FOLDER = 'Random';
+  let stagedFile: File | null = null;
+
+  const keywordEditor = keywordsRoot
+    ? mountKeywordEditor(keywordsRoot, { locked: [], keywords: [], simple: true })
+    : null;
+
+  function setStatus(text: string, isError = false) {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.className = isError ? 'text-sm text-red-600' : 'text-sm text-emerald-700';
+  }
+
+  function setFolderMsg(text: string, isError = false) {
+    if (!folderMsg) return;
+    folderMsg.textContent = text;
+    folderMsg.className = isError ? 'text-sm text-red-600' : 'text-sm text-berry-600/80';
+  }
+
+  function formatFolderKeyword(folderName: string) {
+    const name = String(folderName || '').trim();
+    if (!name) return '';
+    if (/^[A-Z0-9]{2,6}$/.test(name)) return name;
+    const spaced = name.replace(/([a-z\d])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').trim();
+    return spaced
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word, index) => index === 0 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase())
+      .join(' ');
+  }
+
+  function syncFolderKeyword() {
+    const folder = (folderSelect?.value || '').trim();
+    const leaf = folder.split('/').filter(Boolean).pop() || folder;
+    const keyword = formatFolderKeyword(leaf);
+    keywordEditor?.setLocked(keyword ? [keyword] : []);
+  }
+
+  function collectDirs(nodes: any[], out: string[] = []) {
+    for (const node of nodes || []) {
+      if (node.type !== 'dir') continue;
+      out.push(node.path);
+      collectDirs(node.children || [], out);
+    }
+    return out;
+  }
+
+  function fillFolderSelect(paths: string[], selected = '') {
+    if (!folderSelect) return;
+    const list = [...new Set([DEFAULT_FOLDER, ...paths])].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+    const preferred = selected || folderSelect.value || DEFAULT_FOLDER;
+    folderSelect.innerHTML = '';
+    for (const path of list) {
+      const option = document.createElement('option');
+      option.value = path;
+      option.textContent = path;
+      folderSelect.appendChild(option);
+    }
+    folderSelect.value = list.includes(preferred) ? preferred : DEFAULT_FOLDER;
+    syncFolderKeyword();
+  }
+
+  async function refreshFolders(selected = '') {
+    const data = await listWikiTree();
+    const dirs = collectDirs(data.tree || []);
+    if (!dirs.includes(DEFAULT_FOLDER)) {
+      try {
+        await createWikiFolder({ path: DEFAULT_FOLDER, autoSync: false });
+        dirs.push(DEFAULT_FOLDER);
+      } catch {
+        // 顯示既有資料夾即可；建立預設資料夾不是載入阻斷條件。
+      }
+    }
+    fillFolderSelect(dirs, selected || DEFAULT_FOLDER);
+  }
+
+  function setStagedFile(file: File | null) {
+    stagedFile = file;
+    if (!file) {
+      if (dropLabel) dropLabel.textContent = t('add.drop');
+      dropFileName?.classList.add('hidden');
+      if (dropFileName) dropFileName.textContent = '';
+      return;
+    }
+    if (dropLabel) dropLabel.textContent = t('manage.fileSelected');
+    dropFileName?.classList.remove('hidden');
+    if (dropFileName) dropFileName.textContent = file.name;
+    if (metaFilename && !metaFilename.value.trim()) metaFilename.value = file.name.replace(/\.(md|txt)$/i, '');
+  }
+
+  function acceptFile(file: File | null) {
+    if (!file) return;
+    if (!/\.(md|txt)$/i.test(file.name)) {
+      setStatus(t('manage.needMarkdown'), true);
+      return;
+    }
+    setStagedFile(file);
+    setStatus('');
+  }
+
+  async function publish() {
+    const folder = (folderSelect?.value || '').trim().replace(/^\/+|\/+$/g, '');
+    const filename = (metaFilename?.value || '').trim().replace(/\.md$/i, '');
+    const title = (metaTitle?.value || '').trim();
+    const description = (metaDescription?.value || '').trim();
+    const keywords = keywordEditor?.getExtras?.() || [];
+
+    if (!folder) return setStatus(t('manage.needFolder'), true);
+    if (!filename) return setStatus(t('manage.needFilename'), true);
+    if (!title) return setStatus(t('manage.needTitle'), true);
+    if (!stagedFile) return setStatus(t('manage.needFile'), true);
+
+    const content = await stagedFile.text();
+    if (!content.trim()) return setStatus(t('manage.emptyFile'), true);
+
+    publishBtn?.setAttribute('disabled', 'true');
+    dropZone?.classList.add('is-busy');
+    setStatus(t('manage.publishing', { name: `${filename}.md` }));
+    try {
+      const result = await uploadWikiNote({ filename, content, folder, title, description, keywords, autoSync: true });
+      setStatus(result.message || t('manage.published'));
+      setStagedFile(null);
+      if (metaFilename) metaFilename.value = '';
+      if (metaTitle) metaTitle.value = '';
+      if (metaDescription) metaDescription.value = '';
+      keywordEditor?.setKeywords([]);
+      await refreshFolders(folder);
+      document.dispatchEvent(new CustomEvent('wikinb:management-updated'));
+    } catch (error) {
+      setStatus((error as Error).message || t('manage.publishFailed'), true);
+    } finally {
+      publishBtn?.removeAttribute('disabled');
+      dropZone?.classList.remove('is-busy');
+    }
+  }
+
+  folderSelect?.addEventListener('change', syncFolderKeyword);
+  folderBtn?.addEventListener('click', async () => {
+    const path = (folderNew?.value || '').trim().replace(/^\/+|\/+$/g, '');
+    if (!path) return setFolderMsg(t('manage.needFolderPath'), true);
+    folderBtn.disabled = true;
+    folderBtn.textContent = t('manage.creatingFolder');
+    try {
+      const result = await createWikiFolder({ path, autoSync: true });
+      setFolderMsg(result.message || t('manage.folderCreated'));
+      if (folderNew) folderNew.value = '';
+      await refreshFolders(path);
+    } catch (error) {
+      setFolderMsg((error as Error).message || t('manage.folderCreateFailed'), true);
+    } finally {
+      folderBtn.disabled = false;
+      folderBtn.textContent = t('add.folderCreate');
+    }
+  });
+
+  dropZone?.addEventListener('click', () => fileInput?.click());
+  dropZone?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    fileInput?.click();
+  });
+  fileInput?.addEventListener('change', () => {
+    acceptFile(fileInput.files?.[0] || null);
+    fileInput.value = '';
+  });
+  ;['dragenter', 'dragover'].forEach((type) => dropZone?.addEventListener(type, (event) => {
+    event.preventDefault();
+    dropZone.classList.add('drop-active');
+  }));
+  ;['dragleave', 'drop'].forEach((type) => dropZone?.addEventListener(type, (event) => {
+    event.preventDefault();
+    dropZone.classList.remove('drop-active');
+  }));
+  dropZone?.addEventListener('drop', (event) => acceptFile((event as DragEvent).dataTransfer?.files?.[0] || null));
+  publishBtn?.addEventListener('click', () => void publish());
+
+  async function initUploader() {
+    if (!isLoggedIn()) return gate?.classList.remove('hidden');
+    const health = await checkHealth();
+    if (!health.online) return offline?.classList.remove('hidden');
+    panel?.classList.remove('hidden');
+    try {
+      await refreshFolders();
+    } catch (error) {
+      setStatus((error as Error).message || t('manage.folderLoadFailed'), true);
+    }
+  }
+
+  void initUploader();
+</script>
+
+<style>
+  .management-uploader-intro {
+    display: grid;
+    gap: 0.8rem 1.5rem;
+    align-items: end;
+    padding: 0.2rem 0.2rem 0.6rem;
+  }
+
+  .management-uploader-kicker {
+    color: #d05d92;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .management-uploader-intro h2 {
+    margin-top: 0.2rem;
+    color: #4a2038;
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: clamp(1.45rem, 4vw, 2rem);
+    font-weight: 700;
+  }
+
+  .management-uploader-intro > p {
+    max-width: 30rem;
+    color: rgba(95, 60, 84, 0.72);
+    font-size: 0.84rem;
+    line-height: 1.65;
+  }
+
+  .management-form-card,
+  .management-drop-zone {
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    border-radius: 1.5rem;
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: 0 18px 48px rgba(103, 59, 94, 0.09), inset 0 1px rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(22px) saturate(1.25);
+  }
+
+  .management-soft-btn,
+  .management-primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.84);
+    border-radius: 999px;
+    background: linear-gradient(120deg, rgba(218, 205, 255, 0.82), rgba(255, 183, 206, 0.88), rgba(201, 255, 240, 0.78));
+    color: #542944;
+    box-shadow: 0 10px 24px rgba(156, 78, 143, 0.14), inset 0 1px rgba(255, 255, 255, 0.82);
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .management-primary-btn {
+    min-height: 3rem;
+    padding: 0.65rem 1.5rem;
+  }
+
+  .management-soft-btn:hover,
+  .management-soft-btn:focus-visible,
+  .management-primary-btn:hover:not(:disabled),
+  .management-primary-btn:focus-visible:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 32px rgba(156, 78, 143, 0.2), inset 0 1px rgba(255, 255, 255, 0.9);
+    outline: none;
+  }
+
+  .management-drop-zone {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .management-drop-zone.drop-active {
+    border-color: rgba(236, 64, 122, 0.55);
+    background: rgba(252, 231, 243, 0.76);
+    box-shadow: 0 0 0 0.25rem rgba(236, 64, 122, 0.1);
+  }
+
+  .management-drop-zone.is-busy,
+  .management-primary-btn:disabled {
+    cursor: wait;
+    opacity: 0.58;
+    pointer-events: none;
+  }
+
+  .management-drop-mark {
+    display: inline-flex;
+    margin-bottom: 0.75rem;
+    padding: 0.35rem 0.72rem;
+    border-radius: 0.8rem;
+    background: linear-gradient(120deg, rgba(218, 205, 255, 0.74), rgba(255, 183, 206, 0.78));
+    color: #70435e;
+    font-family: Comfortaa, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  @media (min-width: 640px) {
+    .management-uploader-intro {
+      grid-template-columns: minmax(0, 0.8fr) minmax(16rem, 1.2fr);
+    }
+  }
+</style>

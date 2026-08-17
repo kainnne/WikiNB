@@ -1,6 +1,6 @@
 /**
- * Smoke test: 「+ md.」與「Codex」這些登入專屬 CTA 必須真的等到 session token
- * 存在才出現。點「登入」連結本身不會建立 session，所以也不該讓它們現形。
+ * Smoke test: 登入專屬工作區必須真的等到 session token 存在才出現，
+ * 且公開首頁、共用 Header、Management 與 Gemini 維持各自的功能邊界。
  *
  * 這裡直接引用 src/scripts/bridge-client.js 的真實 setAuthVisibility /
  * setSession / clearSession / isLoggedIn，只把 sessionStorage 與 DOM 元素換成假的。
@@ -10,16 +10,21 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [homePage, header, geminiPage, loginPage, searchPage, wikiPage, notFoundPage, baseLayout, backdrop] = await Promise.all([
+const [homePage, header, geminiPage, codexPage, loginPage, searchPage, wikiPage, notFoundPage, baseLayout, backdrop, addPage, managementPage, uploader, bridgeClient] = await Promise.all([
   readFile(new URL('../src/pages/index.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/Header.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/codex.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/login.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/search.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/wiki/[...slug].astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/404.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/layouts/BaseLayout.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/PublicDreamBackdrop.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/add-note.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/rename.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/components/ManagementUploader.astro', import.meta.url), 'utf8'),
+  readFile(new URL('../src/scripts/bridge-client.js', import.meta.url), 'utf8'),
 ]);
 
 function createSessionStorage() {
@@ -56,9 +61,7 @@ function createElement(classNames = []) {
 }
 
 /**
- * 對照 Header.astro 的 .nav-chroma 與 HomeSearch.astro 的 .auth-grid / .auth-cta：
- * 預設 display:none，只有 .is-auth-visible 才有實際 display，
- * 而 [hidden] 一律 display:none !important。
+ * 登入專屬元素預設隱藏，只有 .is-auth-visible 才有實際 display。
  */
 function cssWouldShow(el) {
   if (el.hidden) return false;
@@ -68,11 +71,8 @@ function cssWouldShow(el) {
 /** 一個頁面載入時會被 gate 的所有登入專屬 UI。 */
 function mountAuthCtas() {
   return {
-    navAddNote: createElement(['nav-chroma']),
-    navCodex: createElement(['nav-chroma']),
-    homeGrid: createElement(['auth-grid']),
-    homeAddNote: createElement(['btn-chroma', 'auth-cta']),
-    homeCodex: createElement(['btn-chroma', 'auth-cta']),
+    management: createElement(['nav-management']),
+    workspaceTool: createElement(['private-tool']),
   };
 }
 
@@ -159,22 +159,41 @@ assert.match(homePage, /pageClass="home-page home-guest wikinb-home"/);
 assert.doesNotMatch(homePage, /HomeSearch|search-actions-logged|add-note-launch-btn/);
 assert.match(homePage, /document\.body\.classList\.add\('home-guest'\)/);
 assert.match(header, /id="nav-management"/);
+assert.match(header, /id="nav-menu-home"/);
+assert.match(header, /id="nav-menu-codex"/);
 assert.match(header, /id="nav-menu-search"/);
-assert.match(header, /id="nav-menu-add-note"/);
 assert.match(header, /id="nav-menu-logout"/);
+assert.doesNotMatch(header, /id="nav-add-note"|id="nav-codex"|id="nav-menu-add-note"|class="nav-chroma"/);
 assert.match(header, /#nav-wikinb[\s\S]*order: 1/);
 assert.match(header, /#nav-gemini[\s\S]*order: 2/);
 assert.match(header, /#btn-lang[\s\S]*order: 3/);
 assert.match(header, /#nav-menu[\s\S]*order: 4/);
-assert.match(header, /brandHomeLabel = visitorNav \? '\/ 首頁' : '© HOME'/);
+assert.match(header, /brandHomeLabel = '\/ 首頁'/);
 assert.match(header, /class="brand-sigil"/);
 assert.match(header, /justify-content: space-between/);
 assert.match(header, /#nav-menu \{[\s\S]*flex: 1 1 0/);
 assert.match(header, /loginLabel = visitorNav \? '私人登入' : '登入'/);
 assert.match(header, /data-always-home=\{visitorNav \? 'true' : 'false'\}/);
+assert.match(bridgeClient, /classList\.toggle\('member-shell', loggedIn\)/);
+assert.match(bridgeClient, /setAuthVisibility\(managementLink, loggedIn\)/);
 assert.doesNotMatch(geminiPage, /guest-home-hero|home-atmosphere|home-gemini-btn/);
 
-// 7. 公開搜尋、文章、登入、Gemini 與 404 共用訪客視覺。
+// 7. Management 整合新增與管理；舊 /add-note 入口仍沿用同一套上傳功能。
+assert.match(managementPage, /<ManagementUploader \/>/);
+assert.match(managementPage, /id="management-tab-add"/);
+assert.match(managementPage, /id="management-tab-library"/);
+assert.match(managementPage, /wikinb:management-updated/);
+assert.match(addPage, /<ManagementUploader \/>/);
+for (const source of [codexPage, addPage, managementPage]) {
+  assert.match(source, /pageClass="private-workspace-page"/);
+  assert.match(source, /visitorNav=\{true\}/);
+}
+assert.match(uploader, /createWikiFolder/);
+assert.match(uploader, /uploadWikiNote/);
+assert.match(uploader, /autoSync: true/);
+assert.doesNotMatch(uploader, /linear-gradient\(#111111, #111111\)/);
+
+// 8. 公開搜尋、文章、登入、Gemini 與 404 共用訪客視覺。
 assert.match(baseLayout, /visitorNav\?: boolean/);
 assert.match(baseLayout, /favicon-32\.png/);
 assert.match(baseLayout, /apple-touch-icon\.png/);
@@ -208,6 +227,13 @@ assert.match(geminiPage, /class="gemini-product-lockup"/);
 assert.match(geminiPage, /class="gemini-unlock-glow gemini-unlock-glow-a"/);
 assert.match(geminiPage, /#gemini-unlock \.search-input/);
 assert.match(geminiPage, /<section id="gemini-chat" class="gemini-window hidden">/);
+assert.match(geminiPage, /id="gemini-fs-toggle"/);
+assert.match(geminiPage, /classList\.toggle\('gemini-fs-active', fullscreen\)/);
+assert.match(geminiPage, /\.gemini-window\.is-fullscreen/);
+assert.match(geminiPage, /\.gemini-window\.is-fullscreen :global\(\.gemini-line-assistant \.gemini-bubble\)[\s\S]*?width: 100%;[\s\S]*?max-width: none;/);
+assert.match(geminiPage, /\.gemini-window\.is-fullscreen :global\(\.gemini-line-user \.gemini-bubble\)[\s\S]*?max-width: min\(72%, 64rem\);/);
+assert.match(codexPage, /\.codex-terminal\.is-fullscreen \.codex-line-assistant \.codex-bubble,[\s\S]*?width: 100%;[\s\S]*?max-width: none;/);
+assert.match(codexPage, /\.codex-terminal\.is-fullscreen \.codex-line-user \.codex-bubble[\s\S]*?max-width: min\(72%, 64rem\);/);
 assert.doesNotMatch(geminiPage, /id="gemini-chat"[^>]*public-wiki-page/);
 
-console.log('OK: 公開與登入後首頁維持正確的權限與導覽介面');
+console.log('OK: 登入後共用介面、Management 整合與 Gemini 放大功能維持正確邊界');

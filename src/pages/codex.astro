@@ -6,12 +6,17 @@ import '@fontsource/iansui/latin-400.css';
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="Codex" description="Kainnne Codex 終端介面">
+<BaseLayout
+  title="Codex"
+  description="Kainnne Codex 終端介面"
+  pageClass="private-workspace-page"
+  visitorNav={true}
+>
   <div class="animate-fadeIn codex-page">
     <div class="mb-4 flex flex-wrap items-end justify-between gap-2 sm:gap-4">
       <div class="min-w-0">
         <h1 class="codex-page-title text-2xl font-bold text-berry-800 sm:text-3xl md:text-4xl">
-          <span class="bg-gradient-to-r from-zinc-700 to-zinc-900 bg-clip-text text-transparent">Codex</span>
+          <span class="codex-title-main">Codex</span>
           <span class="ml-1 text-base font-normal text-pink-500 sm:ml-2 sm:text-lg">× Kainnne</span>
         </h1>
       </div>
@@ -389,6 +394,13 @@ const base = import.meta.env.BASE_URL;
     letter-spacing: 0.02em;
   }
 
+  .codex-page .codex-title-main {
+    color: transparent;
+    background: linear-gradient(105deg, #8a68d8, #d05d92 58%, #4eb9aa);
+    background-clip: text;
+    -webkit-background-clip: text;
+  }
+
   .codex-page .codex-terminal {
     overflow: hidden;
     border-radius: 1rem;
@@ -474,6 +486,24 @@ const base = import.meta.env.BASE_URL;
     flex: 1 1 auto;
     max-height: none;
     min-height: 0;
+    padding-inline: clamp(0.75rem, 2vw, 2rem);
+  }
+
+  .codex-page .codex-terminal.is-fullscreen .codex-line-assistant,
+  .codex-page .codex-terminal.is-fullscreen .codex-line-live {
+    align-items: stretch;
+  }
+
+  .codex-page .codex-terminal.is-fullscreen .codex-line-assistant .codex-bubble,
+  .codex-page .codex-terminal.is-fullscreen .codex-line-live .codex-bubble {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .codex-page .codex-terminal.is-fullscreen .codex-line-user .codex-bubble {
+    width: auto;
+    max-width: min(72%, 64rem);
   }
 
   .codex-page .codex-terminal.is-fullscreen .codex-titlebar-label {

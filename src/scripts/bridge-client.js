@@ -289,10 +289,7 @@ export function setAuthVisibility(el, visible) {
 
 export function mountNavAuth() {
   const loginLink = document.getElementById('nav-login');
-  const logoutBtn = document.getElementById('nav-logout');
   const menuLogoutBtn = document.getElementById('nav-menu-logout');
-  const addNoteLink = document.getElementById('nav-add-note');
-  const codexLink = document.getElementById('nav-codex');
   const managementLink = document.getElementById('nav-management');
   const memberMenuItems = Array.from(document.querySelectorAll('.nav-member-menu-item'));
   const aboutLink = document.getElementById('nav-about');
@@ -302,45 +299,40 @@ export function mountNavAuth() {
   const guestMenu = document.getElementById('nav-menu');
   const guestMenuPanel = document.getElementById('nav-menu-panel');
   const guestMenuBtn = document.getElementById('nav-menu-btn');
+  const initialHomePage = document.body.classList.contains('home-page');
 
   const update = () => {
     const loggedIn = isLoggedIn();
     const visitorNav = document.body.classList.contains('visitor-nav');
     const isWikiHome = document.body.classList.contains('wikinb-home');
     const memberHome = visitorNav && isWikiHome && loggedIn;
-    document.body.classList.toggle('home-guest', visitorNav && (!loggedIn || memberHome));
+    document.body.classList.toggle('member-shell', loggedIn);
+    document.body.classList.toggle('home-page', initialHomePage || loggedIn);
+    document.body.classList.toggle('home-guest', loggedIn || (visitorNav && !loggedIn));
     document.body.classList.toggle('home-member', memberHome);
     if (loginLink) loginLink.classList.toggle('hidden', loggedIn);
-    if (logoutBtn) logoutBtn.classList.toggle('hidden', !loggedIn || memberHome);
-    if (menuLogoutBtn) menuLogoutBtn.classList.toggle('hidden', !memberHome);
+    if (menuLogoutBtn) menuLogoutBtn.classList.toggle('hidden', !loggedIn);
 
-    // 登入後首頁只保留中央 Codex 主入口；其餘頁面維持既有快捷操作。
-    setAuthVisibility(addNoteLink, loggedIn && !memberHome);
-    setAuthVisibility(codexLink, loggedIn && !memberHome);
-    setAuthVisibility(managementLink, memberHome);
-    memberMenuItems.forEach((item) => item.classList.toggle('hidden', !memberHome));
+    // 所有登入後頁面共用 Management 主入口與右上角工作區選單。
+    setAuthVisibility(managementLink, loggedIn);
+    memberMenuItems.forEach((item) => item.classList.toggle('hidden', !loggedIn));
 
     // 登入後進入工作模式：隱藏 About Me / GitHub
     if (aboutLink) aboutLink.classList.toggle('hidden', loggedIn);
     if (githubLink) githubLink.classList.toggle('hidden', loggedIn);
 
-    // 首頁登入後沿用右上角選單，收納瀏覽、新增與登出；其他私人頁維持舊導覽。
+    // 登入後隱藏訪客入口，改以工作區選單收納首頁、Codex、瀏覽與登出。
     if (geminiLink) {
       const guestVisible = geminiLink.dataset.guestVisible !== 'false';
       geminiLink.hidden = loggedIn || !guestVisible;
     }
-    if (wikiLink) wikiLink.hidden = memberHome;
+    if (wikiLink) wikiLink.hidden = loggedIn;
     if (guestMenu) {
-      guestMenu.hidden = loggedIn && !memberHome;
-      if (guestMenu.hidden) {
-        if (guestMenuPanel) guestMenuPanel.hidden = true;
-        guestMenu.classList.remove('is-open');
-        guestMenuBtn?.setAttribute('aria-expanded', 'false');
-      }
+      guestMenu.hidden = false;
+      if (guestMenuPanel) guestMenuPanel.hidden = true;
+      guestMenu.classList.remove('is-open');
+      guestMenuBtn?.setAttribute('aria-expanded', 'false');
     }
-
-    // 登入後：WikiNB 切換成工作模式樣式
-    wikiLink?.classList.toggle('is-logged', loggedIn);
 
     document.dispatchEvent(new CustomEvent('wikinb:auth-change', { detail: { loggedIn } }));
   };
@@ -352,7 +344,6 @@ export function mountNavAuth() {
     window.location.href = getBase();
   };
 
-  logoutBtn?.addEventListener('click', handleLogout);
   menuLogoutBtn?.addEventListener('click', handleLogout);
 
   update();

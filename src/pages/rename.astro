@@ -1,34 +1,60 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import ManagementUploader from '../components/ManagementUploader.astro';
 
 const base = import.meta.env.BASE_URL;
 ---
 
-<BaseLayout title="管理筆記" description="修改檔名、標題、簡述、關鍵字，或拖入 md 覆蓋筆記">
-  <div class="animate-fadeIn mx-auto max-w-2xl">
-    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <h1 class="font-display text-3xl font-bold text-berry-800 md:text-4xl" data-i18n="manage.title">管理筆記</h1>
-      <div class="flex flex-wrap items-center gap-2">
+<BaseLayout
+  title="Management"
+  description="新增、整理與同步 WikiNB Markdown"
+  pageClass="private-workspace-page"
+  visitorNav={true}
+>
+  <div class="management-page animate-fadeIn mx-auto max-w-3xl">
+    <div class="management-page-heading">
+      <div>
+        <p class="management-page-kicker">KAINNNE WORKSPACE</p>
+        <h1>Management</h1>
+        <p data-i18n="manage.workspaceIntro">在同一個工作區新增 Markdown、整理筆記與同步 WikiNB。</p>
+      </div>
+      <a href={base} class="management-home-link" data-i18n="manage.home">← 首頁</a>
+    </div>
+
+    <div class="management-tabs" role="tablist" aria-label="Management">
+      <button id="management-tab-add" type="button" class="management-tab" role="tab" aria-controls="management-add" data-management-tab="add" data-i18n="manage.tabAdd">新增內容</button>
+      <button id="management-tab-library" type="button" class="management-tab" role="tab" aria-controls="management-library" data-management-tab="library" data-i18n="manage.tabLibrary">管理筆記</button>
+    </div>
+
+    <section id="management-add" class="management-workspace" role="tabpanel">
+      <ManagementUploader />
+    </section>
+
+    <section id="management-library" class="management-workspace" role="tabpanel" hidden>
+      <div class="management-library-heading">
+        <div>
+          <p class="management-uploader-kicker" data-i18n="manage.libraryKicker">現有內容</p>
+          <h2 data-i18n="manage.title">管理筆記</h2>
+        </div>
         <button id="btn-sync-wiki" type="button" class="btn-chroma-sync hidden">
           <span class="btn-chroma-sync-label" data-i18n="nav.sync">同步 Wiki</span>
         </button>
-        <a href={base} class="btn-ghost shrink-0 text-sm" data-i18n="manage.home">← 首頁</a>
       </div>
-    </div>
 
-    <div id="rename-gate" class="glass-card hidden p-6 text-center text-berry-700/80">
-      <span data-i18n="manage.gate">請先登入後使用。</span>
-      <a href={`${base}login`} class="ml-1 font-semibold text-pink-600" data-i18n="nav.login">登入</a>
-    </div>
+      <div id="rename-gate" class="glass-card hidden p-6 text-center text-berry-700/80">
+        <span data-i18n="manage.gate">請先登入後使用。</span>
+        <a href={`${base}login`} class="ml-1 font-semibold text-pink-600" data-i18n="nav.login">登入</a>
+      </div>
 
-    <div id="rename-offline" class="glass-card hidden border border-amber-200 bg-amber-50/50 p-6 text-center text-amber-900">
-      <span data-i18n="manage.offline">本機 Bridge 未連線。請確認 Mac 已開機且 Bridge 正在執行。</span>
-    </div>
+      <div id="rename-offline" class="glass-card hidden border border-amber-200 bg-amber-50/50 p-6 text-center text-amber-900">
+        <span data-i18n="manage.offline">本機 Bridge 未連線。請確認 Mac 已開機且 Bridge 正在執行。</span>
+      </div>
 
-    <div id="rename-panel" class="hidden space-y-4">
-      <p id="rename-status" class="text-sm text-berry-600/80"></p>
-      <div id="rename-list" class="glass-card overflow-hidden"></div>
-    </div>
+      <div id="rename-panel" class="hidden space-y-4">
+        <p id="rename-status" class="text-sm text-berry-600/80"></p>
+        <div id="rename-list" class="glass-card overflow-hidden"></div>
+      </div>
+    </section>
   </div>
 </BaseLayout>
 
@@ -52,9 +78,35 @@ const base = import.meta.env.BASE_URL;
   const listEl = document.getElementById('rename-list');
   const statusEl = document.getElementById('rename-status');
   const syncBtn = document.getElementById('btn-sync-wiki');
+  const tabButtons = Array.from(document.querySelectorAll('[data-management-tab]'));
+  const addWorkspace = document.getElementById('management-add');
+  const libraryWorkspace = document.getElementById('management-library');
   const expandedDirs = new Set();
   /** @type {Map<string, ReturnType<typeof mountKeywordEditor>>} */
   const keywordEditors = new Map();
+
+  function setManagementTab(tab, { updateUrl = true } = {}) {
+    const active = tab === 'add' ? 'add' : 'library';
+    if (addWorkspace) addWorkspace.hidden = active !== 'add';
+    if (libraryWorkspace) libraryWorkspace.hidden = active !== 'library';
+    for (const button of tabButtons) {
+      const selected = button.getAttribute('data-management-tab') === active;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-selected', selected ? 'true' : 'false');
+      button.setAttribute('tabindex', selected ? '0' : '-1');
+    }
+    if (updateUrl) {
+      const url = new URL(window.location.href);
+      if (active === 'library') url.searchParams.delete('tab');
+      else url.searchParams.set('tab', active);
+      window.history.replaceState({}, '', url);
+    }
+  }
+
+  tabButtons.forEach((button) => {
+    button.addEventListener('click', () => setManagementTab(button.getAttribute('data-management-tab')));
+  });
+  setManagementTab(new URLSearchParams(window.location.search).get('tab'), { updateUrl: false });
 
   function escapeHtml(text) {
     return String(text ?? '')
@@ -461,12 +513,130 @@ const base = import.meta.env.BASE_URL;
   });
 
   init();
+  document.addEventListener('wikinb:management-updated', () => void loadList());
   document.addEventListener('wikinb:locale-change', () => {
     if (panel && !panel.classList.contains('hidden')) void loadList();
   });
 </script>
 
 <style>
+  .management-page {
+    padding-bottom: 3rem;
+  }
+
+  .management-page-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.35rem;
+  }
+
+  .management-page-kicker,
+  .management-uploader-kicker {
+    color: #d05d92;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .management-page-heading h1 {
+    margin-top: 0.2rem;
+    color: transparent;
+    background: linear-gradient(105deg, #8a68d8, #d05d92 58%, #4eb9aa);
+    background-clip: text;
+    -webkit-background-clip: text;
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: clamp(2.15rem, 7vw, 3.65rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+  }
+
+  .management-page-heading p:last-child {
+    max-width: 34rem;
+    margin-top: 0.45rem;
+    color: rgba(95, 60, 84, 0.7);
+    font-size: 0.86rem;
+  }
+
+  .management-home-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.7rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.58);
+    color: #673b57;
+    box-shadow: 0 10px 28px rgba(103, 59, 94, 0.09), inset 0 1px rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    backdrop-filter: blur(18px);
+  }
+
+  .management-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+    padding: 0.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    border-radius: 1.35rem;
+    background: rgba(255, 255, 255, 0.42);
+    box-shadow: 0 16px 42px rgba(103, 59, 94, 0.09), inset 0 1px rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(22px) saturate(1.25);
+  }
+
+  .management-tab {
+    min-height: 3.1rem;
+    border: 1px solid transparent;
+    border-radius: 1rem;
+    background: transparent;
+    color: rgba(95, 60, 84, 0.72);
+    font-family: Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .management-tab.is-active {
+    border-color: rgba(255, 255, 255, 0.84);
+    background: linear-gradient(120deg, rgba(218, 205, 255, 0.72), rgba(255, 183, 206, 0.78), rgba(201, 255, 240, 0.68));
+    color: #542944;
+    box-shadow: 0 9px 24px rgba(156, 78, 143, 0.13), inset 0 1px rgba(255, 255, 255, 0.84);
+  }
+
+  .management-tab:hover,
+  .management-tab:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  .management-workspace[hidden] {
+    display: none !important;
+  }
+
+  .management-library-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.2rem;
+  }
+
+  .management-library-heading h2 {
+    margin-top: 0.2rem;
+    color: #4a2038;
+    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
+    font-size: clamp(1.45rem, 4vw, 2rem);
+    font-weight: 700;
+  }
+
   .btn-chroma-sync {
     position: relative;
     isolation: isolate;
@@ -475,42 +645,21 @@ const base = import.meta.env.BASE_URL;
     justify-content: center;
     overflow: hidden;
     border-radius: 9999px;
-    border: 1px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.84);
     padding: 0.45rem 1rem;
     font-weight: 800;
     font-size: 0.875rem;
     cursor: pointer;
-    background:
-      linear-gradient(#111111, #111111) padding-box,
-      linear-gradient(120deg, #4285f4, #9b72cb, #d96570, #fbbc05, #34a853, #4285f4) border-box;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(120deg, rgba(218, 205, 255, 0.82), rgba(255, 183, 206, 0.88), rgba(201, 255, 240, 0.78));
+    box-shadow: 0 10px 24px rgba(156, 78, 143, 0.14), inset 0 1px rgba(255, 255, 255, 0.82);
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-  }
-
-  .btn-chroma-sync::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    border-radius: inherit;
-    background: linear-gradient(
-      120deg,
-      rgba(66, 133, 244, 0.12),
-      rgba(155, 114, 203, 0.14),
-      rgba(217, 101, 112, 0.1),
-      rgba(251, 188, 5, 0.1),
-      rgba(52, 168, 83, 0.1)
-    );
   }
 
   .btn-chroma-sync-label {
     position: relative;
     z-index: 2;
     letter-spacing: 0.02em;
-    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #542944;
   }
 
   .btn-chroma-sync:hover:not(:disabled),
@@ -523,6 +672,20 @@ const base = import.meta.env.BASE_URL;
   .btn-chroma-sync:disabled {
     cursor: not-allowed;
     opacity: 0.55;
+  }
+
+  @media (max-width: 560px) {
+    .management-page-heading {
+      align-items: flex-start;
+    }
+
+    .management-home-link {
+      min-height: 2.4rem;
+    }
+
+    .management-library-heading {
+      align-items: center;
+    }
   }
 
   :global(#rename-list .btn-rename) {

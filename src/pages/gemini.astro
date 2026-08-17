@@ -113,6 +113,15 @@ import '@fontsource/iansui/latin-400.css';
           <p class="gemini-chrome-title" data-i18n="gemini.title">Kainnne x Gemini</p>
           <p id="gemini-identity" class="truncate text-xs text-berry-600/60"></p>
         </div>
+        <button
+          id="gemini-fs-toggle"
+          type="button"
+          class="gemini-fs-btn"
+          aria-label="放大視窗"
+          title="放大"
+        >
+          <span class="gemini-fs-icon" aria-hidden="true">⛶</span>
+        </button>
       </div>
       <div id="gemini-output" class="gemini-output" aria-live="polite"></div>
       <form id="gemini-chat-form" class="gemini-input-row">
@@ -163,13 +172,33 @@ import '@fontsource/iansui/latin-400.css';
   const chatForm = document.getElementById('gemini-chat-form');
   const chatInput = document.getElementById('gemini-input');
   const chatSend = document.getElementById('gemini-chat-send');
+  const fsToggle = document.getElementById('gemini-fs-toggle');
+  const fsIcon = fsToggle?.querySelector('.gemini-fs-icon');
 
   let pendingEmail = '';
   let running = false;
   let authMessageState = null;
   let codeSentState = null;
+  let fullscreen = false;
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
+
+  function setFullscreen(on) {
+    fullscreen = Boolean(on);
+    chat?.classList.toggle('is-fullscreen', fullscreen);
+    document.documentElement.classList.toggle('gemini-fs-active', fullscreen);
+    document.body.classList.toggle('gemini-fs-active', fullscreen);
+    if (fsToggle) {
+      fsToggle.setAttribute('aria-label', fullscreen ? '還原視窗' : '放大視窗');
+      fsToggle.title = fullscreen ? '還原' : '放大';
+    }
+    if (fsIcon) fsIcon.textContent = fullscreen ? '❐' : '⛶';
+  }
+
+  fsToggle?.addEventListener('click', () => setFullscreen(!fullscreen));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && fullscreen) setFullscreen(false);
+  });
 
   if (unlock && window.matchMedia('(pointer: fine)').matches) {
     unlock.addEventListener(
@@ -317,6 +346,7 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   function openUnlock() {
+    setFullscreen(false);
     chat?.classList.add('hidden');
     unlock?.classList.remove('hidden');
     profileForm?.classList.remove('hidden');
@@ -744,6 +774,46 @@ import '@fontsource/iansui/latin-400.css';
     overflow: hidden;
   }
 
+  .gemini-window.is-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    width: 100vw;
+    height: 100dvh;
+    flex-direction: column;
+    border: 0;
+    border-radius: 0;
+    background: linear-gradient(145deg, #fffafd 0%, #fff4fa 46%, #f7f2ff 100%);
+  }
+
+  :global(html.gemini-fs-active),
+  :global(body.gemini-fs-active) {
+    overflow: hidden;
+  }
+
+  .gemini-window.is-fullscreen .gemini-output {
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 auto;
+    padding-inline: clamp(0.75rem, 2vw, 2rem);
+  }
+
+  .gemini-window.is-fullscreen :global(.gemini-line-assistant) {
+    width: 100%;
+  }
+
+  .gemini-window.is-fullscreen :global(.gemini-line-assistant .gemini-bubble) {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .gemini-window.is-fullscreen :global(.gemini-line-user .gemini-bubble) {
+    width: auto;
+    max-width: min(72%, 64rem);
+  }
+
   .gemini-chrome {
     display: flex;
     align-items: center;
@@ -761,6 +831,29 @@ import '@fontsource/iansui/latin-400.css';
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  .gemini-fs-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.84);
+    border-radius: 0.9rem;
+    background: linear-gradient(120deg, rgba(218, 205, 255, 0.68), rgba(255, 183, 206, 0.72), rgba(201, 255, 240, 0.62));
+    color: #633c55;
+    box-shadow: 0 8px 22px rgba(123, 97, 255, 0.12), inset 0 1px rgba(255, 255, 255, 0.82);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .gemini-fs-btn:hover,
+  .gemini-fs-btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(123, 97, 255, 0.18), inset 0 1px rgba(255, 255, 255, 0.9);
+    outline: none;
   }
 
   .gemini-output {
