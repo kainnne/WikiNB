@@ -49,6 +49,7 @@
 
 ## 學習中
 
+- [[Learning/llm-research-course]] — 從文字表示與 LLM 生態，逐步學到評估、實驗設計與模型路線選擇
 - [[Learning/ai-document-workflow-workshop]] — AI 文件與 Agent 工作流實作
 - [[Learning/python-foundations-practice]] — Python 基礎迭代練習
 
