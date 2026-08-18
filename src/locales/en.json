@@ -176,7 +176,7 @@
   "gemini.errorEmptyAnswer": "Gemini did not produce an answer. Try asking in a different way.",
   "gemini.errorSendCode": "Unable to send the verification code. Please try again later.",
   "gemini.errorVerify": "Verification failed. Please try again later.",
-  "gemini.welcomeMessage": "Hi, I'm Kaine. This small chat is only for my public projects, experience, work, skills, and collaboration topics; I answer briefly from my own perspective using WikiNB. It runs on the free Gemini API, so the conversation stays compact. What would you like to ask first?",
+  "gemini.welcomeMessage": "Hi, I'm Kaine. You can start with my public work or projects, then branch into features, direction, collaboration ideas, improvements, or what I think about them. I answer briefly from my own perspective using WikiNB. This runs on the free Gemini API, so the conversation stays compact. What would you like to explore?",
   "gemini.placeholder": "Ask me about my work, projects, or expertise…",
   "gemini.send": "Send",
   "gemini.latest": "↓ Latest message",

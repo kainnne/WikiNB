@@ -85,6 +85,9 @@ assert.match(worker, /conversationEnded/);
 assert.match(chatPolicy, /DEFAULT_MAX_CHAT_TURNS = 5/);
 assert.match(chatPolicy, /isKaineScopeQuestion/);
 assert.match(chatPolicy, /outOfScopeMessage/);
+assert.match(chatPolicy, /PROJECT_DISCUSSION/);
+assert.match(chatPolicy, /OPEN_ENDED_EXTENSION/);
+assert.match(worker, /不要因為問題沒有命中特定專案名稱或固定關鍵字就拒答/);
 assert.match(wrangler, /"MAX_CHAT_TURNS": "5"/);
 
 const retiredSourceIds = new Set([

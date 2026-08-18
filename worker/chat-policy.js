@@ -9,11 +9,17 @@ const FIRST_PERSON_PUBLIC_PROFILE =
 const PUBLIC_PROFILE_WITH_SUBJECT =
   /(?:kaine|kainnne|朱璽|他|這個人).{0,12}(?:專案|作品|經歷|履歷|背景|技能|能力|工作|職涯|研究|音樂|創作|網站|wiki|筆記|合作|技術|做過)|(?:專案|作品|經歷|履歷|背景|技能|能力|工作|職涯|研究|音樂|創作|網站|wiki|筆記|合作|技術).{0,12}(?:kaine|kainnne|朱璽|他)/iu;
 
+const PROJECT_DISCUSSION =
+  /(?:專案|作品|產品|系統|網站|工具|功能|設計|架構|流程|技術|方案|方向|project|product|system|website|tool|feature|design|architecture|workflow|technology)/iu;
+
+const OPEN_ENDED_EXTENSION =
+  /(?:延伸|額外|新增|改善|改進|建議|想法|評價|看法|認為|覺得|適合|可行|風險|取捨|優缺點|比較|差異|下一步|如何|怎麼|為什麼|extend|additional|add|improve|suggest|idea|opinion|think|suitable|feasible|risk|trade-?off|pros? and cons?|compare|difference|next step|how|why)/iu;
+
 const FOLLOW_UP =
   /^(?:那|所以|可是|然後|再|這|它|為什麼|怎麼|哪|可以|能不能|還有|更詳細|詳細一點|繼續|說下去|tell me more|why|how|which|what about|and|more|continue)/iu;
 
 const CLEAR_GENERAL_TASK =
-  /(?:教我|幫我(?:寫|解|算|翻譯|查)|替我(?:寫|解|算|翻譯)|teach me|do my homework|solve (?:this|my)|translate (?:this|for me)|write (?:an?|my) (?:essay|homework))/iu;
+  /(?:教我|幫我(?:寫|解|算|翻譯|查|規劃|生成)|替我(?:寫|解|算|翻譯|查|規劃|生成)|teach me|do my homework|solve (?:this|my)|translate (?:this|for me)|write (?:an?|my) (?:essay|homework)|plan (?:a|my)|generate (?:a|an))/iu;
 
 function textOf(turn) {
   return String(turn?.content || '').trim();
@@ -25,7 +31,8 @@ function directlyInScope(text) {
   return (
     KNOWN_KAINE_TOPICS.test(normalized) ||
     FIRST_PERSON_PUBLIC_PROFILE.test(normalized) ||
-    PUBLIC_PROFILE_WITH_SUBJECT.test(normalized)
+    PUBLIC_PROFILE_WITH_SUBJECT.test(normalized) ||
+    (PROJECT_DISCUSSION.test(normalized) && OPEN_ENDED_EXTENSION.test(normalized))
   );
 }
 
@@ -58,8 +65,8 @@ export function maxChatTurns(env = {}) {
 
 export function outOfScopeMessage(english = false) {
   return english
-    ? "This small chat is only for my public experience, work, projects, skills, and collaboration topics. General requests such as calculus tutoring would use the shared free Gemini API quota, so I won't answer them here—sorry. You can instead ask what I have built or how one of my projects works."
-    : '這個小聊天只開放聊我的公開經歷、作品、專案、技能與合作方向。像微積分教學這類一般問答會消耗共用的 Gemini 免費 API 額度，所以這裡先不回答，抱歉；你可以改問我做過什麼，或某個專案怎麼運作。';
+    ? "To help conserve Kaine's free Gemini API quota, I may not be able to answer requests unrelated to this chat's main purpose. 🙏"
+    : '為了節省 Kaine 的免費 Gemini API 額度，我可能無法回答與主要任務無關的請求 🙏';
 }
 
 export function continuationPromptMessage(limit, english = false) {
