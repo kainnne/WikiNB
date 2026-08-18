@@ -58,6 +58,7 @@ const base = import.meta.env.BASE_URL;
       <div id="codex-tips" class="codex-tips"></div>
 
       <div id="codex-output" class="codex-output"></div>
+      <button id="codex-scroll-latest" type="button" class="codex-scroll-latest hidden">↓ 最新訊息</button>
       <form id="codex-form" class="codex-input-row">
         <span class="codex-prompt">›</span>
         <input
@@ -97,10 +98,12 @@ const base = import.meta.env.BASE_URL;
   const tipsEl = document.getElementById('codex-tips');
   const fsToggle = document.getElementById('codex-fs-toggle');
   const fsIcon = fsToggle?.querySelector('.codex-fs-icon');
+  const scrollLatestBtn = document.getElementById('codex-scroll-latest');
 
   let abortController = null;
   let running = false;
   let fullscreen = false;
+  let followLatest = true;
   /** @type {{ role: string, content: string }[]} */
   let chatHistory = [];
 
@@ -121,6 +124,30 @@ const base = import.meta.env.BASE_URL;
     if (e.key === 'Escape' && fullscreen) setFullscreen(false);
   });
 
+  function isOutputNearBottom() {
+    if (!output) return true;
+    return output.scrollHeight - output.scrollTop - output.clientHeight < 96;
+  }
+
+  function syncLatestButton() {
+    scrollLatestBtn?.classList.toggle('hidden', followLatest);
+  }
+
+  function scrollToLatest({ force = false, behavior = 'smooth' } = {}) {
+    if (!output || (!force && !followLatest)) return;
+    window.requestAnimationFrame(() => {
+      output.scrollTo({ top: output.scrollHeight, behavior });
+      followLatest = true;
+      syncLatestButton();
+    });
+  }
+
+  output?.addEventListener('scroll', () => {
+    followLatest = isOutputNearBottom();
+    syncLatestButton();
+  }, { passive: true });
+  scrollLatestBtn?.addEventListener('click', () => scrollToLatest({ force: true }));
+
   function setBubbleText(bubble, text, role = 'assistant') {
     if (!bubble) return;
     if (role === 'assistant') {
@@ -133,6 +160,7 @@ const base = import.meta.env.BASE_URL;
   }
 
   function appendLine(text, role = 'assistant') {
+    const shouldFollow = followLatest || isOutputNearBottom();
     const line = document.createElement('div');
     line.className = `codex-line codex-line-${role}`;
     const bubble = document.createElement('div');
@@ -140,7 +168,8 @@ const base = import.meta.env.BASE_URL;
     setBubbleText(bubble, text, role);
     line.appendChild(bubble);
     output?.appendChild(line);
-    output?.scrollTo({ top: output.scrollHeight, behavior: 'smooth' });
+    if (shouldFollow) scrollToLatest({ force: true });
+    else syncLatestButton();
     return line;
   }
 
@@ -231,9 +260,11 @@ const base = import.meta.env.BASE_URL;
     }
 
     terminal?.classList.remove('hidden');
+    const mobileChat = window.matchMedia('(max-width: 640px)').matches;
+    if (mobileChat) setFullscreen(true);
     await loadModels();
     appendLine('Codex 已連線。可選擇模型後送出；執行中可按停止。', 'system');
-    input?.focus();
+    if (!mobileChat) input?.focus();
   }
 
   stopBtn?.addEventListener('click', async (e) => {
@@ -260,8 +291,10 @@ const base = import.meta.env.BASE_URL;
     const reasoningEffort = effortSelect?.value || 'medium';
     const modelLabel = modelSelect?.selectedOptions?.[0]?.textContent || model;
 
+    followLatest = true;
     appendLine(msg, 'user');
     appendLine(`使用模型：${modelLabel} · 推理：${reasoningEffort}`, 'system');
+    scrollToLatest({ force: true });
     input.value = '';
 
     abortController = new AbortController();
@@ -289,6 +322,7 @@ const base = import.meta.env.BASE_URL;
     liveBubble.appendChild(liveBody);
     liveWrap.appendChild(liveBubble);
     output?.appendChild(liveWrap);
+    scrollToLatest();
 
     let liveText = '';
     let lastSummary = '啟動中';
@@ -296,7 +330,7 @@ const base = import.meta.env.BASE_URL;
     const updateProgress = (summary) => {
       if (summary) lastSummary = summary;
       progressBubble.textContent = lastSummary;
-      output?.scrollTo({ top: output.scrollHeight, behavior: 'smooth' });
+      scrollToLatest();
     };
 
     try {
@@ -311,7 +345,7 @@ const base = import.meta.env.BASE_URL;
           } else if (ev.type === 'delta' && ev.text) {
             liveText += (liveText ? '\n' : '') + ev.text;
             liveBody.textContent = liveText;
-            output?.scrollTo({ top: output.scrollHeight, behavior: 'smooth' });
+            scrollToLatest();
           } else if (ev.type === 'log' && ev.text) {
             liveText += (liveText ? '\n' : '') + ev.text;
             liveBody.textContent = liveText;
@@ -343,6 +377,7 @@ const base = import.meta.env.BASE_URL;
       finalBubble.className = 'codex-bubble';
       setBubbleText(finalBubble, finalText, result.stopped ? 'system' : 'assistant');
       liveWrap.replaceChildren(finalBubble);
+      scrollToLatest();
 
       if (
         !result.stopped &&
@@ -402,6 +437,8 @@ const base = import.meta.env.BASE_URL;
   }
 
   .codex-page .codex-terminal {
+    position: relative;
+    min-width: 0;
     overflow: hidden;
     border-radius: 1rem;
     border: 1px solid rgba(251, 207, 232, 0.6);
@@ -469,9 +506,11 @@ const base = import.meta.env.BASE_URL;
     inset: 0;
     z-index: 200;
     width: 100%;
+    max-width: 100%;
     height: 100%;
     height: 100dvh;
     max-height: 100dvh;
+    box-sizing: border-box;
     border-radius: 0;
     border: 0;
     box-shadow: none;
@@ -508,6 +547,15 @@ const base = import.meta.env.BASE_URL;
 
   .codex-page .codex-terminal.is-fullscreen .codex-titlebar-label {
     font-size: 0.95rem;
+  }
+
+  .codex-page .codex-terminal.is-fullscreen .codex-input-row {
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+  }
+
+  .codex-page .codex-terminal.is-fullscreen .codex-live-body {
+    max-height: none;
+    overflow-y: visible;
   }
 
   .codex-page .codex-toolbar {
@@ -579,8 +627,13 @@ const base = import.meta.env.BASE_URL;
   }
 
   .codex-page .codex-output {
+    min-width: 0;
     max-height: min(58dvh, 640px);
     overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     padding: 1rem 0.75rem;
     font-size: 0.95rem;
     line-height: 1.625;
@@ -607,14 +660,18 @@ const base = import.meta.env.BASE_URL;
   .codex-page .codex-line {
     display: flex;
     width: 100%;
+    min-width: 0;
     flex-direction: column;
     margin-bottom: 1rem;
   }
 
   .codex-page .codex-bubble {
+    min-width: 0;
     max-width: min(100%, 36rem);
+    box-sizing: border-box;
     white-space: pre-wrap;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     padding: 0.65rem 0.85rem;
   }
 
@@ -628,6 +685,10 @@ const base = import.meta.env.BASE_URL;
   .codex-page .codex-bubble.codex-md {
     white-space: normal;
     line-height: 1.55;
+  }
+
+  .codex-page .codex-md > * {
+    max-width: 100%;
   }
 
   .codex-page .codex-md > *:first-child {
@@ -702,7 +763,14 @@ const base = import.meta.env.BASE_URL;
     background: rgba(244, 114, 182, 0.12);
   }
 
+  .codex-page .codex-md code:not(pre code) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   .codex-page .codex-md pre {
+    max-width: 100%;
     overflow-x: auto;
     padding: 0.65rem 0.75rem;
     border-radius: 0.5rem;
@@ -722,7 +790,10 @@ const base = import.meta.env.BASE_URL;
   }
 
   .codex-page .codex-md table {
+    display: block;
     width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
     border-collapse: collapse;
     font-size: 0.92em;
   }
@@ -846,6 +917,26 @@ const base = import.meta.env.BASE_URL;
     cursor: pointer;
     font-size: 0.875rem;
     color: #52525b;
+  }
+
+  .codex-page .codex-scroll-latest {
+    position: absolute;
+    right: 1rem;
+    bottom: 5.35rem;
+    z-index: 4;
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    border-radius: 999px;
+    padding: 0.45rem 0.8rem;
+    background: rgba(255, 250, 253, 0.94);
+    color: #633c55;
+    box-shadow: 0 10px 28px rgba(91, 70, 135, 0.16);
+    font-size: 0.75rem;
+    font-weight: 800;
+    backdrop-filter: blur(18px);
+  }
+
+  .codex-page .codex-scroll-latest.hidden {
+    display: none;
   }
 
   .codex-page .codex-input-row {

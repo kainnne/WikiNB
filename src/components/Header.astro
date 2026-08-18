@@ -16,7 +16,7 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
 const brandHomeLabel = '/ 首頁';
 ---
 
-<header class="fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
+<header id="site-header" class="site-header fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
     <a
       id="brand-link"
@@ -205,9 +205,59 @@ const brandHomeLabel = '/ 首頁';
   }
 
   mountNavMenu();
+
+  function mountHeaderScrollBehavior() {
+    const header = document.getElementById('site-header');
+    if (!header) return;
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const update = () => {
+      const y = Math.max(0, window.scrollY);
+      const delta = y - lastY;
+      const menuOpen = document.getElementById('nav-menu')?.classList.contains('is-open');
+      const chatLocked = document.body.classList.contains('gemini-fs-active') || document.body.classList.contains('codex-fs-active');
+      header.classList.toggle('is-scrolled', y > 12);
+
+      if (y <= 12 || menuOpen || chatLocked || delta < -6) {
+        header.classList.remove('is-scroll-hidden');
+      } else if (y > 88 && delta > 6) {
+        header.classList.add('is-scroll-hidden');
+      }
+
+      lastY = y;
+      ticking = false;
+    };
+
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    }, { passive: true });
+    header.addEventListener('focusin', () => header.classList.remove('is-scroll-hidden'));
+    window.addEventListener('pageshow', update);
+    update();
+  }
+
+  mountHeaderScrollBehavior();
 </script>
 
 <style>
+  .site-header {
+    transition: transform 0.24s ease, background-color 0.24s ease, box-shadow 0.24s ease;
+    will-change: transform;
+  }
+
+  .site-header.is-scroll-hidden {
+    transform: translateY(calc(-100% - 0.5rem));
+  }
+
+  .site-header.is-scrolled {
+    background: rgba(255, 250, 253, 0.92);
+    box-shadow: 0 10px 30px rgba(91, 52, 82, 0.08);
+    backdrop-filter: blur(24px) saturate(1.25);
+  }
+
   .nav-management {
     display: none;
     align-items: center;
@@ -569,6 +619,12 @@ const brandHomeLabel = '/ 首頁';
     pointer-events: none;
   }
 
+  :global(body.home-page.home-guest) header.site-header.is-scrolled {
+    background: rgba(255, 250, 253, 0.92);
+    box-shadow: 0 10px 30px rgba(91, 52, 82, 0.08);
+    backdrop-filter: blur(24px) saturate(1.25);
+  }
+
   :global(body.home-page.home-guest) header > div {
     max-width: none;
     justify-content: space-between;
@@ -863,20 +919,15 @@ const brandHomeLabel = '/ 首頁';
       font-size: 1.08rem;
     }
 
-    :global(body.home-page.home-guest) .brand-label {
-      font-size: 0.94rem;
-    }
-
+    :global(body.home-page.home-guest) .brand-label,
     :global(body.home-page.home-guest) .brand-home {
-      min-height: 1.3rem;
-      padding-right: 0.12rem;
-      font-size: 0.94rem;
+      display: none;
     }
 
     :global(body.home-page.home-guest) header nav {
       width: auto;
       min-width: 0;
-      max-width: calc(100% - 8.8rem);
+      max-width: calc(100% - 3.6rem);
       flex: 1 1 auto;
       justify-content: stretch;
       gap: 0.25rem;
@@ -917,6 +968,10 @@ const brandHomeLabel = '/ 首頁';
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .site-header {
+      transition: none;
+    }
+
     :global(body.home-page.home-guest) .nav-menu-panel {
       animation: none;
     }

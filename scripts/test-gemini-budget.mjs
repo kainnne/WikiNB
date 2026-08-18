@@ -127,7 +127,7 @@ assert.match(page, /renderMessageState\(authMessage, authMessageState\)/);
 assert.equal(zh['gemini.errorResendWait'], '請等待 1 分鐘後再重新寄送');
 assert.equal(en['gemini.errorResendWait'], 'Please wait 1 minute before requesting another code.');
 
-assert.equal(zh['gemini.connected'], 'Kaine 已上線');
+assert.equal('gemini.connected' in zh, false);
 assert.match(zh['gemini.welcomeMessage'], /嗨，我是 Kaine/);
 assert.doesNotMatch(zh['gemini.welcomeMessage'], /數位助理|分身/);
 assert.match(zh['gemini.limitMessage'], /前 5 則訊息/);
@@ -137,7 +137,7 @@ assert.equal(zh['gemini.example1'], '請簡短介紹 Kaine，以及他目前在�
 assert.equal(zh['gemini.example2'], '請挑選 Kaine 的一個代表專案簡述。');
 assert.equal(zh['gemini.example3'], '根據 Kaine 的背景，提出一個可行的合作構想。');
 assert.equal(zh['gemini.example4'], '請簡短條列 Kaine 目前公開的主要專案與能力。');
-assert.equal(en['gemini.connected'], 'Kaine is here');
+assert.equal('gemini.connected' in en, false);
 assert.match(en['gemini.welcomeMessage'], /Hi, I'm Kaine/);
 assert.doesNotMatch(en['gemini.welcomeMessage'], /digital assistant|digital twin/i);
 assert.match(en['gemini.limitMessage'], /first 5 messages/i);
