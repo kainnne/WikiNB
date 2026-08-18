@@ -109,6 +109,10 @@ import '@fontsource/iansui/latin-400.css';
 
     <section id="gemini-chat" class="gemini-window hidden">
       <div class="gemini-chrome">
+        <div class="gemini-chrome-copy">
+          <p class="gemini-chrome-title" data-i18n="gemini.title">Kainnne x Gemini</p>
+          <p id="gemini-identity" class="gemini-chrome-identity"></p>
+        </div>
         <button
           id="gemini-fs-toggle"
           type="button"
@@ -167,6 +171,7 @@ import '@fontsource/iansui/latin-400.css';
   const codeSent = document.getElementById('gemini-code-sent');
   const authMessage = document.getElementById('gemini-auth-message');
   const chat = document.getElementById('gemini-chat');
+  const identity = document.getElementById('gemini-identity');
   const output = document.getElementById('gemini-output');
   const chatForm = document.getElementById('gemini-chat-form');
   const chatInput = document.getElementById('gemini-input');
@@ -180,6 +185,7 @@ import '@fontsource/iansui/latin-400.css';
   let authMessageState = null;
   let codeSentState = null;
   let fullscreen = false;
+  let mobileFullscreenLocked = false;
   let followLatest = true;
   let submittedTurns = 0;
   let continuationRequired = false;
@@ -217,7 +223,7 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   function setFullscreen(on) {
-    fullscreen = Boolean(on);
+    fullscreen = mobileFullscreenLocked ? true : Boolean(on);
     chat?.classList.toggle('is-fullscreen', fullscreen);
     document.documentElement.classList.toggle('gemini-fs-active', fullscreen);
     document.body.classList.toggle('gemini-fs-active', fullscreen);
@@ -227,6 +233,17 @@ import '@fontsource/iansui/latin-400.css';
     }
     if (fsIcon) fsIcon.textContent = fullscreen ? '❐' : '⛶';
   }
+
+  const mobileChatQuery = window.matchMedia('(max-width: 640px), (hover: none) and (pointer: coarse)');
+
+  function syncMobileFullscreenMode() {
+    mobileFullscreenLocked = mobileChatQuery.matches;
+    fsToggle?.toggleAttribute('hidden', mobileFullscreenLocked);
+    if (mobileFullscreenLocked && !chat?.classList.contains('hidden')) setFullscreen(true);
+  }
+
+  mobileChatQuery.addEventListener?.('change', syncMobileFullscreenMode);
+  syncMobileFullscreenMode();
 
   fsToggle?.addEventListener('click', () => setFullscreen(!fullscreen));
   document.addEventListener('keydown', (event) => {
@@ -433,26 +450,17 @@ import '@fontsource/iansui/latin-400.css';
     };
   }
 
-  function appendWelcome(session) {
+  function appendWelcome() {
     if (!output) return;
     output.innerHTML = '';
     followLatest = true;
     const line = document.createElement('div');
     line.className = 'gemini-line gemini-line-system';
     const box = document.createElement('div');
-    box.className = 'gemini-welcome';
-    const title = document.createElement('p');
-    title.className = 'gemini-welcome-title';
-    title.textContent = t('gemini.title');
-    box.appendChild(title);
-
-    const account = document.createElement('p');
-    account.className = 'gemini-welcome-identity';
-    account.textContent = `${session.name} · ${session.email}`;
-    box.appendChild(account);
+    box.className = 'gemini-suggestions';
 
     const examples = document.createElement('div');
-    examples.className = 'mt-3 grid gap-2';
+    examples.className = 'grid gap-2';
     ['gemini.example1', 'gemini.example2', 'gemini.example3', 'gemini.example4'].forEach((key) => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -474,25 +482,29 @@ import '@fontsource/iansui/latin-400.css';
   function openChat(session) {
     unlock?.classList.add('hidden');
     chat?.classList.remove('hidden');
-    if (window.matchMedia('(max-width: 640px)').matches) setFullscreen(true);
+    syncMobileFullscreenMode();
+    setFullscreen(mobileFullscreenLocked);
+    if (identity) identity.textContent = `${session.name} · ${session.email}`;
     submittedTurns = Math.max(0, Number(session.chatTurnsUsed || 0));
     continuationRequired = Boolean(
       session.continuationRequired ?? session.conversationEnded,
     );
     continuationDismissed = false;
-    appendWelcome(session);
+    appendWelcome();
     if (continuationRequired) {
       appendMessage(t('gemini.limitMessage'), 'system');
       appendContinuationActions();
     }
     syncConversationControls();
-    if (!continuationRequired) chatInput?.focus();
+    if (!continuationRequired && !mobileFullscreenLocked) chatInput?.focus();
   }
 
   function openUnlock() {
+    mobileFullscreenLocked = false;
     setFullscreen(false);
     chat?.classList.add('hidden');
     unlock?.classList.remove('hidden');
+    syncMobileFullscreenMode();
     profileForm?.classList.remove('hidden');
     codeForm?.classList.add('hidden');
   }
@@ -937,7 +949,7 @@ import '@fontsource/iansui/latin-400.css';
   .gemini-window.is-fullscreen {
     position: fixed;
     inset: 0;
-    z-index: 100;
+    z-index: 200;
     display: flex;
     width: auto;
     max-width: 100%;
@@ -954,6 +966,13 @@ import '@fontsource/iansui/latin-400.css';
     overflow: hidden;
   }
 
+  :global(body.gemini-fs-active #site-header) {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-100%);
+  }
+
   .gemini-window.is-fullscreen .gemini-output {
     min-height: 0;
     max-height: none;
@@ -963,6 +982,12 @@ import '@fontsource/iansui/latin-400.css';
 
   .gemini-window.is-fullscreen .gemini-input-row {
     padding-bottom: max(0.8rem, env(safe-area-inset-bottom));
+  }
+
+  .gemini-window.is-fullscreen .gemini-chrome {
+    padding-top: max(0.9rem, env(safe-area-inset-top));
+    padding-right: max(1.1rem, env(safe-area-inset-right));
+    padding-left: max(1.1rem, env(safe-area-inset-left));
   }
 
   .gemini-window.is-fullscreen :global(.gemini-line-assistant) {
@@ -983,11 +1008,32 @@ import '@fontsource/iansui/latin-400.css';
   .gemini-chrome {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 1rem;
     padding: 0.9rem 1.1rem;
     border-bottom: 1px solid rgba(183, 148, 244, 0.2);
     background: linear-gradient(90deg, rgba(239, 246, 255, 0.82), rgba(253, 242, 248, 0.72));
+  }
+
+  .gemini-chrome-copy {
+    min-width: 0;
+  }
+
+  .gemini-chrome-title {
+    font-family: Comfortaa, Quicksand, sans-serif;
+    font-weight: 700;
+    background: linear-gradient(105deg, #4285f4, #9b72cb, #d96570, #34a853);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .gemini-chrome-identity {
+    margin-top: 0.2rem;
+    color: rgba(117, 86, 157, 0.72);
+    font-size: 0.75rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
   }
 
   .gemini-fs-btn {
@@ -1218,29 +1264,12 @@ import '@fontsource/iansui/latin-400.css';
     font-size: 0.85rem;
   }
 
-  :global(.gemini-welcome) {
+  :global(.gemini-suggestions) {
     width: 100%;
     border: 1px solid rgba(183, 148, 244, 0.2);
     border-radius: 1rem;
     padding: 1rem;
     background: linear-gradient(135deg, rgba(239, 246, 255, 0.7), rgba(253, 242, 248, 0.65));
-  }
-
-  :global(.gemini-welcome-title) {
-    font-family: Comfortaa, Quicksand, sans-serif;
-    font-weight: 700;
-    background: linear-gradient(105deg, #4285f4, #9b72cb, #d96570, #34a853);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  :global(.gemini-welcome-identity) {
-    margin-top: 0.3rem;
-    color: rgba(117, 86, 157, 0.72);
-    font-size: 0.78rem;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
   }
 
   :global(.gemini-example) {
@@ -1332,6 +1361,16 @@ import '@fontsource/iansui/latin-400.css';
 
     .gemini-send {
       padding-inline: 0.8rem;
+    }
+  }
+
+  @media (max-width: 640px), (hover: none) and (pointer: coarse) {
+    .gemini-fs-btn {
+      display: none;
+    }
+
+    .gemini-chrome {
+      min-height: 4.5rem;
     }
   }
 

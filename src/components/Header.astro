@@ -13,7 +13,7 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
 const loginLabel = visitorNav ? '私人登入' : '登入';
 const loginI18nKey = visitorNav ? 'nav.ownerLogin' : 'nav.login';
 const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSection === 'login';
-const brandHomeLabel = '/ 首頁';
+const brandHomeLabel = '/ home';
 ---
 
 <header id="site-header" class="site-header fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
@@ -23,7 +23,7 @@ const brandHomeLabel = '/ 首頁';
       href={base}
       class="brand-link group shrink-0"
       data-always-home={visitorNav ? 'true' : 'false'}
-      aria-label="Kainnne 首頁"
+      aria-label="Kainnne home"
     >
       <span class="brand-sigil" aria-hidden="true">
         <span>K</span>
@@ -33,7 +33,6 @@ const brandHomeLabel = '/ 首頁';
         id="brand-home"
         class="brand-home"
         aria-hidden="false"
-        data-i18n="nav.homeLabel"
       >{brandHomeLabel}</span>
     </a>
 
