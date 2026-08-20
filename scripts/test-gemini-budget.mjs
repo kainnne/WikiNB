@@ -71,7 +71,12 @@ assert.match(worker, /function systemPrompt\(corpus, expandedDetailRequested = f
 assert.match(worker, /這裡無法提供長篇詳細回答；以下先整理必要重點/);
 assert.match(worker, /最相關的 1–3 份 WikiNB 文件/);
 assert.match(worker, /Instagram @kaine_z_/);
-assert.match(worker, /Gmail chaos60649@gmail\.com/);
+assert.match(worker, /Email ryanzhu@kainnne\.com/);
+assert.match(worker, /https:\/\/api\.resend\.com\/emails/);
+assert.match(worker, /env\.RESEND_API_KEY/);
+assert.match(wrangler, /"EMAIL_FROM": "Kainnne × Gemini <login@auth\.kainnne\.com>"/);
+assert.doesNotMatch(worker, /cloudflare-smtp|env\.SMTP_/);
+assert.doesNotMatch(wrangler, /SMTP_|chaos60649@gmail\.com/);
 assert.match(worker, /systemPrompt\(corpus, expandedDetailRequested\)/);
 assert.match(worker, /reserveChatTurn\(env, session\.email, turnLimit\)/);
 assert.match(worker, /incrementChatTurn\(env, session\.email\)/);

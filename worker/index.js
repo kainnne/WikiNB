@@ -1,4 +1,3 @@
-import { sendMail } from 'cloudflare-smtp';
 import {
   appendContinuationPrompt,
   continuationPromptMessage,
@@ -210,21 +209,25 @@ async function consumeRate(env, key, limit, windowMs) {
 }
 
 async function sendTextEmail(env, to, subject, text) {
-  if (!env.SMTP_PASSWORD || !env.SMTP_USER) {
-    throw new Error('SMTP 尚未設定');
+  if (!env.RESEND_API_KEY) {
+    throw new Error('Resend 尚未設定');
   }
-  await sendMail(
-    {
-      host: env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(env.SMTP_PORT || 465),
-      secureTransport: 'tls',
-      username: env.SMTP_USER,
-      password: env.SMTP_PASSWORD,
-      from: env.SMTP_FROM || env.SMTP_USER,
-      to,
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'Kainnne-Gemini/1.0',
     },
-    { subject, text },
-  );
+    body: JSON.stringify({
+      from: env.EMAIL_FROM || 'Kainnne × Gemini <login@auth.kainnne.com>',
+      reply_to: env.EMAIL_REPLY_TO || 'ryanzhu@kainnne.com',
+      to: [to],
+      subject,
+      text,
+    }),
+  });
+  if (!response.ok) throw new Error(`Resend delivery failed: ${response.status}`);
 }
 
 async function requestOtp(request, env) {
@@ -718,7 +721,7 @@ function systemPrompt(corpus, expandedDetailRequested = false) {
 - 開頭明確說明：「為節省 Kaine 共用的 Gemini 免費 API 額度，這裡無法提供長篇詳細回答；以下先整理必要重點。」
 - 不可只回絕。仍須回答訪客真正詢問的主題，以 3–6 個短項目完整交代核心結論。
 - 最後加入「延伸閱讀」，只列這次檢索內容中最相關的 1–3 份 WikiNB 文件，使用文件的「筆記」slug 組成 https://wikinb.kainnne.com/wiki/<slug>/；不可杜撰頁面。若沒有適合文件，只提供 https://wikinb.kainnne.com/。
-- 再加入「聯絡 Kaine」：Instagram @kaine_z_；Gmail chaos60649@gmail.com。
+- 再加入「聯絡 Kaine」：Instagram @kaine_z_；Email ryanzhu@kainnne.com。
 - 不展開長篇背景、完整技術過程或所有履歷。
 `
     : '';
@@ -1114,7 +1117,7 @@ export default {
           ok: true,
           service: 'Kainnne x Gemini',
           model: env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
-          configured: Boolean(env.GEMINI_API_KEY && env.SMTP_PASSWORD && env.TOKEN_SECRET),
+          configured: Boolean(env.GEMINI_API_KEY && env.RESEND_API_KEY && env.TOKEN_SECRET),
         });
       } else if (request.method === 'POST' && url.pathname === '/api/guest-ai/request-code') {
         response = await requestOtp(request, env);
