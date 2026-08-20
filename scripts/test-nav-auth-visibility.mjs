@@ -236,6 +236,8 @@ assert.match(geminiPage, /#gemini-unlock \.search-input/);
 assert.match(geminiPage, /<section id="gemini-chat" class="gemini-window hidden">/);
 assert.match(geminiPage, /id="gemini-fs-toggle"/);
 assert.match(geminiPage, /id="gemini-scroll-latest"/);
+assert.match(geminiPage, /function openAnonymousChat\(\)/);
+assert.match(geminiPage, /if \(!verified && anonymousQuestionUsed\)/);
 assert.match(geminiPage, /class="gemini-chrome-title"/);
 assert.match(geminiPage, /id="gemini-identity" class="gemini-chrome-identity"/);
 assert.match(geminiPage, /identity\.textContent = `\$\{session\.name\} · \$\{session\.email\}`/);

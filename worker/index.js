@@ -11,6 +11,9 @@ import {
 const OTP_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
+const ANONYMOUS_USAGE_IDENTITY = '__anonymous_shared__';
+const ANONYMOUS_NETWORK_DAILY_LIMIT = 12;
+const ANONYMOUS_GLOBAL_DAILY_LIMIT = 200;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -890,47 +893,76 @@ async function continueChat(request, env) {
 
 async function chat(request, env) {
   const session = await guestSession(request, env);
-  if (!session) return json({ error: 'AI 訪客驗證已過期，請重新驗證' }, 401);
-
   const body = await parseJson(request);
   const message = String(body.message || '').trim();
-  const history = Array.isArray(body.history) ? body.history : [];
+  const anonymous = !session && body.anonymous === true;
+  if (!session && !anonymous) {
+    return json({ error: 'AI 訪客驗證已過期，請重新驗證' }, 401);
+  }
+  const history = anonymous ? [] : Array.isArray(body.history) ? body.history : [];
   if (!message) return json({ error: '請輸入問題' }, 400);
   if (message.length > 1200) return json({ error: '問題太長，請縮短到 1,200 字以內' }, 400);
 
-  const burst = await consumeRate(env, `chat:${session.tokenHash}`, 1, 4 * 1000);
+  const requestIdentity = anonymous ? await sha256(clientIp(request)) : session.tokenHash;
+  const burst = await consumeRate(env, `chat:${requestIdentity}`, 1, 4 * 1000);
   if (!burst.ok) return json({ error: '請稍等幾秒再送出下一個問題' }, 429);
 
-  const usage = await dailyUsage(env, session.email);
   const turnLimit = maxChatTurns(env);
   const english = prefersEnglish(message, history);
   const tokenLimit = dailyTokenLimit(env);
+  const usageIdentity = anonymous ? ANONYMOUS_USAGE_IDENTITY : session.email;
+  const usage = await dailyUsage(env, usageIdentity);
   if (usage.tokenCount >= tokenLimit) {
     return json({ error: '今天的訪客 AI 共享額度已達上限，請明天再來' }, 429);
   }
 
-  const continuationApproved = await hasContinuationApproval(env, session.email);
-  const turn = continuationApproved
-    ? await incrementChatTurn(env, session.email)
-    : await reserveChatTurn(env, session.email, turnLimit);
-  if (!turn.ok) {
-    return json({
-      ok: true,
-      kind: 'continuation_required',
-      answer: continuationPromptMessage(turnLimit, english),
-      continuationApproved: false,
-      continuationRequired: true,
-      conversationEnded: true,
-      limitReached: true,
-      chatTurnsUsed: turn.count,
-      chatTurnLimit: turnLimit,
-    });
+  let continuationApproved = false;
+  let chatTurnsUsed = 1;
+  let continuationRequired = false;
+
+  if (anonymous) {
+    const networkRate = await consumeRate(
+      env,
+      `anonymous-chat:${taipeiDay()}:${requestIdentity}`,
+      ANONYMOUS_NETWORK_DAILY_LIMIT,
+      24 * 60 * 60 * 1000,
+    );
+    if (!networkRate.ok) {
+      return json({ error: '這個網路的免登入提問次數已用完，請驗證信箱後繼續' }, 429);
+    }
+    const globalRate = await consumeRate(
+      env,
+      `anonymous-chat-global:${taipeiDay()}`,
+      ANONYMOUS_GLOBAL_DAILY_LIMIT,
+      24 * 60 * 60 * 1000,
+    );
+    if (!globalRate.ok) {
+      return json({ error: '今天的訪客 AI 共享額度已達上限，請明天再來' }, 429);
+    }
+  } else {
+    continuationApproved = await hasContinuationApproval(env, session.email);
+    const turn = continuationApproved
+      ? await incrementChatTurn(env, session.email)
+      : await reserveChatTurn(env, session.email, turnLimit);
+    if (!turn.ok) {
+      return json({
+        ok: true,
+        kind: 'continuation_required',
+        answer: continuationPromptMessage(turnLimit, english),
+        continuationApproved: false,
+        continuationRequired: true,
+        conversationEnded: true,
+        limitReached: true,
+        chatTurnsUsed: turn.count,
+        chatTurnLimit: turnLimit,
+      });
+    }
+    chatTurnsUsed = turn.count;
+    continuationRequired = chatTurnsUsed >= turnLimit && !continuationApproved;
   }
-  const chatTurnsUsed = turn.count;
-  const continuationRequired = chatTurnsUsed >= turnLimit && !continuationApproved;
 
   if (!isKaineScopeQuestion(message, history)) {
-    await recordDailyUsage(env, session.email, usage.day);
+    await recordDailyUsage(env, usageIdentity, usage.day);
     let answer = outOfScopeMessage(english);
     if (continuationRequired) {
       answer = appendContinuationPrompt(answer, turnLimit, english);
@@ -945,6 +977,7 @@ async function chat(request, env) {
       limitReached: continuationRequired,
       chatTurnsUsed,
       chatTurnLimit: turnLimit,
+      requiresVerification: anonymous,
     });
   }
 
@@ -1045,7 +1078,7 @@ async function chat(request, env) {
     reportedTotalTokens || reportedTokenParts || estimatedTotalTokens,
   );
 
-  await recordDailyUsage(env, session.email, usage.day, consumedTokens);
+  await recordDailyUsage(env, usageIdentity, usage.day, consumedTokens);
 
   if (continuationRequired) {
     answer = appendContinuationPrompt(answer, turnLimit, english);
@@ -1061,6 +1094,7 @@ async function chat(request, env) {
     limitReached: continuationRequired,
     chatTurnsUsed,
     chatTurnLimit: turnLimit,
+    requiresVerification: anonymous,
   });
 }
 

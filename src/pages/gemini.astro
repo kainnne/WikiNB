@@ -32,10 +32,10 @@ import '@fontsource/iansui/latin-400.css';
       <span class="gemini-unlock-glow gemini-unlock-glow-b" aria-hidden="true"></span>
       <div class="gemini-unlock-heading">
         <h2 class="font-display text-xl font-bold text-berry-800" data-i18n="gemini.unlockTitle">
-          解鎖訪客 AI
+          驗證後繼續聊天
         </h2>
         <p class="gemini-unlock-note" data-i18n="gemini.unlockPrivacy">
-          Email 僅用於訪客登入紀錄，不會額外蒐集或保存其他個人資訊。名字可以填寫暱稱，不需要使用真實姓名。
+          第一個問題不需要登入；從第二個問題開始請使用 Email 驗證。Email 只用於訪客登入紀錄，名字可以填寫暱稱。
         </p>
       </div>
 
@@ -150,6 +150,7 @@ import '@fontsource/iansui/latin-400.css';
   import { t } from '../scripts/i18n.js';
   import {
     askGuestGemini,
+    askGuestGeminiAnonymous,
     continueGuestGemini,
     fetchGuestAiMe,
     getGuestAiSession,
@@ -190,6 +191,8 @@ import '@fontsource/iansui/latin-400.css';
   let submittedTurns = 0;
   let continuationRequired = false;
   let continuationDismissed = false;
+  let anonymousQuestionUsed = false;
+  let pendingPostAuthMessage = '';
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
 
@@ -479,18 +482,22 @@ import '@fontsource/iansui/latin-400.css';
     appendMessage(t('gemini.welcomeMessage'), 'assistant');
   }
 
-  function openChat(session) {
+  function openChat(session, { preserveConversation = false } = {}) {
     unlock?.classList.add('hidden');
     chat?.classList.remove('hidden');
     syncMobileFullscreenMode();
     setFullscreen(mobileFullscreenLocked);
     if (identity) identity.textContent = `${session.name} · ${session.email}`;
-    submittedTurns = Math.max(0, Number(session.chatTurnsUsed || 0));
+    const serverTurns = Math.max(0, Number(session.chatTurnsUsed || 0));
+    submittedTurns = preserveConversation ? Math.max(submittedTurns, serverTurns) : serverTurns;
     continuationRequired = Boolean(
       session.continuationRequired ?? session.conversationEnded,
     );
     continuationDismissed = false;
-    appendWelcome();
+    if (!preserveConversation) {
+      history = [];
+      appendWelcome();
+    }
     if (continuationRequired) {
       appendMessage(t('gemini.limitMessage'), 'system');
       appendContinuationActions();
@@ -499,7 +506,24 @@ import '@fontsource/iansui/latin-400.css';
     if (!continuationRequired && !mobileFullscreenLocked) chatInput?.focus();
   }
 
-  function openUnlock() {
+  function openAnonymousChat() {
+    unlock?.classList.add('hidden');
+    chat?.classList.remove('hidden');
+    syncMobileFullscreenMode();
+    setFullscreen(mobileFullscreenLocked);
+    if (identity) identity.textContent = t('gemini.anonymousIdentity');
+    submittedTurns = 0;
+    continuationRequired = false;
+    continuationDismissed = false;
+    anonymousQuestionUsed = false;
+    history = [];
+    appendWelcome();
+    syncConversationControls();
+    if (!mobileFullscreenLocked) chatInput?.focus();
+  }
+
+  function openUnlock(nextMessage = '') {
+    pendingPostAuthMessage = String(nextMessage || '').trim();
     mobileFullscreenLocked = false;
     setFullscreen(false);
     chat?.classList.add('hidden');
@@ -548,7 +572,14 @@ import '@fontsource/iansui/latin-400.css';
         conversationEnded: result.conversationEnded,
       };
       setGuestAiSession(session);
-      openChat(session);
+      const shouldResume = anonymousQuestionUsed;
+      openChat(session, { preserveConversation: shouldResume });
+      const queuedMessage = pendingPostAuthMessage;
+      pendingPostAuthMessage = '';
+      if (queuedMessage && chatInput) {
+        chatInput.value = queuedMessage;
+        window.requestAnimationFrame(() => chatForm?.requestSubmit());
+      }
     } catch (error) {
       showAuthMessage(error.message, false, 'gemini.errorVerify');
     } finally {
@@ -568,6 +599,12 @@ import '@fontsource/iansui/latin-400.css';
     const message = String(chatInput?.value || '').trim();
     if (!message) return;
 
+    const verified = Boolean(getGuestAiSession()?.token);
+    if (!verified && anonymousQuestionUsed) {
+      openUnlock(message);
+      return;
+    }
+
     running = true;
     if (chatInput) {
       chatInput.value = '';
@@ -583,10 +620,13 @@ import '@fontsource/iansui/latin-400.css';
     const responseTimer = startResponseTimer();
 
     try {
-      const result = await askGuestGemini({ message, history });
+      const result = verified
+        ? await askGuestGemini({ message, history })
+        : await askGuestGeminiAnonymous({ message });
       responseTimer.stop();
       appendMessage(result.answer, 'assistant');
       submittedTurns = Math.max(submittedTurns + 1, Number(result.chatTurnsUsed || 0));
+      if (!verified) anonymousQuestionUsed = true;
       if (result.kind === 'answer') {
         history.push({ role: 'user', content: message });
         history.push({ role: 'assistant', content: result.answer });
@@ -603,18 +643,22 @@ import '@fontsource/iansui/latin-400.css';
       responseTimer.stop();
       const raw = error.message || '';
       const described = describeGuestAiMessage(raw);
+      if (described.key === 'gemini.anonymousLimit') {
+        openUnlock(message);
+        showAuthMessage(raw, false, 'gemini.anonymousLimit');
+      }
       const friendly =
         /暫時無法回應|暫時無法讀取|服務暫時發生錯誤/.test(raw)
           ? t('gemini.tempError')
           : described.key
             ? t(described.key, described.vars)
             : raw || t('gemini.tempError');
-      appendMessage(friendly, 'error');
+      if (described.key !== 'gemini.anonymousLimit') appendMessage(friendly, 'error');
       if (described.key === 'gemini.errorSessionExpired') openUnlock();
     } finally {
       running = false;
       syncConversationControls();
-      if (!continuationRequired) chatInput?.focus();
+      if (!continuationRequired && !chat?.classList.contains('hidden')) chatInput?.focus();
     }
   });
 
@@ -622,6 +666,7 @@ import '@fontsource/iansui/latin-400.css';
     renderMessageState(authMessage, authMessageState);
     renderMessageState(codeSent, codeSentState);
     syncConversationControls();
+    if (!getGuestAiSession() && identity) identity.textContent = t('gemini.anonymousIdentity');
     if (!chat?.classList.contains('hidden') && submittedTurns === 0 && !continuationRequired) {
       appendWelcome();
     }
@@ -630,14 +675,14 @@ import '@fontsource/iansui/latin-400.css';
   async function init() {
     const session = getGuestAiSession();
     if (!session) {
-      openUnlock();
+      openAnonymousChat();
       return;
     }
     try {
       const me = await fetchGuestAiMe();
       openChat({ ...session, ...me });
     } catch {
-      openUnlock();
+      openAnonymousChat();
     }
   }
 
