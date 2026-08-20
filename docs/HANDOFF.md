@@ -1,6 +1,6 @@
 # WikiNB 工程 Handoff
 
-更新：2026-08-17
+更新：2026-08-20
 
 狀態：公開站、訪客 Gemini、私人登入與 GitHub Pages 部署皆已可用。
 
@@ -48,6 +48,9 @@ WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astr
 ### 訪客 Gemini
 
 - 訪客以名稱、Email、6 位數 OTP 解鎖；session 與管理者登入完全分離。
+- 2026-08-20 起，訪客 OTP 改由 Resend 與已驗證的寄件子網域寄送，寄件者固定為 `Kainnne × Gemini <login@auth.kainnne.com>`，Reply-To 為 `ryanzhu@kainnne.com`。
+- `auth.kainnne.com` 只是 Kainnne 旗下服務共用的自動驗證信寄件網域，與公開網站位於 `wikinb.kainnne.com` 並不衝突；不要因網站網域不同而改回 Gmail 或另外建立寄件網域。
+- 這裡的流程是無密碼 Email OTP，不是「密碼之後再驗證一次」的傳統 2FA。Kaine 口語提到「兩步驟驗證」時，若在談訪客 Gemini，通常是指先填資料、再輸入 Email 驗證碼的兩階段流程。
 - Worker 使用簽章訪客 token；D1 保存 OTP、rate limit、每日對話次數與 token 使用量。
 - 對外角色以第一人稱「Kaine」回答，不再自稱數位助理或分身；公開 WikiNB 是唯一事實邊界，不能生成未公開私人事實或真實承諾。
 - 每個已驗證 Email 依台北日期先開放 5 則訊息；以 Email hash 的 D1 原子計數強制執行。第 5 則回答後前端要求訪客選擇是否續聊。
@@ -105,8 +108,10 @@ npx wrangler d1 execute wikinb-guest-ai --remote --file=worker/migrations/0002_d
 Cloudflare secrets 必須留在平台，不得寫入 Markdown、Git 或前端：
 
 - `GEMINI_API_KEY`
-- `SMTP_PASSWORD`
+- `RESEND_API_KEY`：使用 WikiNB 自己的 sending-only、僅限 `auth.kainnne.com` 的 Resend API key，不與 ScopeCut 共用 key。
 - `TOKEN_SECRET`
+
+舊的 `SMTP_PASSWORD` 已不再被程式使用；若 Cloudflare 後台仍保留，只是待 Kaine 明確確認後清除的歷史 secret，不得重新接回功能。
 
 ## 驗證與完成條件
 
