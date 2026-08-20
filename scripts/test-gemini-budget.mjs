@@ -144,9 +144,9 @@ assert.equal(en['gemini.errorResendWait'], 'Please wait 1 minute before requesti
 
 assert.equal('gemini.connected' in zh, false);
 assert.match(zh['gemini.welcomeMessage'], /嗨，我是 Kaine/);
-assert.match(zh['gemini.welcomeMessage'], /第一個問題不需登入/);
-assert.equal(zh['gemini.anonymousIdentity'], '訪客 · 第一題免驗證');
-assert.equal(zh['gemini.unlockTitle'], '驗證後繼續聊天');
+assert.equal(zh['gemini.unlockTitle'], '解鎖訪客 AI');
+assert.equal('gemini.anonymousIdentity' in zh, false);
+assert.doesNotMatch(zh['gemini.welcomeMessage'], /第一個問題|第一題|免驗證/);
 assert.doesNotMatch(zh['gemini.welcomeMessage'], /數位助理|分身/);
 assert.match(zh['gemini.limitMessage'], /前 5 則訊息/);
 assert.match(zh['gemini.limitMessage'], /寄一封通知信給 Kaine/);
@@ -157,9 +157,9 @@ assert.equal(zh['gemini.example3'], '根據 Kaine 的背景，提出一個可行
 assert.equal(zh['gemini.example4'], '請簡短條列 Kaine 目前公開的主要專案與能力。');
 assert.equal('gemini.connected' in en, false);
 assert.match(en['gemini.welcomeMessage'], /Hi, I'm Kaine/);
-assert.match(en['gemini.welcomeMessage'], /first question requires no sign-in/i);
-assert.equal(en['gemini.anonymousIdentity'], 'Guest · First question without verification');
-assert.equal(en['gemini.unlockTitle'], 'Verify to continue chatting');
+assert.equal(en['gemini.unlockTitle'], 'Unlock guest AI');
+assert.equal('gemini.anonymousIdentity' in en, false);
+assert.doesNotMatch(en['gemini.welcomeMessage'], /first question|no sign-in|without verification/i);
 assert.doesNotMatch(en['gemini.welcomeMessage'], /digital assistant|digital twin/i);
 assert.match(en['gemini.limitMessage'], /first 5 messages/i);
 assert.match(en['gemini.limitMessage'], /email Kaine/i);

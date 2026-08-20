@@ -27,15 +27,15 @@ import '@fontsource/iansui/latin-400.css';
       </h1>
     </header>
 
-    <section id="gemini-unlock" class="gemini-card mx-auto max-w-xl p-5 sm:p-7">
+    <section id="gemini-unlock" class="gemini-card hidden mx-auto max-w-xl p-5 sm:p-7">
       <span class="gemini-unlock-glow gemini-unlock-glow-a" aria-hidden="true"></span>
       <span class="gemini-unlock-glow gemini-unlock-glow-b" aria-hidden="true"></span>
       <div class="gemini-unlock-heading">
         <h2 class="font-display text-xl font-bold text-berry-800" data-i18n="gemini.unlockTitle">
-          驗證後繼續聊天
+          解鎖訪客 AI
         </h2>
         <p class="gemini-unlock-note" data-i18n="gemini.unlockPrivacy">
-          第一個問題不需要登入；從第二個問題開始請使用 Email 驗證。Email 只用於訪客登入紀錄，名字可以填寫暱稱。
+          Email 僅用於訪客登入紀錄，不會額外蒐集或保存其他個人資訊。名字可以填寫暱稱，不需要使用真實姓名。
         </p>
       </div>
 
@@ -107,7 +107,7 @@ import '@fontsource/iansui/latin-400.css';
       <p id="gemini-auth-message" class="mt-4 hidden text-center text-sm"></p>
     </section>
 
-    <section id="gemini-chat" class="gemini-window hidden">
+    <section id="gemini-chat" class="gemini-window">
       <div class="gemini-chrome">
         <div class="gemini-chrome-copy">
           <p class="gemini-chrome-title" data-i18n="gemini.title">Kainnne x Gemini</p>
@@ -487,7 +487,10 @@ import '@fontsource/iansui/latin-400.css';
     chat?.classList.remove('hidden');
     syncMobileFullscreenMode();
     setFullscreen(mobileFullscreenLocked);
-    if (identity) identity.textContent = `${session.name} · ${session.email}`;
+    if (identity) {
+      identity.hidden = false;
+      identity.textContent = `${session.name} · ${session.email}`;
+    }
     const serverTurns = Math.max(0, Number(session.chatTurnsUsed || 0));
     submittedTurns = preserveConversation ? Math.max(submittedTurns, serverTurns) : serverTurns;
     continuationRequired = Boolean(
@@ -511,7 +514,10 @@ import '@fontsource/iansui/latin-400.css';
     chat?.classList.remove('hidden');
     syncMobileFullscreenMode();
     setFullscreen(mobileFullscreenLocked);
-    if (identity) identity.textContent = t('gemini.anonymousIdentity');
+    if (identity) {
+      identity.textContent = '';
+      identity.hidden = true;
+    }
     submittedTurns = 0;
     continuationRequired = false;
     continuationDismissed = false;
@@ -666,7 +672,6 @@ import '@fontsource/iansui/latin-400.css';
     renderMessageState(authMessage, authMessageState);
     renderMessageState(codeSent, codeSentState);
     syncConversationControls();
-    if (!getGuestAiSession() && identity) identity.textContent = t('gemini.anonymousIdentity');
     if (!chat?.classList.contains('hidden') && submittedTurns === 0 && !continuationRequired) {
       appendWelcome();
     }
