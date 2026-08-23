@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-08-17
+> 最後更新：2026-08-23
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -53,12 +53,14 @@
 
 ## 學習中
 
+- [[Learning/kuse-ai-practical-course]] — Kaine 的 Kuse AI 實作課：從顧問、執行、Project 到 prompt、修正與資安責任
 - [[Learning/llm-research-course]] — 從文字表示與 LLM 生態，逐步學到評估、實驗設計與模型路線選擇
 - [[Learning/ai-document-workflow-workshop]] — AI 文件與 Agent 工作流實作
 - [[Learning/python-foundations-practice]] — Python 基礎迭代練習
 
 ## 系統與方法
 
+- [[Systems/knowledge-persona-agent]] — 如何用角色、風格、RAG、回答政策、記憶與權限邊界建立數位分身、AI 客服與其他知識型 Agent
 - [[Systems/wikinb-and-codexrules]] — WikiNB、CodexRules 與專案資料的分工
 - [[Random/ai-output-verification]] — 如何驗證 AI 產出並避免無限循環
 - [[Random/markdown-format-guide]] — Markdown 格式教學
