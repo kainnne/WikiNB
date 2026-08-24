@@ -1,0 +1,55 @@
+---
+import maintenanceConfig from '../../config/public-maintenance.json';
+
+const config = maintenanceConfig.wikinbKcis;
+const escapeHtml = (value: string) => value
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#039;');
+
+const maintenanceDocument = `<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#fff7fc">
+    <title>${escapeHtml(config.title)}</title>
+    <style>
+      :root{color-scheme:light;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+      *{box-sizing:border-box}
+      body{margin:0;min-height:100vh;min-height:100svh;display:grid;place-items:center;padding:24px;color:#43243a;background:radial-gradient(circle at 15% 18%,#dfe9ff 0,transparent 34%),radial-gradient(circle at 86% 14%,#ffe0ee 0,transparent 36%),radial-gradient(circle at 72% 86%,#dcfff4 0,transparent 32%),#fff8fc}
+      main{width:min(100%,640px);padding:clamp(32px,7vw,64px);text-align:center;border:1px solid rgba(255,255,255,.9);border-radius:32px;background:rgba(255,255,255,.72);box-shadow:0 24px 70px rgba(88,49,78,.14);backdrop-filter:blur(18px)}
+      .mark{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 24px;border-radius:22px;color:#fff;font-size:26px;font-weight:800;background:linear-gradient(135deg,#76a8ff,#b58cff 48%,#ff91b2);box-shadow:0 14px 32px rgba(146,108,209,.3)}
+      .status{margin:0 0 12px;color:#8a6682;font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+      h1{margin:0;font-size:clamp(30px,7vw,48px);line-height:1.18;letter-spacing:-.035em}
+      .message{margin:18px auto 0;max-width:440px;color:#6e5868;font-size:clamp(16px,3vw,19px);line-height:1.8}
+      .secondary{display:block;margin-top:7px;color:#9a8293;font-size:13px}
+      a{display:inline-flex;align-items:center;justify-content:center;margin-top:30px;padding:12px 20px;border-radius:999px;color:#fff;font-weight:800;text-decoration:none;background:linear-gradient(115deg,#628fdc,#9c72d2);box-shadow:0 10px 24px rgba(100,82,169,.22)}
+      a:focus-visible{outline:3px solid rgba(98,143,220,.35);outline-offset:4px}
+      @media (prefers-reduced-motion:no-preference){main{animation:arrive .36s ease-out both}@keyframes arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+    </style>
+  </head>
+  <body>
+    <main role="status" aria-live="polite">
+      <div class="mark" aria-hidden="true">W</div>
+      <p class="status">KCIS · WikiNB</p>
+      <h1>${escapeHtml(config.title)}</h1>
+      <p class="message">${escapeHtml(config.message)}<span class="secondary" lang="en">${escapeHtml(config.secondaryMessage)}</span></p>
+      <a href="${escapeHtml(config.homeUrl)}">返回 KCIS 首頁</a>
+    </main>
+  </body>
+</html>`;
+
+const gateScript = `(() => {
+  if (window.location.hostname !== ${JSON.stringify(config.hostname)}) return;
+  window.stop();
+  document.open();
+  document.write(${JSON.stringify(maintenanceDocument).replaceAll('<', '\\u003c')});
+  document.close();
+})();`;
+---
+
+{config.enabled && <script is:inline set:html={gateScript}></script>}
