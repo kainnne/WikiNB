@@ -2,7 +2,7 @@
 title: Kainnne LumaReader 技術架構
 description: Electron 主程序、最小 preload、loopback 文件服務與 Markdown renderer 的本機優先架構說明。
 type: note
-status: active
+status: superseded
 tags:
   - LumaReader
   - Electron
@@ -10,9 +10,12 @@ tags:
   - 本機優先
   - 應用程式安全
 date: 2026-08-17
+updated: 2026-08-24
 ---
 
 # Kainnne LumaReader 技術架構
+
+> 這是正式跨平台發行前的架構快照，保留當時的設計與驗證邊界。產品已完成後續的編輯／新增文件能力、macOS Developer ID 簽章與 Apple 公證、Windows 實機建置，以及 GitHub Release／下載網站交付；目前技術說明請閱讀 [[Technical/kainnne-lumareader/02_architecture_and_release_20260824]]。
 
 ## 定位與功能頁
 

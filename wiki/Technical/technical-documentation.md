@@ -9,6 +9,7 @@ tags:
   - 系統架構
   - 專案索引
 date: 2026-08-17
+updated: 2026-08-24
 ---
 
 # Kainnne 專案技術文件
@@ -22,7 +23,7 @@ date: 2026-08-17
 ### 產品與網站
 
 - [[Technical/kainnne-personal-portal/01_architecture_20260817|Kainnne 個人入口網站：前端與 GEO／SEO 架構]]
-- [[Technical/kainnne-lumareader/01_architecture_20260817|Kainnne LumaReader：本機閱讀器架構]]
+- [[Technical/kainnne-lumareader/02_architecture_and_release_20260824|Kainnne LumaReader：本機檔案權限、編輯與跨平台發行]]（[[Technical/kainnne-lumareader/01_architecture_20260817|發行前架構快照]]）
 - [[Technical/kainnne-forms-landing/01_site_architecture_20260817|Kainnne Forms Landing：靜態網站架構]]
 
 ### 知識系統與教育應用

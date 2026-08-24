@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-08-23
+> 最後更新：2026-08-24
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -43,6 +43,7 @@
 ## 技術文件
 
 - [[Technical/technical-documentation]] — 各專案的架構、資料流、測試、部署與公開邊界
+- [[Technical/kainnne-lumareader/02_architecture_and_release_20260824]] — LumaReader 的本機權限、編輯安全與跨平台發行方法
 
 ## 關於我
 
