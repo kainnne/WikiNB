@@ -10,7 +10,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [homePage, header, geminiPage, codexPage, loginPage, searchPage, wikiPage, notFoundPage, baseLayout, maintenanceGate, maintenanceConfig, backdrop, addPage, managementPage, uploader, bridgeClient] = await Promise.all([
+const [homePage, header, geminiPage, codexPage, loginPage, searchPage, wikiPage, notFoundPage, baseLayout, backdrop, addPage, managementPage, uploader, bridgeClient] = await Promise.all([
   readFile(new URL('../src/pages/index.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/Header.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/gemini.astro', import.meta.url), 'utf8'),
@@ -20,8 +20,6 @@ const [homePage, header, geminiPage, codexPage, loginPage, searchPage, wikiPage,
   readFile(new URL('../src/pages/wiki/[...slug].astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/404.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/layouts/BaseLayout.astro', import.meta.url), 'utf8'),
-  readFile(new URL('../src/components/KcisMaintenanceGate.astro', import.meta.url), 'utf8'),
-  readFile(new URL('../config/public-maintenance.json', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/PublicDreamBackdrop.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/add-note.astro', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/rename.astro', import.meta.url), 'utf8'),
@@ -208,14 +206,6 @@ assert.match(baseLayout, /favicon-32\.png/);
 assert.match(baseLayout, /apple-touch-icon\.png/);
 assert.doesNotMatch(baseLayout, /data:image\/svg\+xml/);
 assert.match(baseLayout, /publicSection\?: 'wiki' \| 'gemini' \| 'login'/);
-assert.match(baseLayout, /<KcisMaintenanceGate \/>/);
-assert.match(maintenanceGate, /window\.location\.hostname/);
-assert.match(maintenanceGate, /window\.stop\(\)/);
-assert.match(maintenanceGate, /document\.open\(\)/);
-assert.match(maintenanceGate, /document\.write/);
-assert.equal(JSON.parse(maintenanceConfig).wikinbKcis.enabled, true);
-assert.equal(JSON.parse(maintenanceConfig).wikinbKcis.hostname, 'wikinb.kcis.kainnne.com');
-assert.equal(JSON.parse(maintenanceConfig).wikinbKcis.title, 'WikiNB 功能暫停中');
 assert.match(baseLayout, /<Header visitorNav=\{visitorNav\} publicSection=\{publicSection\} \/>/);
 assert.match(backdrop, /class="public-dream-backdrop"/);
 assert.match(backdrop, /body\.public-wiki-page/);
