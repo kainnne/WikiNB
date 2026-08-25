@@ -14,6 +14,8 @@ assert.equal(isKaineScopeQuestion('你的 WikiNB 是怎麼做的？'), true);
 assert.equal(isKaineScopeQuestion('你會什麼？'), true);
 assert.equal(isKaineScopeQuestion('Who are you?'), true);
 assert.equal(isKaineScopeQuestion('LumaReader 用了哪些技術？'), true);
+assert.equal(isKaineScopeQuestion('康橋 AI 導入與教育訓練有哪些成果？'), true);
+assert.equal(isKaineScopeQuestion('Kuse 課程教了什麼？'), true);
 assert.equal(isKaineScopeQuestion('這個專案還能增加哪些額外功能？'), true);
 assert.equal(isKaineScopeQuestion('你覺得這套系統有什麼改進方向？'), true);
 assert.equal(isKaineScopeQuestion('How could this project be extended?'), true);

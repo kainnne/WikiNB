@@ -1,7 +1,7 @@
 export const DEFAULT_MAX_CHAT_TURNS = 5;
 
 const KNOWN_KAINE_TOPICS =
-  /\b(?:kaine|kainnne|wikinb|lumareader|scopecut|codexrules|agents\s+cli|kainnne\s+geo|geo\s+automation)\b|朱璽/iu;
+  /\b(?:kaine|kainnne|wikinb|lumareader|scopecut|codexrules|agents\s+cli|kainnne\s+geo|geo\s+automation|kcis|kuse)\b|朱璽|康橋|AI\s*(?:導入|教育訓練)/iu;
 
 const FIRST_PERSON_PUBLIC_PROFILE =
   /(?:你是誰|介紹(?:一下)?你(?:自己)?|你(?:本人|自己)?(?:目前|現在)?在做什麼|你(?:會|擅長|懂|能做)什麼|你的?(?:公開)?(?:專案|作品|經歷|履歷|背景|技能|能力|工作|職涯|研究|音樂|創作|網站|wiki|筆記|合作|服務|技術)|who are you|introduce yourself|your (?:projects?|work|experience|background|skills?|music|research|website)|what (?:are you working on|have you built|do you do|can you do))/iu;

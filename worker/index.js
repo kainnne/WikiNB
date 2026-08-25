@@ -567,15 +567,25 @@ function pageRelevance(page, terms) {
   return score;
 }
 
-const REPRESENTATIVE_PROJECT_SLUGS = [
-  'Projects/Products/kainnne-lumareader',
-  'Projects/Workflow/kainnne-geo-automation',
-  'Projects/Workflow/scopecut',
-  'Systems/codexrules-agent-system',
-  'Projects/Knowledge/wikinb',
+const PROJECT_OVERVIEW_SLUG = 'Projects/project-overview';
+const SINGLE_REPRESENTATIVE_PROJECT_SLUG = 'Projects/Products/kainnne-lumareader';
+
+const BROAD_PROFILE_PRIORITY_SLUGS = [
+  PROJECT_OVERVIEW_SLUG,
+  'KCIS/WikiNB-KCIS',
+  'Learning/kuse-ai-practical-course',
+  'AboutMe/02-software-development',
 ];
 
-const PROJECT_OVERVIEW_SLUG = 'Projects/project-overview';
+const REPRESENTATIVE_PROJECT_SLUGS = [
+  SINGLE_REPRESENTATIVE_PROJECT_SLUG,
+  'KCIS/WikiNB-KCIS',
+  'KCIS/kcis-ai-navigation',
+  'Projects/Knowledge/wikinb',
+  'Projects/Workflow/scopecut',
+  'Projects/Workflow/kainnne-geo-automation',
+  'Systems/codexrules-agent-system',
+];
 
 const EXCLUDED_PUBLIC_SLUGS = new Set([
   'projects/products/musicmatch',
@@ -667,16 +677,16 @@ function buildRelevantCorpus(pages, question, maxChars = 6500) {
   if (projectOverviewRequested) {
     add(findBySlug(PROJECT_OVERVIEW_SLUG));
   } else if (asksForOneRepresentativeProject(question)) {
-    add(findBySlug(REPRESENTATIVE_PROJECT_SLUGS[0]));
+    add(findBySlug(SINGLE_REPRESENTATIVE_PROJECT_SLUG));
   } else if (asksForBroadProfile(question)) {
-    add(findBySlug('AboutMe/02-software-development'));
-    REPRESENTATIVE_PROJECT_SLUGS.slice(0, 3).forEach((slug) => add(findBySlug(slug)));
+    BROAD_PROFILE_PRIORITY_SLUGS.forEach((slug) => add(findBySlug(slug)));
   }
 
   if (!projectOverviewRequested) {
     ranked.filter((item) => item.score > 0).forEach((item) => add(item.page));
     for (const slug of [
       ...REPRESENTATIVE_PROJECT_SLUGS,
+      ...BROAD_PROFILE_PRIORITY_SLUGS,
       'AboutMe/02-software-development',
       'AboutMe/03-ai-and-data',
       'AboutMe/04-collaboration-and-workstyle',
@@ -741,7 +751,7 @@ ${PUBLIC_SAFE_STYLE}
 - 以 Kaine 與公開 WikiNB 內容為起點即可，不限於事實查詢；可以回答專案延伸、額外功能、比較、評價、改進方向、合作構想，以及對 Kaine 的合理看法。
 - 不要因為問題沒有命中特定專案名稱或固定關鍵字就拒答。只要能從目前對話或公開內容合理連結到 Kaine，就直接回答。
 - 需要推論時清楚標示這是分析或建議，不把推論寫成 Kaine 已經做過、決定或承諾的事。
-- 訪客未指定名稱而要求「一個代表專案」時，只介紹 LumaReader。若需要說明多個目前重點，依序優先使用 LumaReader、Kainnne GEO、ScopeCut、CodexRules／agents CLI 與 WikiNB。
+- 訪客未指定名稱而要求「一個代表專案」時，只介紹 LumaReader。若是人物介紹、工作背景或多個目前重點，先說康橋 AI 導入、教育訓練與可操作的數位產品，再用 LumaReader、WikiNB、ScopeCut 等作品呈現完整產品能力；Kainnne GEO 與 CodexRules／agents CLI 是支撐方法，除非問題直接詢問，不要放在回答最前面。
 - 訪客要求條列所有／主要專案與能力時，以「Kaine 主要專案與能力總覽」為唯一權威來源；用分組短條列完整涵蓋頁面列出的項目，包含 agents CLI、LumaReader 與音樂能力，不逐項展開長篇技術細節。
 - 已撤下、僅供練習、未完成或不符合目前職涯主軸的內容，不得主動提及、推薦或用來推論 Kaine 的目前定位；只有這次檢索實際提供的公開筆記才能作為回答依據。
 - WikiNB 與 GEO 目前沒有自動排程；不得聲稱它們會每天自動更新、巡檢、修改或發布。更新與執行皆須由 Kaine 明確觸發並審閱。

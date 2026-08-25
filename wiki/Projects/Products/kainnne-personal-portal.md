@@ -1,6 +1,6 @@
 ---
 title: Kainnne 個人入口網站
-description: 以產品與可驗證成果為核心的個人品牌入口，串起作品、能力證明與知識系統。
+description: 一些替你省下操作與思考時間的數位產品，並以可驗證成果串起作品、能力與知識系統。
 type: note
 status: active
 tags:
@@ -9,12 +9,22 @@ tags:
   - 作品集
   - GitHub Pages
 date: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-25
 ---
 
 # Kainnne 個人入口網站
 
 Kainnne.com 是我的對外入口。它不是按年份堆疊經歷的傳統履歷，而是先回答「我現在能做出什麼」，再用實際產品、可開啟的網站與技術紀錄支持這個答案。
+
+目前標語是：**一些替你省下操作與思考時間的數位產品。**
+
+## 三個對外介紹入口
+
+- [kainnne.com](https://kainnne.com/)：產品導向的主要入口，集中展示可操作的數位產品。
+- [kainnne.com/me](https://kainnne.com/me)：個人經歷、背景與跨領域能力入口。
+- [kcis.kainnne.com/me](https://kcis.kainnne.com/me)：康橋情境的 AI 導入、教育訓練與教育科技成果入口。
+
+這三個入口服務不同閱讀情境，不應只用單一產品頁取代完整人物與教育實作介紹。
 
 ## 核心成果
 

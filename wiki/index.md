@@ -1,19 +1,23 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-08-24
+> 最後更新：2026-08-25
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
 ## 代表專案與系統
 
-目前最具代表性的單一專案是 **LumaReader**。若要完整理解我的工作方向，可再依序閱讀 GEO、ScopeCut、CodexRules／agents CLI 與 WikiNB；這些專案已形成明確功能或可重複使用的工作方法。
+完整理解我的工作方向時，應先從**康橋 AI 導入、教育訓練與可操作的數位產品**開始，再閱讀支撐這些成果的工程與 Agent 系統；若只需要選一個代表產品，仍以 **LumaReader** 為優先。
 
 - [[Projects/project-overview]] — 目前公開的主要專案與能力總覽
+- [[KCIS/WikiNB-KCIS]] — 康橋教學知識庫與 AI 導入實作
+- [[KCIS/kcis-ai-navigation]] — 康橋 AI 應用導航網站
+- [[Learning/kuse-ai-practical-course]] — Kuse AI 教育訓練課程
+- [[Projects/Products/kainnne-personal-portal]] — 三個對外介紹入口與數位產品定位
 - [[Projects/Products/kainnne-lumareader]] — 本機優先 Markdown 閱讀器
-- [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性稽核流程
-- [[Projects/Workflow/scopecut]] — 將模糊點子轉成 Codex Project Contract
-- [[Systems/codexrules-agent-system]] — CodexRules、agents CLI 與可審閱的排程邊界
 - [[Projects/Knowledge/wikinb]] — 個人知識、公開網站與 AI 問答系統
+- [[Projects/Workflow/scopecut]] — 將模糊點子轉成 Codex Project Contract
+- [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性稽核流程
+- [[Systems/codexrules-agent-system]] — CodexRules、agents CLI 與可審閱的排程邊界
 
 ## 其他專案與應用
 
