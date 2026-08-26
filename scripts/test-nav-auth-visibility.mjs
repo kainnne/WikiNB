@@ -202,8 +202,8 @@ assert.doesNotMatch(uploader, /linear-gradient\(#111111, #111111\)/);
 
 // 8. 公開搜尋、文章、登入、Gemini 與 404 共用訪客視覺。
 assert.match(baseLayout, /visitorNav\?: boolean/);
-assert.match(baseLayout, /favicon-32\.png/);
-assert.match(baseLayout, /apple-touch-icon\.png/);
+assert.match(baseLayout, /https:\/\/kainnne\.com\/brand\/kainnne-mark\.png/);
+assert.match(baseLayout, /rel="apple-touch-icon"/);
 assert.doesNotMatch(baseLayout, /data:image\/svg\+xml/);
 assert.match(baseLayout, /publicSection\?: 'wiki' \| 'gemini' \| 'login'/);
 assert.match(baseLayout, /<Header visitorNav=\{visitorNav\} publicSection=\{publicSection\} \/>/);
