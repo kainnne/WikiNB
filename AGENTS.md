@@ -86,7 +86,7 @@ npm run bridge   # 登入 / Codex / 同步 / 上傳 wiki
 
 | 項目 | 說明 |
 |------|------|
-| 公開站 | https://zx50416.github.io/WikiNB/ |
+| 公開站 | https://wikinb.kainnne.com/ |
 | 瀏覽 wiki | 不需 Mac |
 | 登入／Codex／同步／拖檔 | 需 Bridge + Mac |
 
@@ -96,3 +96,17 @@ npm run bridge   # 登入 / Codex / 同步 / 上傳 wiki
 
 - **Me**：對外能力證明
 - **Kainnne**：對內筆記與 AI 助理
+
+## GitHub 使用者名稱遷移（2026-08-10）
+
+- GitHub repository owner 已由 `zx50416` 更名為 `kainnne`。
+- repository 正式 URL 改為 `https://github.com/kainnne/WikiNB`。
+- 正式公開網址為 `https://wikinb.kainnne.com/`；GitHub Pages 備援網址為 `https://kainnne.github.io/WikiNB/`。遷移前的 `zx50416.github.io` 只供排錯，不應再作為正式連結。
+- 若發生 clone、fetch、push、Pages、Bridge 自動推送、登入 callback、部署、webhook 或 CI 錯誤，優先搜尋設定與文件中是否仍寫死 `zx50416`。
+- 使用者名稱遷移不代表 `wiki/` 或專案檔案遺失；不要因此刪除、搬移或重建既有資料。
+
+<!-- BEGIN KAINNNE PUBLIC AGENT BRIDGE -->
+## Local private Agent context
+
+If `AGENTS.local.md` exists, read it after this file and follow its routes into `AGENTS_Intro/` only as needed. These local files must not be staged or published.
+<!-- END KAINNNE PUBLIC AGENT BRIDGE -->

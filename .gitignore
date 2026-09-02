@@ -15,3 +15,11 @@ wiki/.trash/
 .wikinb-sync/
 # `agents install` 的私人中央規則副本；保留在本機，不發布到公開 WikiNB。
 /AGENTS_Intro/
+
+# BEGIN KAINNNE PRIVATE AGENT RULES
+# Local private agent context installed by the agents CLI.
+/AGENTS.local.md
+/CLAUDE.md
+/AGENTS_Intro/
+/Intro.md
+# END KAINNNE PRIVATE AGENT RULES
