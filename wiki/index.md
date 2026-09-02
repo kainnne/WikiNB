@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-08-25
+> 最後更新：2026-09-02
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -58,6 +58,7 @@
 
 ## 學習中
 
+- [[Learning/ai-first-frontend-foundations]] — 不以大量手寫程式為前提，建立能指揮 Agent、拆解介面、判讀架構、驗收與安全部署的前端基本功
 - [[Learning/kuse-ai-practical-course]] — Kaine 的 Kuse AI 實作課：從顧問、執行、Project 到 prompt、修正與資安責任
 - [[Learning/llm-research-course]] — 從文字表示與 LLM 生態，逐步學到評估、實驗設計與模型路線選擇
 - [[Learning/ai-document-workflow-workshop]] — AI 文件與 Agent 工作流實作
