@@ -64,7 +64,7 @@ updated: 2026-09-02
 
 ### 2. Build 產物
 
-工具檢查、轉換、切割、命名或壓縮後的檔案。Webpack 影片中的 `dist/`、bundle、hash、Babel 與 source map 都在解釋這個階段。
+工具會檢查、轉換、切割、命名或壓縮原始碼，輸出例如 `dist/`、bundle 與 source map。這一層解決的是「如何把開發材料組裝成可執行或可部署成果」。
 
 ### 3. Runtime 狀態
 
@@ -72,7 +72,7 @@ updated: 2026-09-02
 
 ## SSR／CSR 先不要當成二選一
 
-Next.js 影片用 SSR 與 CSR 對比幫助入門，這對理解「HTML 在哪裡先被準備」有用，但現代 Next.js 同一頁可以混合 server 與 client 工作：
+初學時常把 SSR 與 CSR 當成對比，但真正需要判斷的是：內容在哪裡準備、資料在哪裡取得、互動在哪裡執行。同一頁可以混合 server 與 client 工作：
 
 - page 與 layout 預設可在 server 產生內容、取資料與保護 secret。
 - 需要點擊狀態、Effect、`window` 或其他 browser API 的互動區才建立 client boundary。
@@ -123,15 +123,6 @@ Next.js 影片用 SSR 與 CSR 對比幫助入門，這對理解「HTML 在哪裡
 
 能以自己的網站為例說清楚四題，就進入單元 1；若只能認得名詞，先重做 Network 觀察。
 
-## 影片選看片段
+## 本單元下一步
 
-- [Webpack：為什麼需要建置工具（19:17）](https://www.youtube.com/watch?v=uP6KTupfyIw&t=1157s)
-- [Next.js：SSR／CSR 入門對比（06:22）](https://www.youtube.com/watch?v=Kj4kQzP75Fk&t=382s)
-
-看片時只抓心智模型，不照抄版本、比例或安裝指令；以課程中的現行校正為準。
-
-## 官方參考
-
-- [MDN：How the web works](https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Web_standards/How_the_web_works)
-- [Webpack：Core Concepts](https://webpack.js.org/concepts/)
-- [Next.js：Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
+完成一次 Network 觀察並回答四題 Teach-back。之後進入 HTML／DOM，開始把畫面設計轉成有語意、可操作的結構。

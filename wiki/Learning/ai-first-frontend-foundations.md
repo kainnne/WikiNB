@@ -15,7 +15,7 @@ updated: 2026-09-02
 
 # AI 時代的前端基本功
 
-四支教學影片提供 Webpack、React、TypeScript 與 Next.js 的示範；課程不照影片順序重播，而是依網站從需求到部署的真實路徑重組，並用現行官方文件校正舊版本與過度簡化的說法。
+這門課為具備設計判斷力、對前端有興趣，並以 AI Agent 作為主要實作夥伴的學習者設計。課程不以大量手寫程式為前提，而是補齊能把美感轉成規格、理解網站運作、判斷 Agent 方案、找出問題與安全發布所需的前端基本功。
 
 ## 課程定位
 
@@ -124,7 +124,7 @@ updated: 2026-09-02
 - Server Component 預設；需要 state、event、browser API 才建立 Client boundary。
 - Route Handler、資料庫、secret、環境變數與 client bundle。
 - loading、error、not-found、cache、dynamic data 與 streaming 的觀念。
-- Proxy（影片中的 Middleware）只用於真正的 request boundary 工作。
+- Proxy 只用於真正的 request boundary 工作，例如 rewrite、redirect 或 header 處理。
 - 練習：為一個內容網站畫 route map 與 server／client boundary；要求 Agent 解釋每個 `'use client'` 的必要性。
 - 產出：路由表、資料流與秘密邊界圖。
 
@@ -163,15 +163,15 @@ updated: 2026-09-02
 
 通過條件不是能背語法，而是能對每個重要決策回答：「為什麼這樣做、失敗會看到什麼、我用什麼證據確認」。
 
-## 影片內容的重要校正
+## AI Agent 時代必須建立的觀念
 
-- React 的 Effect 是同步 React 與外部系統的逃生口；由特定使用者操作造成的 POST 通常應留在事件處理流程，不要為了監聽所有 state 變動而增加 Effect。
-- React 重新 render 不代表整頁 DOM 全部清掉重畫；React 會計算新輸出並提交必要的 DOM 更新。
-- TypeScript 的 `as` 在編譯後會消失，不會驗證 runtime 的 API 資料。
-- interface 與 type 都屬於 TypeScript 型別層；type alias 不只用於變數，也能命名 union、tuple、object 與泛型等型別。
-- Create React App 已在 2025 年被 React 官方標示為 deprecated，不使用影片中的舊專案起手式。
-- 現代 Next.js 不是 SSR／CSR 二選一；同一路由可以混合 server／client、靜態、快取、動態與串流內容。
-- Next.js 16 將 Middleware 改名為 Proxy；它是請求邊界工具，不是慢速資料取得或完整授權系統。
+- Effect 用於同步 React 與外部系統；由特定使用者操作造成的工作通常留在事件處理流程。
+- React render 是計算新的 UI 描述並提交必要的 DOM 更新，不等於把整頁清除重畫。
+- TypeScript 型別在編譯後不會替你驗證 runtime 的外部資料；`as` 只是型別斷言，不是資料驗證。
+- interface 與 type 都能描述資料契約；選擇重點是資料形狀、擴充方式與可讀性，不是背誦語法優劣。
+- 新專案的工具選擇應根據 routing、data、render 與 deployment 需求，不要把初始化工具當成架構決策。
+- 一個 route 可以混合 server／client、靜態、快取、動態與串流內容；應依資料與互動邊界判斷。
+- Proxy 是 request boundary 工具，不用來承擔慢速資料取得或完整授權系統。
 
 ## 對話式學習紀錄
 
@@ -182,31 +182,4 @@ updated: 2026-09-02
 - 仍容易混淆。
 - 下一個最小練習。
 
-穩定、可公開的教材會同步 WikiNB；個人卡點、未公開專案內容與原始逐字稿只留在本機工作區。
-
-## 來源與延伸閱讀
-
-### 原始影片
-
-- [Webpack 5 入門](https://www.youtube.com/watch?v=uP6KTupfyIw)
-- [React 入門](https://www.youtube.com/watch?v=zqV7NIFGDrQ)
-- [TypeScript 入門](https://www.youtube.com/watch?v=GinkGJZBHIY)
-- [Next.js 入門](https://www.youtube.com/watch?v=Kj4kQzP75Fk)
-
-原始清單中的 Webpack 連結重複，因此實際是四支獨立影片。逐字稿只作為本機研究材料，WikiNB 不發布完整第三方逐字稿。
-
-### 現行官方文件
-
-- [MDN：How the web works](https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Web_standards/How_the_web_works)
-- [React：Thinking in React](https://react.dev/learn/thinking-in-react)
-- [React：State: A Component’s Memory](https://react.dev/learn/state-a-components-memory)
-- [React：You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)
-- [React：Sunsetting Create React App](https://react.dev/blog/2025/02/14/sunsetting-create-react-app)
-- [TypeScript：Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html)
-- [Webpack：Core Concepts](https://webpack.js.org/concepts/)
-- [Next.js：App Router](https://nextjs.org/docs/app)
-- [Next.js：Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
-- [Next.js：Route Handlers](https://nextjs.org/docs/app/getting-started/route-handlers)
-- [Next.js：Proxy](https://nextjs.org/docs/app/getting-started/proxy)
-- [Next.js：Deploying](https://nextjs.org/docs/app/getting-started/deploying)
-- [Vercel：Deploying Git Repositories](https://vercel.com/docs/git)
+穩定、可公開的教材會同步 WikiNB；個人卡點、未公開專案內容與研究底稿只留在本機工作區。
