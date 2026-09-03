@@ -19,6 +19,10 @@
 - [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性稽核流程
 - [[Systems/codexrules-agent-system]] — CodexRules、agents CLI 與可審閱的排程邊界
 
+## 與我合作
+
+- [[AboutMe/work-with-kaine]] — 從客製網站、可分享履歷與第一個專案，到教育與企業 AI 導入的合作方式
+
 ## 其他專案與應用
 
 ### 對外入口

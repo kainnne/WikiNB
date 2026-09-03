@@ -16,6 +16,8 @@ assert.equal(isKaineScopeQuestion('Who are you?'), true);
 assert.equal(isKaineScopeQuestion('LumaReader 用了哪些技術？'), true);
 assert.equal(isKaineScopeQuestion('康橋 AI 導入與教育訓練有哪些成果？'), true);
 assert.equal(isKaineScopeQuestion('Kuse 課程教了什麼？'), true);
+assert.equal(isKaineScopeQuestion('我想請 Kaine 協助我完成一個專案'), true);
+assert.equal(isKaineScopeQuestion('我有合作構想，Kaine 可以提供哪些協助？'), true);
 assert.equal(isKaineScopeQuestion('這個專案還能增加哪些額外功能？'), true);
 assert.equal(isKaineScopeQuestion('你覺得這套系統有什麼改進方向？'), true);
 assert.equal(isKaineScopeQuestion('How could this project be extended?'), true);

@@ -20,6 +20,7 @@ const [
   wikiIndex,
   softwareProfile,
   projectOverview,
+  workWithKaine,
 ] = await Promise.all([
   readFile(new URL('../worker/index.js', import.meta.url), 'utf8'),
   readFile(new URL('../worker/chat-policy.js', import.meta.url), 'utf8'),
@@ -32,6 +33,7 @@ const [
   readFile(new URL('../wiki/index.md', import.meta.url), 'utf8'),
   readFile(new URL('../wiki/AboutMe/02-software-development.md', import.meta.url), 'utf8'),
   readFile(new URL('../wiki/Projects/project-overview.md', import.meta.url), 'utf8'),
+  readFile(new URL('../wiki/AboutMe/work-with-kaine.md', import.meta.url), 'utf8'),
 ]);
 
 const zh = JSON.parse(zhText);
@@ -57,6 +59,9 @@ assert.match(worker, /節省免費 API 額度是必要限制/);
 assert.match(worker, /完整性優先於字數/);
 assert.match(worker, /REPRESENTATIVE_PROJECT_SLUGS/);
 assert.match(worker, /BROAD_PROFILE_PRIORITY_SLUGS/);
+assert.match(worker, /COLLABORATION_SLUG = 'AboutMe\/work-with-kaine'/);
+assert.match(worker, /function asksForCollaboration\(question\)/);
+assert.match(worker, /ryanzhu@kainnne\.com/);
 assert.match(worker, /'KCIS\/WikiNB-KCIS'/);
 assert.match(worker, /'Learning\/kuse-ai-practical-course'/);
 assert.match(worker, /EXCLUDED_PUBLIC_SLUGS/);
@@ -68,7 +73,7 @@ assert.match(worker, /projects\/2026-08-03-zhuxi-reincarnation-renpy/);
 assert.match(worker, /只介紹 LumaReader/);
 assert.match(worker, /Kaine 主要專案與能力總覽/);
 assert.match(worker, /WikiNB 與 GEO 目前沒有自動排程/);
-assert.match(worker, /wiki-pages-v5/);
+assert.match(worker, /wiki-pages-v6/);
 assert.match(worker, /function requestsExpandedDetail\(text\)/);
 assert.match(worker, /我要\.\{0,4\}更詳細/);
 assert.match(worker, /function retrievalQuestion\(message, history\)/);
@@ -122,13 +127,23 @@ assert.match(projectOverview, /## 完整產品能力/);
 assert.match(projectOverview, /\*\*CodexRules／agents CLI\*\*/);
 assert.match(projectOverview, /\*\*LumaReader\*\*/);
 assert.match(projectOverview, /\*\*音樂能力\*\*/);
+assert.match(wikiIndex, /\[\[AboutMe\/work-with-kaine\]\]/);
+assert.match(workWithKaine, /Kainnne Studio/);
+assert.match(workWithKaine, /MusicMatch/);
+assert.match(workWithKaine, /正式 MVP 仍在規劃與驗證階段/);
+assert.match(workWithKaine, /ryanzhu@kainnne\.com/);
 
 assert.match(page, /maxlength="1200"/);
 assert.match(page, /let submittedTurns = 0/);
 assert.match(page, /let continuationRequired = false/);
-assert.match(page, /let anonymousQuestionUsed = false/);
+assert.match(page, /const ANONYMOUS_QUESTION_LIMIT = 5/);
+assert.match(page, /let anonymousQuestionsUsed = 0/);
 assert.match(page, /if \(running \|\| continuationRequired\) return/);
-assert.match(page, /if \(!verified && anonymousQuestionUsed\)[\s\S]*?openUnlock\(message\)/);
+assert.match(
+  page,
+  /if \(!verified && anonymousQuestionsUsed >= ANONYMOUS_QUESTION_LIMIT\)[\s\S]*?openUnlock\(message\)/,
+);
+assert.match(page, /if \(!verified\) anonymousQuestionsUsed \+= 1/);
 assert.match(page, /function openAnonymousChat\(\)/);
 assert.match(page, /openChat\(session, \{ preserveConversation: shouldResume \}\)/);
 assert.match(page, /requestAnimationFrame\(\(\) => chatForm\?\.requestSubmit\(\)\)/);
@@ -168,10 +183,10 @@ assert.doesNotMatch(zh['gemini.welcomeMessage'], /數位助理|分身/);
 assert.match(zh['gemini.limitMessage'], /前 5 則訊息/);
 assert.match(zh['gemini.limitMessage'], /寄一封通知信給 Kaine/);
 assert.equal(zh['gemini.continueAndNotify'], '繼續聊天並通知 Kaine');
-assert.equal(zh['gemini.example1'], '請簡單介紹 Kaine 與他的專長。');
-assert.equal(zh['gemini.example2'], 'Kaine 最近在做什麼？接下來有哪些目標？');
-assert.equal(zh['gemini.example3'], '哪個專案最能代表 Kaine 的能力？');
-assert.equal(zh['gemini.example4'], '我適不適合跟 Kaine 合作？');
+assert.equal(zh['gemini.example1'], '我想請 Kaine 協助我完成一個專案。');
+assert.equal(zh['gemini.example2'], '我有合作構想，Kaine 可以提供哪些協助？');
+assert.equal(zh['gemini.example3'], '請簡單介紹 Kaine 與他的專長。');
+assert.equal(zh['gemini.example4'], '哪個專案最能代表 Kaine 的能力？');
 assert.equal('gemini.connected' in en, false);
 assert.equal(
   en['gemini.welcomeMessage'],
@@ -184,10 +199,10 @@ assert.doesNotMatch(en['gemini.welcomeMessage'], /digital assistant|digital twin
 assert.match(en['gemini.limitMessage'], /first 5 messages/i);
 assert.match(en['gemini.limitMessage'], /email Kaine/i);
 assert.equal(en['gemini.continueAndNotify'], 'Continue and notify Kaine');
-assert.equal(en['gemini.example1'], 'Please briefly introduce Kaine and his areas of expertise.');
-assert.equal(en['gemini.example2'], 'What is Kaine working on lately, and what are his next goals?');
-assert.equal(en['gemini.example3'], "Which project best represents Kaine's abilities?");
-assert.equal(en['gemini.example4'], 'Would I be a good fit to collaborate with Kaine?');
+assert.equal(en['gemini.example1'], "I'd like Kaine's help bringing a project to life.");
+assert.equal(en['gemini.example2'], 'I have a collaboration idea. How could Kaine help?');
+assert.equal(en['gemini.example3'], 'Please briefly introduce Kaine and his areas of expertise.');
+assert.equal(en['gemini.example4'], "Which project best represents Kaine's abilities?");
 assert.equal('gemini.unlockHint' in zh, false);
 assert.equal('gemini.unlockHint' in en, false);
 assert.equal('gemini.home' in zh, false);

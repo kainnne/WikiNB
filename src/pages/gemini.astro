@@ -191,7 +191,8 @@ import '@fontsource/iansui/latin-400.css';
   let submittedTurns = 0;
   let continuationRequired = false;
   let continuationDismissed = false;
-  let anonymousQuestionUsed = false;
+  const ANONYMOUS_QUESTION_LIMIT = 5;
+  let anonymousQuestionsUsed = 0;
   let pendingPostAuthMessage = '';
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
@@ -521,7 +522,7 @@ import '@fontsource/iansui/latin-400.css';
     submittedTurns = 0;
     continuationRequired = false;
     continuationDismissed = false;
-    anonymousQuestionUsed = false;
+    anonymousQuestionsUsed = 0;
     history = [];
     appendWelcome();
     syncConversationControls();
@@ -578,7 +579,7 @@ import '@fontsource/iansui/latin-400.css';
         conversationEnded: result.conversationEnded,
       };
       setGuestAiSession(session);
-      const shouldResume = anonymousQuestionUsed;
+      const shouldResume = anonymousQuestionsUsed > 0;
       openChat(session, { preserveConversation: shouldResume });
       const queuedMessage = pendingPostAuthMessage;
       pendingPostAuthMessage = '';
@@ -606,7 +607,7 @@ import '@fontsource/iansui/latin-400.css';
     if (!message) return;
 
     const verified = Boolean(getGuestAiSession()?.token);
-    if (!verified && anonymousQuestionUsed) {
+    if (!verified && anonymousQuestionsUsed >= ANONYMOUS_QUESTION_LIMIT) {
       openUnlock(message);
       return;
     }
@@ -632,7 +633,7 @@ import '@fontsource/iansui/latin-400.css';
       responseTimer.stop();
       appendMessage(result.answer, 'assistant');
       submittedTurns = Math.max(submittedTurns + 1, Number(result.chatTurnsUsed || 0));
-      if (!verified) anonymousQuestionUsed = true;
+      if (!verified) anonymousQuestionsUsed += 1;
       if (result.kind === 'answer') {
         history.push({ role: 'user', content: message });
         history.push({ role: 'assistant', content: result.answer });
