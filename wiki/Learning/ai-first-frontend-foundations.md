@@ -10,7 +10,7 @@ tags:
   - TypeScript
   - Next.js
 date: 2026-09-02
-updated: 2026-09-02
+updated: 2026-09-03
 ---
 
 # AI 時代的前端基本功
@@ -21,7 +21,24 @@ updated: 2026-09-02
 
 這不是「不用懂前端，讓 AI 全做」的課，也不是傳統語法填鴨課。目標角色是 **AI-first 前端產品操作者**：你保留產品、美感與決策權，把大量實作交給 Agent，但有能力描述、判斷、驗證、除錯與安全發布。
 
-預計 10 個單元，每單元約 60–90 分鐘，可依對話掌握度拆成多次。練習不要求從空白頁手寫應用；會用閱讀、標記、改小參數、操作工具、審查 diff 與要求 Agent 提供證據來建立基本功。
+全系列共有 10 個單元。這一頁是課程地圖，每個單元另有一篇可以獨立閱讀的完整教材。文章會先用生活化的比喻建立直覺，再解釋名詞、實際網站中的位置、常見誤判、Agent 協作方法與親手驗證方式。練習不要求從空白頁手寫應用；你會透過閱讀、標記、改小參數、操作工具、審查 diff 與要求 Agent 提供證據來建立基本功。
+
+## 系列閱讀方式
+
+建議依序閱讀，但不用一次讀完。每次只處理一個單元中的一小段，先回答預測題，再做觀察或操作，最後用自己的話重新解釋。能完成 Teach-back 才代表觀念真的可以拿來判斷 Agent 的工作。
+
+| 單元 | 完整文章 | 最重要的能力 |
+| --- | --- | --- |
+| 0 | [[Learning/ai-first-frontend-foundations/00-request-to-pixel]] | 看懂一個網址如何變成畫面 |
+| 1 | [[Learning/ai-first-frontend-foundations/01-html-dom-semantic-structure]] | 把視覺版面翻成有語意的結構 |
+| 2 | [[Learning/ai-first-frontend-foundations/02-css-visual-system]] | 把美感翻成可維護、可響應的規則 |
+| 3 | [[Learning/ai-first-frontend-foundations/03-javascript-data-and-async]] | 看懂操作、資料與非同步狀態 |
+| 4 | [[Learning/ai-first-frontend-foundations/04-react-components-and-state]] | 判斷元件、props、state 與 Effect 邊界 |
+| 5 | [[Learning/ai-first-frontend-foundations/05-typescript-data-contracts]] | 用型別契約提早發現理解落差 |
+| 6 | [[Learning/ai-first-frontend-foundations/06-npm-and-build-tools]] | 看懂專案如何安裝、啟動與建置 |
+| 7 | [[Learning/ai-first-frontend-foundations/07-nextjs-server-client-boundaries]] | 判斷路由、資料與 server／client 邊界 |
+| 8 | [[Learning/ai-first-frontend-foundations/08-agent-task-design]] | 把美感與需求寫成 Agent 可驗收契約 |
+| 9 | [[Learning/ai-first-frontend-foundations/09-debugging-release-and-rollback]] | 用證據除錯、發布並保留回復能力 |
 
 ## 常用工具包
 
@@ -53,6 +70,8 @@ updated: 2026-09-02
 
 ## 單元 1：HTML／DOM——畫面的語意骨架
 
+完整教材：[[Learning/ai-first-frontend-foundations/01-html-dom-semantic-structure]]
+
 核心問題：畫面不看顏色時，結構還說得通嗎？
 
 - HTML 元素、attribute、nesting、document outline、DOM tree。
@@ -62,6 +81,8 @@ updated: 2026-09-02
 - 產出：語意／可及性稽核表。
 
 ## 單元 2：CSS——把美感變成可維護的視覺系統
+
+完整教材：[[Learning/ai-first-frontend-foundations/02-css-visual-system]]
 
 核心問題：怎麼把「看起來對」變成可重複、可響應、可驗收？
 
@@ -74,6 +95,8 @@ updated: 2026-09-02
 
 ## 單元 3：JavaScript——行為、資料與非同步
 
+完整教材：[[Learning/ai-first-frontend-foundations/03-javascript-data-and-async]]
+
 核心問題：使用者操作後，資料如何改變畫面？
 
 - value、variable、array、object、function、condition、event。
@@ -84,6 +107,8 @@ updated: 2026-09-02
 - 產出：事件表、資料表與失敗路徑圖。
 
 ## 單元 4：React——元件、props、state 與 Effect 邊界
+
+完整教材：[[Learning/ai-first-frontend-foundations/04-react-components-and-state]]
 
 核心問題：怎麼把介面拆成能長期維護的互動元件？
 
@@ -96,6 +121,8 @@ updated: 2026-09-02
 
 ## 單元 5：TypeScript——把想法變成資料契約
 
+完整教材：[[Learning/ai-first-frontend-foundations/05-typescript-data-contracts]]
+
 核心問題：如何在執行前發現「彼此以為的資料不同」？
 
 - inference、annotation、object shape、optional、union、literal、narrowing。
@@ -107,6 +134,8 @@ updated: 2026-09-02
 
 ## 單元 6：npm 與建置工具——看懂專案如何被組裝
 
+完整教材：[[Learning/ai-first-frontend-foundations/06-npm-and-build-tools]]
+
 核心問題：原始碼如何變成可以部署的產物？
 
 - Node.js、npm、package、dependency、devDependency、lockfile。
@@ -117,6 +146,8 @@ updated: 2026-09-02
 - 產出：專案啟動／建置卡，不要求手寫 Webpack config。
 
 ## 單元 7：Next.js——路由、資料與 server／client 邊界
+
+完整教材：[[Learning/ai-first-frontend-foundations/07-nextjs-server-client-boundaries]]
 
 核心問題：哪些工作應在 server，哪些必須到 browser？
 
@@ -130,6 +161,8 @@ updated: 2026-09-02
 
 ## 單元 8：Agent 任務設計——從美感直覺到可執行規格
 
+完整教材：[[Learning/ai-first-frontend-foundations/08-agent-task-design]]
+
 核心問題：怎麼讓 Agent 的快，變成可控而不是不可審查？
 
 - 背景、使用者、目標、範圍、非目標、內容、互動與限制。
@@ -141,6 +174,8 @@ updated: 2026-09-02
 - 產出：可重用前端任務 brief。
 
 ## 單元 9：除錯、驗收、部署與回復
+
+完整教材：[[Learning/ai-first-frontend-foundations/09-debugging-release-and-rollback]]
 
 核心問題：你怎麼知道網站真的完成，而不只是截圖好看？
 

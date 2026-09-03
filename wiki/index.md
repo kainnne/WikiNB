@@ -59,7 +59,7 @@
 
 ## 學習中
 
-- [[Learning/ai-first-frontend-foundations]] — 不以大量手寫程式為前提，建立能指揮 Agent、拆解介面、判讀架構、驗收與安全部署的前端基本功
+- [[Learning/ai-first-frontend-foundations]] — 為 AI-first 前端學習者設計的 10 單元完整文章系列，涵蓋介面結構、視覺系統、資料、框架、Agent 協作與發布驗收
 - [[Learning/kuse-ai-practical-course]] — Kaine 的 Kuse AI 實作課：從顧問、執行、Project 到 prompt、修正與資安責任
 - [[Learning/llm-research-course]] — 從文字表示與 LLM 生態，逐步學到評估、實驗設計與模型路線選擇
 - [[Learning/ai-document-workflow-workshop]] — AI 文件與 Agent 工作流實作
