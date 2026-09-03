@@ -13,7 +13,6 @@ const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
 const loginLabel = visitorNav ? '私人登入' : '登入';
 const loginI18nKey = visitorNav ? 'nav.ownerLogin' : 'nav.login';
 const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSection === 'login';
-const brandHomeLabel = '/ home';
 ---
 
 <header id="site-header" class="site-header fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
@@ -22,18 +21,16 @@ const brandHomeLabel = '/ home';
       id="brand-link"
       href={base}
       class="brand-link group shrink-0"
-      data-always-home={visitorNav ? 'true' : 'false'}
       aria-label="Kainnne home"
     >
-      <span class="brand-sigil" aria-hidden="true">
-        <span>K</span>
-      </span>
-      <span id="brand-label" class="brand-label">Kainnne</span>
-      <span
-        id="brand-home"
-        class="brand-home"
-        aria-hidden="false"
-      >{brandHomeLabel}</span>
+      <img
+        class="brand-logo"
+        src={`${base}brand/kainnne-wordmark.png`}
+        alt="Kainnne"
+        width="3072"
+        height="996"
+        decoding="async"
+      />
     </a>
 
     <nav class="flex max-w-[75%] flex-wrap items-center justify-end gap-1 md:max-w-none md:gap-2">
@@ -150,27 +147,6 @@ const brandHomeLabel = '/ home';
   import { mountNavAuth } from '../scripts/bridge-client.js';
   mountI18n();
   mountNavAuth();
-
-  /** 依實際網址判斷是否在首頁；功能頁顯示「/ 首頁」。 */
-  function syncBrandHome() {
-    const el = document.getElementById('brand-home');
-    const brand = document.getElementById('brand-link');
-    if (!el) return;
-    const base = (document.documentElement.dataset.base || '/').replace(/\/+$/, '');
-    let path = window.location.pathname.replace(/\/+$/, '');
-    if (path.endsWith('/index.html')) {
-      path = path.slice(0, -'/index.html'.length).replace(/\/+$/, '');
-    }
-    const home = base || '';
-    const isHome = path === home || path === '' || path === '/';
-    const alwaysHome = brand?.dataset.alwaysHome === 'true';
-    const hideHomeLabel = isHome && !alwaysHome;
-    el.classList.toggle('is-home-hidden', hideHomeLabel);
-    el.setAttribute('aria-hidden', hideHomeLabel ? 'true' : 'false');
-  }
-
-  syncBrandHome();
-  window.addEventListener('pageshow', syncBrandHome);
 
   /** 右上角下拉選單：登入 / About Me / GitHub */
   function mountNavMenu() {
@@ -292,71 +268,38 @@ const brandHomeLabel = '/ home';
     outline: none;
   }
 
-  /* 品牌：恆為彩字（登入前後相同） */
+  /* 品牌：共用完整 Kainnne 字標，連結行為維持回到首頁。 */
   .brand-link {
     display: inline-flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    gap: 0.35rem;
     text-decoration: none;
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
-  .brand-sigil {
-    display: none;
-  }
-
-  .brand-label,
-  .brand-home {
-    font-family: Comfortaa, Quicksand, 'Noto Sans TC', sans-serif;
-    font-weight: 700;
-    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .brand-label {
-    font-size: 1.55rem;
-    letter-spacing: 0.04em;
-    line-height: 1;
-  }
-
-  .brand-home {
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    line-height: 1.2;
-    padding: 0 0 0.12rem;
-    margin: 0;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    outline: none;
-    background: linear-gradient(105deg, #6ea8ff 0%, #b794ff 40%, #ff8fab 70%, #5eead4 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    white-space: nowrap;
-  }
-
-  .brand-home.is-home-hidden {
-    display: none;
+  .brand-logo {
+    display: block;
+    width: 7.5rem;
+    height: auto;
+    filter: drop-shadow(0 6px 14px rgba(128, 91, 166, 0.12));
+    transition: transform 0.2s ease, filter 0.2s ease;
   }
 
   @media (min-width: 640px) {
-    .brand-label {
-      font-size: 1.75rem;
-    }
-
-    .brand-home {
-      font-size: 0.85rem;
-      padding-bottom: 0.14rem;
+    .brand-logo {
+      width: 9rem;
     }
   }
 
   .brand-link:hover {
     transform: translateY(-1px);
     opacity: 0.9;
+  }
+
+  .brand-link:hover .brand-logo,
+  .brand-link:focus-visible .brand-logo {
+    filter: drop-shadow(0 9px 18px rgba(128, 91, 166, 0.18));
+    transform: scale(1.02);
   }
 
   /* WikiNB：未登入時沿用公開站的柔和粉色入口。 */
@@ -640,72 +583,13 @@ const brandHomeLabel = '/ home';
     min-height: 3.65rem;
     align-items: center;
     align-self: flex-start;
-    gap: 0.68rem;
     padding: 0.2rem 0.35rem;
     pointer-events: auto;
   }
 
-  :global(body.home-page.home-guest) .brand-sigil {
-    position: relative;
-    width: 3.2rem;
-    height: 3.2rem;
-    display: inline-grid;
-    place-items: center;
-    flex: 0 0 auto;
-    border: 1px solid rgba(255, 255, 255, 0.86);
-    border-radius: 44% 56% 52% 48% / 48% 44% 56% 52%;
-    background: linear-gradient(135deg, rgba(110, 168, 255, 0.82), rgba(183, 148, 255, 0.88) 40%, rgba(255, 143, 171, 0.88) 72%, rgba(94, 234, 212, 0.76));
-    box-shadow:
-      0 13px 30px rgba(118, 76, 123, 0.2),
-      inset 0 1px rgba(255, 255, 255, 0.82);
-    transform: rotate(-8deg);
-    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.35s ease;
-  }
-
-  :global(body.home-page.home-guest) .brand-sigil::before {
-    content: '';
-    position: absolute;
-    inset: 0.32rem;
-    border: 1px solid rgba(255, 255, 255, 0.64);
-    border-radius: inherit;
-    background: rgba(255, 255, 255, 0.32);
-    backdrop-filter: blur(8px);
-  }
-
-  :global(body.home-page.home-guest) .brand-sigil > span {
-    position: relative;
-    z-index: 1;
-    color: rgba(255, 255, 255, 0.96);
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.35rem;
-    font-style: italic;
-    font-weight: 700;
-    transform: rotate(8deg) translateX(-0.04rem);
-    text-shadow: 0 4px 14px rgba(77, 36, 70, 0.2);
-  }
-
-  :global(body.home-page.home-guest) .brand-label,
-  :global(body.home-page.home-guest) .brand-home {
-    color: transparent;
-    background: linear-gradient(105deg, #6ea8ff 0%, #a990f1 36%, #da8fc4 70%, #55cdb8 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.34rem;
-    font-style: italic;
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    -webkit-text-fill-color: transparent;
-  }
-
-  :global(body.home-page.home-guest) .brand-home {
-    position: relative;
-    min-height: 1.7rem;
-    display: inline-flex;
-    align-items: center;
-    margin-left: -0.28rem;
-    padding: 0 0.42rem 0 0;
-    border-radius: 0;
+  :global(body.home-page.home-guest) .brand-logo {
+    width: clamp(8rem, 14vw, 10.5rem);
+    filter: drop-shadow(0 10px 22px rgba(128, 91, 166, 0.16));
   }
 
   :global(body.home-page.home-guest) .brand-link:hover,
@@ -714,10 +598,10 @@ const brandHomeLabel = '/ home';
     outline: none;
   }
 
-  :global(body.home-page.home-guest) .brand-link:hover .brand-sigil,
-  :global(body.home-page.home-guest) .brand-link:focus-visible .brand-sigil {
-    border-radius: 56% 44% 46% 54% / 42% 56% 44% 58%;
-    transform: rotate(4deg) scale(1.055);
+  :global(body.home-page.home-guest) .brand-link:hover .brand-logo,
+  :global(body.home-page.home-guest) .brand-link:focus-visible .brand-logo {
+    filter: drop-shadow(0 14px 28px rgba(128, 91, 166, 0.22));
+    transform: scale(1.035);
   }
 
   :global(body.home-page.home-guest) header nav {
@@ -905,28 +789,17 @@ const brandHomeLabel = '/ home';
 
     :global(body.home-page.home-guest) .brand-link {
       min-height: 2.85rem;
-      gap: 0.38rem;
       padding: 0.16rem;
     }
 
-    :global(body.home-page.home-guest) .brand-sigil {
-      width: 2.55rem;
-      height: 2.55rem;
-    }
-
-    :global(body.home-page.home-guest) .brand-sigil > span {
-      font-size: 1.08rem;
-    }
-
-    :global(body.home-page.home-guest) .brand-label,
-    :global(body.home-page.home-guest) .brand-home {
-      display: none;
+    :global(body.home-page.home-guest) .brand-logo {
+      width: 6.75rem;
     }
 
     :global(body.home-page.home-guest) header nav {
       width: auto;
       min-width: 0;
-      max-width: calc(100% - 3.6rem);
+      max-width: calc(100% - 7.4rem);
       flex: 1 1 auto;
       justify-content: stretch;
       gap: 0.25rem;
