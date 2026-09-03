@@ -74,6 +74,15 @@ export function outOfScopeMessage(english = false) {
     : '為了節省 Kaine 的免費 Gemini API 額度，我可能無法回答與主要任務無關的請求 🙏';
 }
 
+export function ensureCollaborationContact(answer, english = false) {
+  const text = String(answer || '').trim();
+  if (/ryanzhu@kainnne\.com/i.test(text)) return text;
+  const contact = english
+    ? 'To discuss the project with Kaine, email ryanzhu@kainnne.com.'
+    : '如果想和 Kaine 進一步討論這個專案，可以直接寄信到 ryanzhu@kainnne.com。';
+  return `${text}\n\n${contact}`.trim();
+}
+
 export function continuationPromptMessage(limit, english = false) {
   return english
     ? `You have used the first ${limit} messages. Would you like to continue? If you choose to continue, the system will email Kaine to let him know that you requested more chat time. The email will not include your conversation.`

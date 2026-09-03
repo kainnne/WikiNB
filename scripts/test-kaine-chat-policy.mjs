@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   appendContinuationPrompt,
   continuationPromptMessage,
+  ensureCollaborationContact,
   isKaineScopeQuestion,
   maxChatTurns,
   outOfScopeMessage,
@@ -77,5 +78,17 @@ assert.match(continuationPromptMessage(5, false), /寄一封通知信給 Kaine/)
 assert.match(continuationPromptMessage(5, true), /first 5 messages/i);
 assert.match(continuationPromptMessage(5, true), /email Kaine/i);
 assert.match(appendContinuationPrompt('回答', 5, false), /^回答[\s\S]*前 5 則訊息/);
+assert.equal(
+  ensureCollaborationContact('這是一段依公開資料生成的合作回答。', false),
+  '這是一段依公開資料生成的合作回答。\n\n如果想和 Kaine 進一步討論這個專案，可以直接寄信到 ryanzhu@kainnne.com。',
+);
+assert.equal(
+  ensureCollaborationContact('請寄信至 ryanzhu@kainnne.com。', false),
+  '請寄信至 ryanzhu@kainnne.com。',
+);
+assert.match(
+  ensureCollaborationContact('A contextual collaboration answer.', true),
+  /email ryanzhu@kainnne\.com\.$/,
+);
 
 console.log('OK: Kaine 限定聊天範圍與 5 則續聊確認政策');
