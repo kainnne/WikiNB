@@ -47,8 +47,10 @@ assert.match(worker, /thinkingLevel: 'minimal'/);
 assert.match(worker, /env\.GEMINI_MODEL \|\| 'gemini-3\.1-flash-lite'/);
 assert.match(wrangler, /"GEMINI_MODEL": "gemini-3\.1-flash-lite"/);
 assert.match(worker, /const retryable = \[500, 502, 503, 504\]/);
-assert.match(worker, /你就是 Kaine/);
-assert.match(worker, /不要稱自己為數位助理、分身、模擬器或 Gemini/);
+assert.match(worker, /你是 Kaine 的 AI 小迷妹/);
+assert.match(worker, /不要冒充 Kaine、不要用第一人稱代替 Kaine 發言/);
+assert.match(worker, /只決定語氣與觀看角度，不縮小原本的回答能力/);
+assert.match(worker, /欣賞 Kaine 不等於無條件吹捧/);
 assert.match(worker, /const PUBLIC_SAFE_STYLE/);
 assert.doesNotMatch(worker, /KAINE_PERSONA_PROMPT|personaPrompt/);
 assert.match(worker, /節省免費 API 額度是必要限制/);
@@ -155,7 +157,10 @@ assert.equal(zh['gemini.errorResendWait'], '請等待 1 分鐘後再重新寄送
 assert.equal(en['gemini.errorResendWait'], 'Please wait 1 minute before requesting another code.');
 
 assert.equal('gemini.connected' in zh, false);
-assert.match(zh['gemini.welcomeMessage'], /嗨，我是 Kaine/);
+assert.equal(
+  zh['gemini.welcomeMessage'],
+  'Hello！我是 Kaine 的 AI 小迷妹！我很樂意跟你分享他的作品、專長，還有 Kaine 最近的計劃目標！\n\n你想先從哪裡開始？',
+);
 assert.equal(zh['gemini.unlockTitle'], '解鎖訪客 AI');
 assert.equal('gemini.anonymousIdentity' in zh, false);
 assert.doesNotMatch(zh['gemini.welcomeMessage'], /第一個問題|第一題|免驗證/);
@@ -163,12 +168,15 @@ assert.doesNotMatch(zh['gemini.welcomeMessage'], /數位助理|分身/);
 assert.match(zh['gemini.limitMessage'], /前 5 則訊息/);
 assert.match(zh['gemini.limitMessage'], /寄一封通知信給 Kaine/);
 assert.equal(zh['gemini.continueAndNotify'], '繼續聊天並通知 Kaine');
-assert.equal(zh['gemini.example1'], '請從康橋 AI 導入、教育訓練與產品能力介紹 Kaine。');
-assert.equal(zh['gemini.example2'], 'Kaine 如何把 AI 導入康橋的教學、行政與教育訓練？');
-assert.equal(zh['gemini.example3'], 'Kaine 做了哪些數位產品？它們替使用者省下什麼？');
-assert.equal(zh['gemini.example4'], '根據 Kaine 的教育科技與產品背景，提出一個合作構想。');
+assert.equal(zh['gemini.example1'], '請簡單介紹 Kaine 與他的專長。');
+assert.equal(zh['gemini.example2'], 'Kaine 最近在做什麼？接下來有哪些目標？');
+assert.equal(zh['gemini.example3'], '哪個專案最能代表 Kaine 的能力？');
+assert.equal(zh['gemini.example4'], '我適不適合跟 Kaine 合作？');
 assert.equal('gemini.connected' in en, false);
-assert.match(en['gemini.welcomeMessage'], /Hi, I'm Kaine/);
+assert.equal(
+  en['gemini.welcomeMessage'],
+  "Hello! I'm Kaine's AI fangirl! I'd love to tell you about his work, expertise, and Kaine's latest plans and goals!\n\nWhere would you like to start?",
+);
 assert.equal(en['gemini.unlockTitle'], 'Unlock guest AI');
 assert.equal('gemini.anonymousIdentity' in en, false);
 assert.doesNotMatch(en['gemini.welcomeMessage'], /first question|no sign-in|without verification/i);
@@ -176,10 +184,10 @@ assert.doesNotMatch(en['gemini.welcomeMessage'], /digital assistant|digital twin
 assert.match(en['gemini.limitMessage'], /first 5 messages/i);
 assert.match(en['gemini.limitMessage'], /email Kaine/i);
 assert.equal(en['gemini.continueAndNotify'], 'Continue and notify Kaine');
-assert.equal(en['gemini.example1'], 'Introduce Kaine through his KCIS AI work, training, and product capabilities.');
-assert.equal(en['gemini.example2'], 'How has Kaine brought AI into KCIS education, administration, and training?');
-assert.equal(en['gemini.example3'], 'What digital products has Kaine built, and what do they save users?');
-assert.equal(en['gemini.example4'], "Suggest a collaboration based on Kaine's EdTech and product background.");
+assert.equal(en['gemini.example1'], 'Please briefly introduce Kaine and his areas of expertise.');
+assert.equal(en['gemini.example2'], 'What is Kaine working on lately, and what are his next goals?');
+assert.equal(en['gemini.example3'], "Which project best represents Kaine's abilities?");
+assert.equal(en['gemini.example4'], 'Would I be a good fit to collaborate with Kaine?');
 assert.equal('gemini.unlockHint' in zh, false);
 assert.equal('gemini.unlockHint' in en, false);
 assert.equal('gemini.home' in zh, false);
