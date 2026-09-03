@@ -65,7 +65,7 @@ npm run bridge
 codex /status
 ```
 
-Bridge 使用已登入的 Codex CLI，不應把 OpenAI API key 寫進前端或 repository。Codex 適合深入閱讀本機 `wiki/`、整理脈絡與規劃下一步；公開 Gemini 則只取得經檢索的少量公開內容。
+Bridge 使用已登入的 Codex CLI，不應把 OpenAI API key 寫進前端或 repository。登入後的 Kainnne × Codex 是 Kaine 私人的 AI 專案搭檔：可深入閱讀本機 `wiki/` 與相關專案資料，自由分析、發想、比較、教學、規劃與草擬具體修改，不受公開 Gemini 的訪客問答範圍限制。CLI 仍固定使用 `read-only` sandbox，所以只能檢查與提出做法，不會自行改檔、commit、push 或部署。
 
 ## 常見排查
 

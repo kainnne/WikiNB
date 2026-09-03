@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import dotenv from 'dotenv';
 import express from 'express';
 import nodemailer from 'nodemailer';
+import { buildCodexChatPrompt } from './codex-prompt.js';
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1537,46 +1538,6 @@ app.post('/api/wiki/update-title', authMiddleware, async (req, res) => {
   }
 });
 
-function formatHistoryBlock(history) {
-  if (!Array.isArray(history) || history.length === 0) return '';
-  const lines = [];
-  for (const turn of history.slice(-16)) {
-    const role = turn?.role === 'assistant' ? '助手' : '使用者';
-    const text = String(turn?.content || '')
-      .trim()
-      .slice(0, 2500);
-    if (!text) continue;
-    lines.push(`${role}：${text}`);
-  }
-  if (!lines.length) return '';
-  return `\n\n以下是稍早的對話（請延續上下文，不要假裝沒看過）：\n${lines.join('\n\n')}\n`;
-}
-
-function buildCodexChatPrompt(message, history) {
-  const wikiFiles = collectWikiMdFiles();
-
-  return `你是 Kainnne WikiNB 的 Codex 學習／提醒助理（本機 CLI）。
-
-專案定義（見 AGENTS.md）：
-- 這是使用者的「筆記彙整」與「AI 提醒助理」
-- 筆記已整理好後放在 wiki/；網站可拖檔上傳 wiki，再按同步上線
-- 沒有 raw/ 流程；請以 wiki/ 為主要知識來源
-- 幫他回想寫過什麼、複習、延伸思考、規劃下一步；可自由發揮，不要過度保守
-
-角色與風格：
-- 像正常、自由的 GPT：可延伸、舉例、教學、推測（推測請標明）
-- 需要時請讀 AGENTS.md、wiki/**/*.md；先依檔名、標題與摘要縮小範圍，再讀相關頁面
-- 只有真的沒資訊時才說不知道
-- 使用繁體中文；可用 Markdown
-
-專案快照：
-- 工作目錄：${PROJECT_ROOT}
-- wiki 頁面：${wikiFiles.length ? wikiFiles.join(', ') : '（無）'}
-${formatHistoryBlock(history)}
-使用者最新問題：
-${String(message || '').trim()}`;
-}
-
 app.post('/api/codex/chat', authMiddleware, async (req, res) => {
   const { message, model, reasoningEffort, history } = req.body || {};
   if (!message?.trim()) {
@@ -1589,7 +1550,12 @@ app.post('/api/codex/chat', authMiddleware, async (req, res) => {
   const allowedEffort = new Set(CODEX_EFFORTS.map((e) => e.id));
   const effort = allowedEffort.has(chosenEffort) ? chosenEffort : 'medium';
 
-  const prompt = buildCodexChatPrompt(message, history);
+  const prompt = buildCodexChatPrompt({
+    message,
+    history,
+    projectRoot: PROJECT_ROOT,
+    wikiFiles: collectWikiMdFiles(),
+  });
 
   const authHeader = req.headers.authorization || '';
   const sessionToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';

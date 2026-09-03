@@ -6,7 +6,7 @@
 - **新增 MD**：上傳到 `wiki/`（可選資料夾）並可自動 git push
 - 建立資料夾、重新命名、刪除（可自動推送）
 - 覆蓋既有 Markdown、更新顯示標題／簡述／關鍵字
-- Codex 問答（讀 wiki，學習／提醒助理）
+- Kainnne × Codex（Kaine 私人的唯讀 AI 專案搭檔，可讀 wiki 與專案脈絡）
 
 > Bridge 是 Kaine 私人維護入口。訪客 Email 驗證與 Gemini 問答由 Cloudflare Worker 處理；訪客 session 不能呼叫 Bridge 管理 API。
 
@@ -49,6 +49,8 @@ AUTO_GIT_PUSH=true
 ```bash
 codex /status   # ChatGPT Plus，勿用 API Key
 ```
+
+登入後的 Kainnne × Codex 只供 Kaine 使用。它可以自由分析、發想、比較、教學、規劃與草擬具體修改，並主動讀取相關 Wiki 與專案資料；CLI 固定使用 `read-only` sandbox，因此不會自行改檔、commit、push 或部署。
 
 ## 驗證與交接
 
