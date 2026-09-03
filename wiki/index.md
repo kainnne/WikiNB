@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-09-02
+> 最後更新：2026-09-03
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -48,6 +48,7 @@
 
 - [[Technical/technical-documentation]] — 各專案的架構、資料流、測試、部署與公開邊界
 - [[Technical/kainnne-lumareader/02_architecture_and_release_20260824]] — LumaReader 的本機權限、編輯安全與跨平台發行方法
+- [[Technical/kainnne-lumareader/03_macos_launchservices_incident_20260902]] — LumaReader 檔案關聯操作後的 macOS 登入死機、排查與復原紀錄
 
 ## 關於我
 
@@ -66,6 +67,7 @@
 
 ## 系統與方法
 
+- [[Systems/safe-system-operations-with-agents]] — 保留 Agent 自主性，同時用風險分區、單步交易與熔斷條件降低主力機死機風險
 - [[Systems/knowledge-persona-agent]] — 如何用角色、風格、RAG、回答政策、記憶與權限邊界建立數位分身、AI 客服與其他知識型 Agent
 - [[Systems/wikinb-and-codexrules]] — WikiNB、CodexRules 與專案資料的分工
 - [[Random/ai-output-verification]] — 如何驗證 AI 產出並避免無限循環
