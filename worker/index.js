@@ -515,7 +515,7 @@ async function hasContinuationApproval(env, email) {
 
 async function loadWikiPages(env) {
   const cache = caches.default;
-  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v7');
+  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v8');
   const cached = await cache.match(cacheKey);
   if (cached) return cached.json();
 

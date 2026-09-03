@@ -85,7 +85,7 @@ assert.match(worker, /projects\/2026-08-03-zhuxi-reincarnation-renpy/);
 assert.match(worker, /只介紹 LumaReader/);
 assert.match(worker, /Kaine 主要專案與能力總覽/);
 assert.match(worker, /WikiNB 與 GEO 目前沒有自動排程/);
-assert.match(worker, /wiki-pages-v7/);
+assert.match(worker, /wiki-pages-v8/);
 assert.match(worker, /function requestsExpandedDetail\(text\)/);
 assert.match(worker, /我要\.\{0,4\}更詳細/);
 assert.match(worker, /function retrievalQuestion\(message, history\)/);
