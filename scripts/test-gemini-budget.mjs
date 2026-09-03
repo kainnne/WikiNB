@@ -64,6 +64,7 @@ assert.match(worker, /function asksForCollaboration\(question\)/);
 assert.match(worker, /BROAD_PROFILE_PRIORITY_SLUGS = \[\s*COLLABORATION_SLUG/);
 assert.match(worker, /不得以「先釐清你的專案目標」或類似合作流程作為開場/);
 assert.match(worker, /逐步建立可規模化的曝光與行銷系統/);
+assert.match(worker, /整段回答控制在 3–5 句，不加標題、不列長條列/);
 assert.match(worker, /ryanzhu@kainnne\.com/);
 assert.match(worker, /'KCIS\/WikiNB-KCIS'/);
 assert.match(worker, /'Learning\/kuse-ai-practical-course'/);
