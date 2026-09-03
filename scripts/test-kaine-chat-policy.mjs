@@ -21,6 +21,8 @@ assert.equal(isKaineScopeQuestion('我有合作構想，Kaine 可以提供哪些
 assert.equal(isKaineScopeQuestion('這個專案還能增加哪些額外功能？'), true);
 assert.equal(isKaineScopeQuestion('你覺得這套系統有什麼改進方向？'), true);
 assert.equal(isKaineScopeQuestion('How could this project be extended?'), true);
+assert.equal(isKaineScopeQuestion('macOS LaunchServices 死機等問題的除錯紀錄？'), true);
+assert.equal(isKaineScopeQuestion('這份除錯紀錄可信嗎？'), true);
 assert.equal(isKaineScopeQuestion('教我微積分'), false);
 assert.equal(isKaineScopeQuestion('幫我寫英文作業'), false);
 assert.equal(isKaineScopeQuestion('幫我規劃台北三日遊'), false);
@@ -29,6 +31,16 @@ assert.equal(
   isKaineScopeQuestion('那資料流怎麼走？', [
     { role: 'user', content: 'WikiNB 用了哪些技術？' },
     { role: 'assistant', content: '它由 Astro、Worker 與 Bridge 組成。' },
+  ]),
+  true,
+);
+assert.equal(
+  isKaineScopeQuestion('macOS LaunchServices 死機等問題的除錯紀錄？', [
+    { role: 'user', content: '哪個專案最能代表 Kaine 的能力？' },
+    {
+      role: 'assistant',
+      content: 'LumaReader 的 macOS LaunchServices 事故紀錄展現了他的除錯能力。',
+    },
   ]),
   true,
 );

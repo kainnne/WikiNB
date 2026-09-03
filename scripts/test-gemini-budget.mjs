@@ -110,6 +110,7 @@ assert.match(worker, /kind: 'out_of_scope'/);
 assert.match(worker, /conversationEnded/);
 assert.match(worker, /ANONYMOUS_USAGE_IDENTITY = '__anonymous_shared__'/);
 assert.match(worker, /body\.anonymous === true/);
+assert.match(worker, /const history = Array\.isArray\(body\.history\) \? body\.history : \[\]/);
 assert.match(worker, /ANONYMOUS_NETWORK_DAILY_LIMIT/);
 assert.match(worker, /ANONYMOUS_GLOBAL_DAILY_LIMIT/);
 assert.match(worker, /requiresVerification: anonymous/);
@@ -118,6 +119,10 @@ assert.match(chatPolicy, /isKaineScopeQuestion/);
 assert.match(chatPolicy, /outOfScopeMessage/);
 assert.match(chatPolicy, /PROJECT_DISCUSSION/);
 assert.match(chatPolicy, /OPEN_ENDED_EXTENSION/);
+assert.match(chatPolicy, /模糊問題交給 Gemini 依公開 WikiNB 與系統規則判斷/);
+assert.match(guestClient, /askGuestGeminiAnonymous\(\{ message, history \}\)/);
+assert.match(guestClient, /JSON\.stringify\(\{ message, history, anonymous: true \}\)/);
+assert.match(page, /askGuestGeminiAnonymous\(\{ message, history \}\)/);
 assert.match(worker, /不要因為問題沒有命中特定專案名稱或固定關鍵字就拒答/);
 assert.match(wrangler, /"MAX_CHAT_TURNS": "5"/);
 

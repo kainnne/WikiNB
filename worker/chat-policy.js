@@ -15,11 +15,8 @@ const PROJECT_DISCUSSION =
 const OPEN_ENDED_EXTENSION =
   /(?:延伸|額外|新增|改善|改進|建議|想法|評價|看法|認為|覺得|適合|可行|風險|取捨|優缺點|比較|差異|下一步|如何|怎麼|為什麼|extend|additional|add|improve|suggest|idea|opinion|think|suitable|feasible|risk|trade-?off|pros? and cons?|compare|difference|next step|how|why)/iu;
 
-const FOLLOW_UP =
-  /^(?:那|所以|可是|然後|再|這|它|為什麼|怎麼|哪|可以|能不能|還有|更詳細|詳細一點|繼續|說下去|tell me more|why|how|which|what about|and|more|continue)/iu;
-
 const CLEAR_GENERAL_TASK =
-  /(?:教我|幫我(?:寫|解|算|翻譯|查|規劃|生成)|替我(?:寫|解|算|翻譯|查|規劃|生成)|teach me|do my homework|solve (?:this|my)|translate (?:this|for me)|write (?:an?|my) (?:essay|homework)|plan (?:a|my)|generate (?:a|an))/iu;
+  /(?:教我|幫我(?:寫|解|算|翻譯|查|規劃|生成)|替我(?:寫|解|算|翻譯|查|規劃|生成)|今天.{0,8}(?:天氣|氣象)|(?:天氣|氣象)(?:如何|預報)|teach me|do my homework|solve (?:this|my)|translate (?:this|for me)|write (?:an?|my) (?:essay|homework)|plan (?:a|my)|generate (?:a|an)|weather (?:today|forecast))/iu;
 
 function textOf(turn) {
   return String(turn?.content || '').trim();
@@ -37,15 +34,23 @@ function directlyInScope(text) {
 }
 
 export function isKaineScopeQuestion(message, history = []) {
-  if (directlyInScope(message)) return true;
-  if (CLEAR_GENERAL_TASK.test(String(message || '').normalize('NFKC'))) return false;
-  if (!FOLLOW_UP.test(String(message || '').normalize('NFKC').trim())) return false;
+  const normalized = String(message || '').normalize('NFKC').trim();
+  if (!normalized) return false;
+  if (directlyInScope(normalized)) return true;
+  if (CLEAR_GENERAL_TASK.test(normalized)) return false;
 
-  return [...(Array.isArray(history) ? history : [])]
-    .reverse()
-    .filter((turn) => turn?.role === 'user')
-    .slice(0, 2)
-    .some((turn) => directlyInScope(textOf(turn)));
+  const recentTurns = [...(Array.isArray(history) ? history : [])].reverse().slice(0, 4);
+  const recentUserTurns = recentTurns.filter((turn) => turn?.role === 'user');
+  const recentKaineContext = recentUserTurns.some((turn) => directlyInScope(textOf(turn)));
+  if (recentKaineContext) return true;
+  const recentGeneralTask = recentUserTurns.some((turn) =>
+    CLEAR_GENERAL_TASK.test(textOf(turn).normalize('NFKC')),
+  );
+  if (recentGeneralTask) return false;
+
+  // 模糊問題交給 Gemini 依公開 WikiNB 與系統規則判斷，避免關鍵字白名單
+  // 把合法的作品名稱、錯誤訊息或技術追問誤擋。只有上方明確的一般任務才硬拒絕。
+  return true;
 }
 
 export function prefersEnglish(message, history = []) {

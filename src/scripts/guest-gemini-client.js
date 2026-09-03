@@ -141,10 +141,10 @@ export function askGuestGemini({ message, history }) {
   );
 }
 
-export function askGuestGeminiAnonymous({ message }) {
+export function askGuestGeminiAnonymous({ message, history }) {
   return guestAiFetch('/api/guest-ai/chat', {
     method: 'POST',
-    body: JSON.stringify({ message, history: [], anonymous: true }),
+    body: JSON.stringify({ message, history, anonymous: true }),
   });
 }
 

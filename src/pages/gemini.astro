@@ -629,7 +629,7 @@ import '@fontsource/iansui/latin-400.css';
     try {
       const result = verified
         ? await askGuestGemini({ message, history })
-        : await askGuestGeminiAnonymous({ message });
+        : await askGuestGeminiAnonymous({ message, history });
       responseTimer.stop();
       appendMessage(result.answer, 'assistant');
       submittedTurns = Math.max(submittedTurns + 1, Number(result.chatTurnsUsed || 0));

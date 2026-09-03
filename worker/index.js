@@ -642,17 +642,15 @@ function requestsExpandedDetail(text) {
 }
 
 function retrievalQuestion(message, history) {
-  if (!requestsExpandedDetail(message) || !Array.isArray(history)) return message;
-  const previousUserTurn = [...history]
-    .reverse()
-    .find(
-      (turn) =>
-        turn?.role === 'user' &&
-        String(turn?.content || '').trim() &&
-        !requestsExpandedDetail(turn.content),
-    );
-  const previousQuestion = String(previousUserTurn?.content || '').trim();
-  return previousQuestion ? `${previousQuestion}\n${message}` : message;
+  if (!Array.isArray(history) || history.length === 0) return message;
+  const needsContext = requestsExpandedDetail(message) || String(message || '').length <= 80;
+  if (!needsContext) return message;
+  const recentContext = history
+    .slice(-2)
+    .map((turn) => String(turn?.content || '').trim())
+    .filter(Boolean)
+    .join('\n');
+  return recentContext ? `${recentContext}\n${message}` : message;
 }
 
 function buildRelevantCorpus(pages, question, maxChars = 6500) {
@@ -948,7 +946,7 @@ async function chat(request, env) {
   if (!session && !anonymous) {
     return json({ error: 'AI 訪客驗證已過期，請重新驗證' }, 401);
   }
-  const history = anonymous ? [] : Array.isArray(body.history) ? body.history : [];
+  const history = Array.isArray(body.history) ? body.history : [];
   if (!message) return json({ error: '請輸入問題' }, 400);
   if (message.length > 1200) return json({ error: '問題太長，請縮短到 1,200 字以內' }, 400);
 
