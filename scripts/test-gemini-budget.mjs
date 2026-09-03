@@ -62,13 +62,11 @@ assert.match(worker, /BROAD_PROFILE_PRIORITY_SLUGS/);
 assert.match(worker, /COLLABORATION_SLUG = 'AboutMe\/work-with-kaine'/);
 assert.match(worker, /function asksForCollaboration\(question\)/);
 assert.match(worker, /BROAD_PROFILE_PRIORITY_SLUGS = \[\s*COLLABORATION_SLUG/);
-assert.match(worker, /不得以「先釐清你的專案目標」或類似合作流程作為開場/);
 assert.match(worker, /逐步建立可規模化的曝光與行銷系統/);
-assert.match(worker, /本次泛用合作詢問格式（最高優先）/);
-assert.match(worker, /只寫一個短段落、總共 3 個完整句子/);
-assert.match(worker, /禁止 Markdown 標題、項目符號、編號與能力清單/);
-assert.match(worker, /本次不要主動補充 AI 新手陪跑、企業 AI 導入/);
-assert.match(worker, /asksForCollaboration\(message\) && !expandedDetailRequested/);
+assert.match(worker, /視為最重要的知識來源，而不是回答模板/);
+assert.match(worker, /不要每次機械式重複整套說法/);
+assert.match(worker, /不用固定句數、固定段落順序或逐句套用相同文案/);
+assert.doesNotMatch(worker, /conciseCollaborationRequested|本次泛用合作詢問格式/);
 assert.match(worker, /ryanzhu@kainnne\.com/);
 assert.match(worker, /'KCIS\/WikiNB-KCIS'/);
 assert.match(worker, /'Learning\/kuse-ai-practical-course'/);
@@ -85,7 +83,7 @@ assert.match(worker, /wiki-pages-v7/);
 assert.match(worker, /function requestsExpandedDetail\(text\)/);
 assert.match(worker, /我要\.\{0,4\}更詳細/);
 assert.match(worker, /function retrievalQuestion\(message, history\)/);
-assert.match(worker, /function systemPrompt\([\s\S]*conciseCollaborationRequested = false/);
+assert.match(worker, /function systemPrompt\(corpus, expandedDetailRequested = false\)/);
 assert.match(worker, /這裡無法提供長篇詳細回答；以下先整理必要重點/);
 assert.match(worker, /最相關的 1–3 份 WikiNB 文件/);
 assert.match(worker, /Instagram @kaine_z_/);
@@ -95,10 +93,7 @@ assert.match(worker, /env\.RESEND_API_KEY/);
 assert.match(wrangler, /"EMAIL_FROM": "Kainnne × Gemini <login@auth\.kainnne\.com>"/);
 assert.doesNotMatch(worker, /cloudflare-smtp|env\.SMTP_/);
 assert.doesNotMatch(wrangler, /SMTP_|chaos60649@gmail\.com/);
-assert.match(
-  worker,
-  /systemPrompt\([\s\S]*corpus,[\s\S]*expandedDetailRequested,[\s\S]*conciseCollaborationRequested/,
-);
+assert.match(worker, /systemPrompt\(corpus, expandedDetailRequested\)/);
 assert.match(worker, /reserveChatTurn\(env, session\.email, turnLimit\)/);
 assert.match(worker, /incrementChatTurn\(env, session\.email\)/);
 assert.match(worker, /chat-continuation:/);
