@@ -135,7 +135,9 @@ import '@fontsource/iansui/latin-400.css';
           maxlength="1200"
           autocomplete="off"
           data-i18n-placeholder="gemini.placeholder"
-          placeholder="問我關於作品、專案或專業方向…"
+          placeholder="也可以直接寫下你想做的事…"
+          aria-label="寫下你想做的事或問題"
+          data-i18n-aria="gemini.placeholder"
         />
         <button id="gemini-chat-send" type="submit" class="gemini-send" data-i18n="gemini.send">
           送出
@@ -147,7 +149,8 @@ import '@fontsource/iansui/latin-400.css';
 
 <script>
   import { renderMarkdownWithMath } from '../scripts/markdown-math.js';
-  import { t } from '../scripts/i18n.js';
+  import { t, getLocale } from '../scripts/i18n.js';
+  import { GEMINI_TOPICS, GEMINI_FOLLOWUPS, prepareVisitorRequest } from '../scripts/gemini-onboarding.js';
   import {
     askGuestGemini,
     askGuestGeminiAnonymous,
@@ -194,11 +197,17 @@ import '@fontsource/iansui/latin-400.css';
   const ANONYMOUS_QUESTION_LIMIT = 5;
   let anonymousQuestionsUsed = 0;
   let pendingPostAuthMessage = '';
+  let activeTopic = '';
+  let topicTurns = 0;
+  let selectedQuestion = '';
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
 
   function syncConversationControls() {
     const disabled = running || continuationRequired || continuationDismissed;
+    output?.querySelectorAll('.gemini-choice, .gemini-followup, .gemini-change-topic').forEach((button) => {
+      button.disabled = disabled;
+    });
     if (chatInput) {
       chatInput.disabled = disabled;
       const placeholderKey = continuationDismissed
@@ -458,29 +467,97 @@ import '@fontsource/iansui/latin-400.css';
     if (!output) return;
     output.innerHTML = '';
     followLatest = true;
-    const line = document.createElement('div');
-    line.className = 'gemini-line gemini-line-system';
+    activeTopic = '';
+    topicTurns = 0;
+    appendTopicPicker();
+  }
+
+  function submitChoice(questionKey) {
+    if (!chatInput || running || continuationRequired || continuationDismissed) return;
+    selectedQuestion = t(questionKey);
+    chatInput.value = selectedQuestion;
+    chatForm?.requestSubmit();
+  }
+
+  function appendTopicPicker() {
+    if (!output) return;
+    output.querySelectorAll('.gemini-suggestions, .gemini-next').forEach((node) => node.remove());
     const box = document.createElement('div');
     box.className = 'gemini-suggestions';
-
+    const heading = document.createElement('h2');
+    heading.className = 'gemini-choice-heading';
+    heading.dataset.i18n = 'gemini.chooseTitle';
+    heading.textContent = t('gemini.chooseTitle');
+    const intro = document.createElement('p');
+    intro.className = 'gemini-choice-intro';
+    intro.dataset.i18n = 'gemini.welcomeMessage';
+    intro.textContent = t('gemini.welcomeMessage');
+    box.append(heading, intro);
     const examples = document.createElement('div');
-    examples.className = 'grid gap-2';
-    ['gemini.example1', 'gemini.example2', 'gemini.example3', 'gemini.example4'].forEach((key) => {
+    examples.className = 'gemini-choice-grid';
+    GEMINI_TOPICS.forEach((topic) => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'gemini-example';
-      button.textContent = t(key);
+      button.className = 'gemini-choice';
+      button.dataset.topic = topic;
+      for (const part of ['title', 'description']) {
+        const text = document.createElement(part === 'title' ? 'strong' : 'span');
+        const key = `gemini.entry.${topic}.${part}`;
+        text.dataset.i18n = key;
+        text.textContent = t(key);
+        button.appendChild(text);
+      }
       button.addEventListener('click', () => {
-        if (!chatInput || running) return;
-        chatInput.value = t(key);
-        chatInput.focus();
+        if (running || continuationRequired || continuationDismissed) return;
+        activeTopic = topic;
+        topicTurns = 0;
+        submitChoice(`gemini.entry.${topic}.question`);
       });
       examples.appendChild(button);
     });
     box.appendChild(examples);
-    line.appendChild(box);
-    output.appendChild(line);
-    appendMessage(t('gemini.welcomeMessage'), 'assistant');
+    output.appendChild(box);
+    syncConversationControls();
+  }
+
+  function appendFollowups() {
+    if (!output || continuationRequired || continuationDismissed) return;
+    output.querySelectorAll('.gemini-next').forEach((node) => node.remove());
+    const group = document.createElement('div');
+    group.className = 'gemini-next';
+    group.setAttribute('role', 'group');
+    group.dataset.i18nAria = 'gemini.followupTitle';
+    group.setAttribute('aria-label', t('gemini.followupTitle'));
+    const choices = topicTurns === 1 && activeTopic ? GEMINI_FOLLOWUPS[activeTopic] : ['examples', 'prepare'];
+    choices.forEach((choice) => {
+      const isTopic = GEMINI_TOPICS.includes(choice);
+      const labelKey = isTopic ? `gemini.entry.${choice}.title` : `gemini.next.${choice}.label`;
+      const questionKey = isTopic ? `gemini.entry.${choice}.question` : `gemini.next.${choice}.question`;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'gemini-followup';
+      button.dataset.i18n = labelKey;
+      button.textContent = t(labelKey);
+      button.addEventListener('click', () => {
+        if (running || continuationRequired || continuationDismissed) return;
+        if (isTopic) { activeTopic = choice; topicTurns = 0; }
+        submitChoice(questionKey);
+      });
+      group.appendChild(button);
+    });
+    const change = document.createElement('button');
+    change.type = 'button';
+    change.className = 'gemini-change-topic';
+    change.dataset.i18n = 'gemini.changeTopic';
+    change.textContent = t('gemini.changeTopic');
+    change.addEventListener('click', () => {
+      if (running || continuationRequired || continuationDismissed) return;
+      appendTopicPicker();
+      output.querySelector('.gemini-choice')?.focus({ preventScroll: true });
+      scrollToLatest({ force: true });
+    });
+    group.appendChild(change);
+    output.appendChild(group);
   }
 
   function openChat(session, { preserveConversation = false } = {}) {
@@ -507,7 +584,7 @@ import '@fontsource/iansui/latin-400.css';
       appendContinuationActions();
     }
     syncConversationControls();
-    if (!continuationRequired && !mobileFullscreenLocked) chatInput?.focus();
+    if (!continuationRequired && !mobileFullscreenLocked && preserveConversation) chatInput?.focus();
   }
 
   function openAnonymousChat() {
@@ -526,7 +603,6 @@ import '@fontsource/iansui/latin-400.css';
     history = [];
     appendWelcome();
     syncConversationControls();
-    if (!mobileFullscreenLocked) chatInput?.focus();
   }
 
   function openUnlock(nextMessage = '') {
@@ -603,6 +679,7 @@ import '@fontsource/iansui/latin-400.css';
   chatForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (running || continuationRequired) return;
+    if (continuationDismissed) return;
     const message = String(chatInput?.value || '').trim();
     if (!message) return;
 
@@ -613,6 +690,8 @@ import '@fontsource/iansui/latin-400.css';
     }
 
     running = true;
+    syncConversationControls();
+    output?.querySelectorAll('.gemini-suggestions, .gemini-next').forEach((node) => node.remove());
     if (chatInput) {
       chatInput.value = '';
       chatInput.disabled = true;
@@ -627,14 +706,17 @@ import '@fontsource/iansui/latin-400.css';
     const responseTimer = startResponseTimer();
 
     try {
+      const requestMessage = prepareVisitorRequest(message, t('gemini.plainPreference'), selectedQuestion, history, getLocale() === 'en');
       const result = verified
-        ? await askGuestGemini({ message, history })
-        : await askGuestGeminiAnonymous({ message, history });
+        ? await askGuestGemini({ message: requestMessage, history, originalMessage: message })
+        : await askGuestGeminiAnonymous({ message: requestMessage, history, originalMessage: message });
       responseTimer.stop();
       appendMessage(result.answer, 'assistant');
       submittedTurns = Math.max(submittedTurns + 1, Number(result.chatTurnsUsed || 0));
       if (!verified) anonymousQuestionsUsed += 1;
       if (result.kind === 'answer') {
+        selectedQuestion = '';
+        topicTurns += 1;
         history.push({ role: 'user', content: message });
         history.push({ role: 'assistant', content: result.answer });
         history = history.slice(-4);
@@ -645,6 +727,8 @@ import '@fontsource/iansui/latin-400.css';
       if (continuationRequired) {
         continuationDismissed = false;
         appendContinuationActions();
+      } else if (result.kind === 'answer') {
+        appendFollowups();
       }
     } catch (error) {
       responseTimer.stop();
@@ -662,10 +746,11 @@ import '@fontsource/iansui/latin-400.css';
             : raw || t('gemini.tempError');
       if (described.key !== 'gemini.anonymousLimit') appendMessage(friendly, 'error');
       if (described.key === 'gemini.errorSessionExpired') openUnlock();
+      if (chatInput) chatInput.value = message;
     } finally {
       running = false;
       syncConversationControls();
-      if (!continuationRequired && !chat?.classList.contains('hidden')) chatInput?.focus();
+      if (!continuationRequired && !mobileFullscreenLocked && !chat?.classList.contains('hidden')) chatInput?.focus();
     }
   });
 
@@ -673,9 +758,8 @@ import '@fontsource/iansui/latin-400.css';
     renderMessageState(authMessage, authMessageState);
     renderMessageState(codeSent, codeSentState);
     syncConversationControls();
-    if (!chat?.classList.contains('hidden') && submittedTurns === 0 && !continuationRequired) {
-      appendWelcome();
-    }
+    // Dynamic choices have data-i18n attributes. Translate them in place;
+    // rebuilding the welcome screen would erase pending or failed questions.
   });
 
   async function init() {
@@ -1317,27 +1401,91 @@ import '@fontsource/iansui/latin-400.css';
 
   :global(.gemini-suggestions) {
     width: 100%;
-    border: 1px solid rgba(183, 148, 244, 0.2);
-    border-radius: 1rem;
-    padding: 1rem;
-    background: linear-gradient(135deg, rgba(239, 246, 255, 0.7), rgba(253, 242, 248, 0.65));
+    padding: clamp(0.4rem, 2vw, 1.25rem);
+    margin-block: auto;
   }
 
-  :global(.gemini-example) {
+  :global(.gemini-choice-heading) {
+    color: #4a2146;
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+    font-weight: 800;
+    line-height: 1.4;
+  }
+
+  :global(.gemini-choice-intro) {
+    max-width: 42rem;
+    margin: 0.65rem 0 1.35rem;
+    color: #76576c;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  :global(.gemini-choice-grid) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  :global(.gemini-choice) {
     width: 100%;
-    border: 1px solid rgba(183, 148, 244, 0.22);
-    border-radius: 0.8rem;
-    padding: 0.6rem 0.75rem;
-    background: rgba(255, 255, 255, 0.82);
-    color: #75569d;
-    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 7rem;
+    border: 1px solid #d6c7e8;
+    border-radius: 1.15rem;
+    padding: 0.9rem 1rem;
+    background: linear-gradient(130deg, #ffffff, #f4f0ff);
+    color: #513554;
     text-align: left;
-    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 5px 16px rgba(91, 70, 135, 0.04);
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
   }
 
-  :global(.gemini-example:hover) {
-    transform: translateY(-1px);
+  :global(.gemini-choice:nth-child(2)) { background: linear-gradient(130deg, #fff, #fff0f6); }
+  :global(.gemini-choice:nth-child(3)) { background: linear-gradient(130deg, #fff, #edf5ff); }
+  :global(.gemini-choice:nth-child(4)) { background: linear-gradient(130deg, #fff, #f0faf6); }
+  :global(.gemini-choice:nth-child(5)) { background: linear-gradient(130deg, #fff, #f4f0ff); }
+  :global(.gemini-choice:nth-child(6)) { background: linear-gradient(130deg, #fff, #fff4ef); }
+  :global(.gemini-choice[data-topic='about']) { grid-column: 1 / -1; min-height: 0; }
+  :global(.gemini-choice strong) { font-size: 1.05rem; line-height: 1.5; }
+  :global(.gemini-choice span) { font-size: 0.9375rem; line-height: 1.65; color: #76576c; }
+
+  :global(.gemini-choice:hover:not(:disabled)) {
+    transform: translateY(-2px);
+    border-color: #a38bc4;
+    box-shadow: 0 8px 22px rgba(91, 70, 135, 0.1);
+  }
+
+  :global(.gemini-next) { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.75rem 0 1rem; }
+  :global(.gemini-followup), :global(.gemini-change-topic) {
+    min-height: 44px;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid #d6c7e8;
+    border-radius: 0.9rem;
+    color: #634378;
     background: #fff;
+    font-size: 0.9375rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  :global(.gemini-change-topic) { border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 4px; }
+  :global(.gemini-followup:hover:not(:disabled)) { background: #f4f0ff; }
+  :global(.gemini-choice:focus-visible), :global(.gemini-followup:focus-visible), :global(.gemini-change-topic:focus-visible) {
+    outline: 3px solid #7d5bac;
+    outline-offset: 3px;
+  }
+  :global(.gemini-choice:disabled), :global(.gemini-followup:disabled), :global(.gemini-change-topic:disabled) {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  @media (max-width: 640px) {
+    :global(.gemini-choice-grid) { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+    :global(.gemini-choice) { min-height: 0; padding: 0.85rem 1rem; gap: 0.25rem; }
+    :global(.gemini-choice-intro) { margin-bottom: 1rem; }
   }
 
   .gemini-input-row {
@@ -1432,6 +1580,8 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   @media (prefers-reduced-motion: reduce) {
+    :global(.gemini-choice) { transition: none; }
+    :global(.gemini-choice:hover:not(:disabled)) { transform: none; }
     .gemini-unlock-glow {
       animation: none;
     }

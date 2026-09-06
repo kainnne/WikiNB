@@ -130,21 +130,21 @@ export function fetchGuestAiMe() {
   return guestAiFetch('/api/guest-ai/me', { method: 'GET' }, true);
 }
 
-export function askGuestGemini({ message, history }) {
+export function askGuestGemini({ message, history, originalMessage = message }) {
   return guestAiFetch(
     '/api/guest-ai/chat',
     {
       method: 'POST',
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({ message, history, originalMessage }),
     },
     true,
   );
 }
 
-export function askGuestGeminiAnonymous({ message, history }) {
+export function askGuestGeminiAnonymous({ message, history, originalMessage = message }) {
   return guestAiFetch('/api/guest-ai/chat', {
     method: 'POST',
-    body: JSON.stringify({ message, history, anonymous: true }),
+    body: JSON.stringify({ message, history, originalMessage, anonymous: true }),
   });
 }
 

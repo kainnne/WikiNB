@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const [
-  worker,
+  workerSource,
   chatPolicy,
   wrangler,
   page,
@@ -36,11 +36,12 @@ const [
   readFile(new URL('../wiki/AboutMe/work-with-kaine.md', import.meta.url), 'utf8'),
 ]);
 
+const worker = workerSource + '\n' + await readFile(new URL('../worker/visitor-policy.js', import.meta.url), 'utf8');
 const zh = JSON.parse(zhText);
 const en = JSON.parse(enText);
 const sources = JSON.parse(sourcesText);
 
-assert.match(worker, /function buildRelevantCorpus\(pages, question, maxChars = 6500\)/);
+assert.match(worker, /function buildRelevantCorpus\(pages, question, maxChars = 6500, intent = visitorIntent\(question\)\)/);
 assert.match(worker, /selected\.length >= 4/);
 assert.match(worker, /\? 4000 : 1300/);
 assert.match(worker, /\.slice\(-4\)/);
@@ -49,10 +50,11 @@ assert.match(worker, /thinkingLevel: 'minimal'/);
 assert.match(worker, /env\.GEMINI_MODEL \|\| 'gemini-3\.1-flash-lite'/);
 assert.match(wrangler, /"GEMINI_MODEL": "gemini-3\.1-flash-lite"/);
 assert.match(worker, /const retryable = \[500, 502, 503, 504\]/);
-assert.match(worker, /你是 Kaine 的 AI 小迷妹/);
+assert.match(worker, /你是介紹 Kaine 的 AI 助理/);
+assert.doesNotMatch(worker + zhText + enText, /小迷妹|fangirl/i);
 assert.match(worker, /不要冒充 Kaine、不要用第一人稱代替 Kaine 發言/);
-assert.match(worker, /只決定語氣與觀看角度，不縮小原本的回答能力/);
-assert.match(worker, /欣賞 Kaine 不等於無條件吹捧/);
+assert.match(worker, /可分析可行的合作方法，但所有建議須連回 Kaine 的已知能力/);
+assert.match(worker, /語氣自然、客觀且專業/);
 assert.match(worker, /const PUBLIC_SAFE_STYLE/);
 assert.doesNotMatch(worker, /KAINE_PERSONA_PROMPT|personaPrompt/);
 assert.match(worker, /節省免費 API 額度是必要限制/);
@@ -63,15 +65,6 @@ assert.match(worker, /COLLABORATION_SLUG = 'AboutMe\/work-with-kaine'/);
 assert.match(worker, /function asksForCollaboration\(question\)/);
 assert.match(chatPolicy, /function ensureCollaborationContact\(answer, english = false\)/);
 assert.match(worker, /ensureCollaborationContact,/);
-assert.match(worker, /asksForCollaboration\(retrievalQuestion\(message, history\)\)/);
-assert.match(worker, /BROAD_PROFILE_PRIORITY_SLUGS = \[\s*COLLABORATION_SLUG/);
-assert.match(worker, /想向誰呈現、要宣傳什麼/);
-assert.match(worker, /個人網站、作品集、服務頁或專案展示頁/);
-assert.match(worker, /不要只用「設計與實作網站或數位產品」/);
-assert.match(worker, /系統會在模型漏寫時只補上最短聯絡句/);
-assert.match(worker, /視為最重要的知識來源，而不是回答模板/);
-assert.match(worker, /不要每次機械式重複整套說法/);
-assert.match(worker, /不用固定句數、固定段落順序或逐句套用相同文案/);
 assert.doesNotMatch(worker, /conciseCollaborationRequested|本次泛用合作詢問格式/);
 assert.match(worker, /ryanzhu@kainnne\.com/);
 assert.match(worker, /'KCIS\/WikiNB-KCIS'/);
@@ -89,17 +82,14 @@ assert.match(worker, /wiki-pages-v8/);
 assert.match(worker, /function requestsExpandedDetail\(text\)/);
 assert.match(worker, /我要\.\{0,4\}更詳細/);
 assert.match(worker, /function retrievalQuestion\(message, history\)/);
-assert.match(worker, /function systemPrompt\(corpus, expandedDetailRequested = false\)/);
-assert.match(worker, /這裡無法提供長篇詳細回答；以下先整理必要重點/);
+assert.match(worker, /function systemPrompt\(corpus, expandedDetailRequested = false, message = ''\)/);
 assert.match(worker, /最相關的 1–3 份 WikiNB 文件/);
-assert.match(worker, /Instagram @kaine_z_/);
-assert.match(worker, /Email ryanzhu@kainnne\.com/);
 assert.match(worker, /https:\/\/api\.resend\.com\/emails/);
 assert.match(worker, /env\.RESEND_API_KEY/);
 assert.match(wrangler, /"EMAIL_FROM": "Kainnne × Gemini <login@auth\.kainnne\.com>"/);
 assert.doesNotMatch(worker, /cloudflare-smtp|env\.SMTP_/);
 assert.doesNotMatch(wrangler, /SMTP_|chaos60649@gmail\.com/);
-assert.match(worker, /systemPrompt\(corpus, expandedDetailRequested\)/);
+assert.match(worker, /systemPrompt\(corpus, expandedDetailRequested, message\)/);
 assert.match(worker, /reserveChatTurn\(env, session\.email, turnLimit\)/);
 assert.match(worker, /incrementChatTurn\(env, session\.email\)/);
 assert.match(worker, /chat-continuation:/);
@@ -121,9 +111,9 @@ assert.match(chatPolicy, /outOfScopeMessage/);
 assert.match(chatPolicy, /PROJECT_DISCUSSION/);
 assert.match(chatPolicy, /OPEN_ENDED_EXTENSION/);
 assert.match(chatPolicy, /模糊問題交給 Gemini 依公開 WikiNB 與系統規則判斷/);
-assert.match(guestClient, /askGuestGeminiAnonymous\(\{ message, history \}\)/);
-assert.match(guestClient, /JSON\.stringify\(\{ message, history, anonymous: true \}\)/);
-assert.match(page, /askGuestGeminiAnonymous\(\{ message, history \}\)/);
+assert.match(guestClient, /askGuestGeminiAnonymous\(\{ message, history, originalMessage = message \}\)/);
+assert.match(guestClient, /JSON\.stringify\(\{ message, history, originalMessage, anonymous: true \}\)/);
+assert.match(page, /askGuestGeminiAnonymous\(\{ message: requestMessage, history, originalMessage: message \}\)/);
 assert.match(worker, /不要因為問題沒有命中特定專案名稱或固定關鍵字就拒答/);
 assert.match(wrangler, /"MAX_CHAT_TURNS": "5"/);
 
@@ -172,14 +162,9 @@ assert.match(page, /result\.kind === 'answer'/);
 assert.match(page, /gemini\.continuePlaceholder/);
 assert.match(page, /appendContinuationActions/);
 assert.match(page, /continueGuestGemini\(\)/);
-assert.match(
-  page,
-  /\['gemini\.example1', 'gemini\.example2', 'gemini\.example3', 'gemini\.example4'\]/,
-);
-assert.match(
-  page,
-  /output\.appendChild\(line\);\s*appendMessage\(t\('gemini\.welcomeMessage'\), 'assistant'\)/,
-);
+assert.match(page, /GEMINI_TOPICS\.forEach/);
+assert.match(page, /submitChoice\(`gemini\.entry\.\$\{topic\}\.question`\)/);
+assert.match(page, /prepareVisitorRequest\(message, t\('gemini\.plainPreference'\), selectedQuestion, history, getLocale\(\) === 'en'\)/);
 assert.doesNotMatch(page, /gemini\.unlockHint|gemini\.home/);
 assert.doesNotMatch(page, /gemini-quota|remainingPercent|gemini\.remaining/);
 assert.match(guestClient, /\['請等待 1 分鐘後再重新寄送', 'gemini\.errorResendWait'\]/);
@@ -193,10 +178,7 @@ assert.equal(zh['gemini.errorResendWait'], '請等待 1 分鐘後再重新寄送
 assert.equal(en['gemini.errorResendWait'], 'Please wait 1 minute before requesting another code.');
 
 assert.equal('gemini.connected' in zh, false);
-assert.equal(
-  zh['gemini.welcomeMessage'],
-  'Hello！我是 Kaine 的 AI 小迷妹！我很樂意跟你分享他的作品、專長，還有 Kaine 最近的計劃目標！\n\n你想先從哪裡開始？',
-);
+assert.match(zh['gemini.welcomeMessage'], /Kaine/);
 assert.equal(zh['gemini.unlockTitle'], '解鎖訪客 AI');
 assert.equal('gemini.anonymousIdentity' in zh, false);
 assert.doesNotMatch(zh['gemini.welcomeMessage'], /第一個問題|第一題|免驗證/);
@@ -204,15 +186,8 @@ assert.doesNotMatch(zh['gemini.welcomeMessage'], /數位助理|分身/);
 assert.match(zh['gemini.limitMessage'], /前 5 則訊息/);
 assert.match(zh['gemini.limitMessage'], /寄一封通知信給 Kaine/);
 assert.equal(zh['gemini.continueAndNotify'], '繼續聊天並通知 Kaine');
-assert.equal(zh['gemini.example1'], '我想請 Kaine 協助我完成一個專案。');
-assert.equal(zh['gemini.example2'], '我有合作構想，Kaine 可以提供哪些協助？');
-assert.equal(zh['gemini.example3'], '請簡單介紹 Kaine 與他的專長。');
-assert.equal(zh['gemini.example4'], '哪個專案最能代表 Kaine 的能力？');
 assert.equal('gemini.connected' in en, false);
-assert.equal(
-  en['gemini.welcomeMessage'],
-  "Hello! I'm Kaine's AI fangirl! I'd love to tell you about his work, expertise, and Kaine's latest plans and goals!\n\nWhere would you like to start?",
-);
+assert.match(en['gemini.welcomeMessage'], /Kaine/);
 assert.equal(en['gemini.unlockTitle'], 'Unlock guest AI');
 assert.equal('gemini.anonymousIdentity' in en, false);
 assert.doesNotMatch(en['gemini.welcomeMessage'], /first question|no sign-in|without verification/i);
@@ -220,10 +195,6 @@ assert.doesNotMatch(en['gemini.welcomeMessage'], /digital assistant|digital twin
 assert.match(en['gemini.limitMessage'], /first 5 messages/i);
 assert.match(en['gemini.limitMessage'], /email Kaine/i);
 assert.equal(en['gemini.continueAndNotify'], 'Continue and notify Kaine');
-assert.equal(en['gemini.example1'], "I'd like Kaine's help bringing a project to life.");
-assert.equal(en['gemini.example2'], 'I have a collaboration idea. How could Kaine help?');
-assert.equal(en['gemini.example3'], 'Please briefly introduce Kaine and his areas of expertise.');
-assert.equal(en['gemini.example4'], "Which project best represents Kaine's abilities?");
 assert.equal('gemini.unlockHint' in zh, false);
 assert.equal('gemini.unlockHint' in en, false);
 assert.equal('gemini.home' in zh, false);
