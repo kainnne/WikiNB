@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { GEMINI_TOPICS, GEMINI_FOLLOWUPS, withPlainLanguagePreference, prepareVisitorRequest } from '../src/scripts/gemini-onboarding.js';
 import { isKaineScopeQuestion } from '../worker/chat-policy.js';
-import { visitorIntent, visitorGuidance, buildVisitorSystemPrompt } from '../worker/visitor-policy.js';
+import { visitorIntent, visitorGuidance, buildVisitorSystemPrompt, shouldOfferContact } from '../worker/visitor-policy.js';
 import workerHandler from '../worker/index.js';
 
 assert.equal(GEMINI_TOPICS[0], 'about');
@@ -14,12 +14,21 @@ for (const [question, intent] of [
   ['Who is Kaine?', 'introduction'],
   ['我是人資，Kaine 可以怎麼協助？', 'collaboration'],
   ['人力資源', 'collaboration'],
+  ['Kuse 怎麼用？', 'teaching'],
+  ['How do I use Kuse?', 'teaching'],
+  ['請 Kaine 協助團隊 AI 導入', 'collaboration'],
   ['How could Kaine work with an HR team?', 'collaboration'],
   ['LumaReader 有哪些技術？', 'project'],
   ['請介紹 Kaine 的代表專案', 'project'],
 ]) assert.equal(visitorIntent(question), intent, question);
 
 assert.match(visitorGuidance('人資'), /合作情境/);
+assert.equal(shouldOfferContact('請 Kaine 協助團隊 AI 導入'), true);
+const contacted = [{ role: 'assistant', content: '可寄信 ryanzhu@kainnne.com' }];
+assert.equal(shouldOfferContact('可以先做哪個部分？', contacted), false, 'Avoid repeating a contact footer on every follow-up');
+assert.equal(shouldOfferContact('請提供聯絡方式', contacted), true);
+assert.equal(shouldOfferContact('Kuse 怎麼用？'), false, 'An explicit lesson should receive its answer without a forced footer');
+assert.equal(shouldOfferContact('Kaine 能提供什麼協助？', [{role: 'user', content: 'ryanzhu@kainnne.com'}]), true, 'A user mentioning an email is not a delivered invitation');
 assert.doesNotMatch(visitorGuidance('請介紹 Kaine'), /LumaReader|GEO|ScopeCut/);
 assert.match(buildVisitorSystemPrompt('測試來源', '人資'), /招募、薪酬或勞動法規的判斷仍由人資專業人員負責/);
 assert.ok(buildVisitorSystemPrompt('', '人資').length < 2500, 'Keep the system rules compact');
@@ -75,13 +84,20 @@ const pages = [
   ['Projects/project-overview', 'AI 網站設計與教育訓練'],
   ['AboutMe/03-ai-and-data', 'AI 資料整理'],
   ['AboutMe/04-collaboration-and-workstyle', '工作流程改善'],
+  ['AboutMe/02-software-development', '網站與自動化實作'],
   ['Learning/kuse-ai-practical-course', 'AI 教育訓練'],
 ].map(([slug, bodyText]) => ({ slug, bodyText, title: slug, tags: [] }));
 const introCorpus = buildRelevantCorpus(pages, '請介紹 Kaine 的專長');
 assert.ok(introCorpus.indexOf('Projects/project-overview') < introCorpus.indexOf('AboutMe/03-ai-and-data'));
 assert.equal(introCorpus.includes('AboutMe/work-with-kaine'), false, 'An introduction must not start from studio sales copy');
+assert.equal(introCorpus.includes('Learning/kuse-ai-practical-course'), false, 'General introductions must not default to course material');
+assert.ok(introCorpus.includes('AboutMe/02-software-development'));
+const lessonCorpus = buildRelevantCorpus(pages, 'Kuse 怎麼用？');
+assert.ok(lessonCorpus.indexOf('Learning/kuse-ai-practical-course') < lessonCorpus.indexOf('AboutMe/03-ai-and-data'), 'Explicit Kuse instructions prioritize course evidence');
 const hrCorpus = buildRelevantCorpus(pages, '人力資源');
-assert.ok(hrCorpus.indexOf('AboutMe/03-ai-and-data') < hrCorpus.indexOf('Projects/Products/kainnne-lumareader'));
+assert.ok(hrCorpus.includes('AboutMe/03-ai-and-data'));
+assert.ok(hrCorpus.includes('AboutMe/02-software-development'));
+assert.ok(!hrCorpus.includes('Projects/Products/kainnne-lumareader') || hrCorpus.indexOf('AboutMe/03-ai-and-data') < hrCorpus.indexOf('Projects/Products/kainnne-lumareader'));
 assert.ok(hrCorpus.length <= 6500);
 assert.ok((hrCorpus.match(/筆記：/g) || []).length <= 4);
 const questionWithHistory = retrievalQuestion('人資呢？', [
@@ -117,6 +133,7 @@ try {
   assert.equal(modelRequests.length, 0, 'Presentation guidance cannot bypass the scope gate or consume model calls');
   const hrResult = await workerHandler.fetch(request('LumaReader 架構與客戶端偏好', '我是人資，Kaine 可以如何協助？'), env, {});
   assert.equal(hrResult.status, 200);
+  assert.match((await hrResult.json()).answer, /ryanzhu@kainnne\.com/, 'A first collaboration answer includes a contact route even when the model omits it');
   assert.equal(modelRequests.length, 1, 'Do not add classification or rewriting calls');
   assert.equal(modelRequests[0].contents.at(-1).parts[0].text, '我是人資，Kaine 可以如何協助？');
   assert.ok(modelRequests[0].systemInstruction.parts[0].text.includes(visitorGuidance('人資')));

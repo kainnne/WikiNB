@@ -39,6 +39,7 @@ import '@fontsource/iansui/latin-400.css';
         </p>
       </div>
 
+      <p class="gemini-unlock-contact"><a href="mailto:ryanzhu@kainnne.com" data-i18n="gemini.contact.label">與 Kaine 討論需求</a></p>
       <form id="gemini-profile-form" class="space-y-4">
         <label class="block text-sm font-semibold text-berry-800">
           <span data-i18n="gemini.name">使用者名稱</span>
@@ -143,6 +144,10 @@ import '@fontsource/iansui/latin-400.css';
           送出
         </button>
       </form>
+      <div class="gemini-contact">
+        <a id="gemini-contact-link" href="mailto:ryanzhu@kainnne.com" data-i18n="gemini.contact.label">與 Kaine 討論需求</a>
+        <div><p data-i18n="gemini.contact.note">可先說明目前的作業與希望改善的地方。</p><span>ryanzhu@kainnne.com</span></div>
+      </div>
     </section>
   </div>
 </BaseLayout>
@@ -528,7 +533,7 @@ import '@fontsource/iansui/latin-400.css';
     group.setAttribute('role', 'group');
     group.dataset.i18nAria = 'gemini.followupTitle';
     group.setAttribute('aria-label', t('gemini.followupTitle'));
-    const choices = topicTurns === 1 && activeTopic ? GEMINI_FOLLOWUPS[activeTopic] : ['examples', 'prepare'];
+    const choices = topicTurns === 1 && activeTopic ? GEMINI_FOLLOWUPS[activeTopic] : ['prepare', 'examples'];
     choices.forEach((choice) => {
       const isTopic = GEMINI_TOPICS.includes(choice);
       const labelKey = isTopic ? `gemini.entry.${choice}.title` : `gemini.next.${choice}.label`;
@@ -1487,6 +1492,37 @@ import '@fontsource/iansui/latin-400.css';
     :global(.gemini-choice) { min-height: 0; padding: 0.85rem 1rem; gap: 0.25rem; }
     :global(.gemini-choice-intro) { margin-bottom: 1rem; }
   }
+
+  .gemini-contact {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 1rem;
+    padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(183, 148, 244, 0.2);
+    background: #faf6ff;
+    color: #685574;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .gemini-contact a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.5rem 0.85rem;
+    border-radius: 0.8rem;
+    background: #735384;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .gemini-contact a:focus-visible, .gemini-unlock-contact a:focus-visible {
+    outline: 2px solid #735384;
+    outline-offset: 3px;
+  }
+  .gemini-contact span { font-size: 0.78rem; }
+  .gemini-unlock-contact { margin: 0 0 1rem; text-align: center; text-decoration: underline; }
 
   .gemini-input-row {
     display: flex;

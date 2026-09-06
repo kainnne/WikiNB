@@ -1,14 +1,14 @@
-// Curated entry points describe visitor goals, not services or availability.
+// Curated entry points connect visitor needs to possible work with Kaine.
 import { isKaineScopeQuestion } from '../../worker/chat-policy.js';
 import { visitorGuidance } from '../../worker/visitor-policy.js';
 
 export const GEMINI_TOPICS = ['about', 'automation', 'knowledge', 'learning', 'website'];
 
 export const GEMINI_FOLLOWUPS = {
-  automation: ['documents', 'repetitive', 'unsure'],
-  knowledge: ['finding', 'teamKnowledge', 'unsure'],
-  learning: ['personalAi', 'teamAi', 'unsure'],
-  website: ['portfolio', 'services', 'unsure'],
+  automation: ['prepare', 'documents', 'repetitive'],
+  knowledge: ['prepare', 'finding', 'teamKnowledge'],
+  learning: ['prepare', 'personalAi', 'teamAi'],
+  website: ['prepare', 'portfolio', 'services'],
   about: ['automation', 'learning', 'website'],
 };
 

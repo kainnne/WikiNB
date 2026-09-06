@@ -1,4 +1,4 @@
-import { buildVisitorSystemPrompt, visitorIntent } from './visitor-policy.js';
+import { buildVisitorSystemPrompt, visitorIntent, shouldOfferContact } from './visitor-policy.js';
 import {
   appendContinuationPrompt,
   continuationPromptMessage,
@@ -576,9 +576,9 @@ const COLLABORATION_SLUG = 'AboutMe/work-with-kaine';
 const BROAD_PROFILE_PRIORITY_SLUGS = [
   PROJECT_OVERVIEW_SLUG,
   'AboutMe/03-ai-and-data',
-  'KCIS/WikiNB-KCIS',
-  'Learning/kuse-ai-practical-course',
   'AboutMe/02-software-development',
+  'AboutMe/04-collaboration-and-workstyle',
+  'KCIS/WikiNB-KCIS',
 ];
 
 const REPRESENTATIVE_PROJECT_SLUGS = [
@@ -684,11 +684,14 @@ function buildRelevantCorpus(pages, question, maxChars = 6500, intent = visitorI
   const projectOverviewRequested = asksForProjectOverview(question);
   const collaborationRequested = asksForCollaboration(question);
 
-  if (intent === 'introduction') {
+  if (intent === 'teaching') {
+    if (/kuse/iu.test(question)) add(findBySlug('Learning/kuse-ai-practical-course'));
+  } else if (intent === 'introduction') {
     BROAD_PROFILE_PRIORITY_SLUGS.forEach((slug) => add(findBySlug(slug)));
   } else if (intent === 'collaboration' && !/網站|網頁|履歷|作品集|website|portfolio/iu.test(question)) {
     add(findBySlug('AboutMe/03-ai-and-data'));
     add(findBySlug('AboutMe/04-collaboration-and-workstyle'));
+    add(findBySlug('AboutMe/02-software-development'));
   } else if (collaborationRequested) {
     add(findBySlug(COLLABORATION_SLUG));
   }
@@ -1052,7 +1055,7 @@ async function chat(request, env) {
   if (finishReason === 'MAX_TOKENS') {
     answer += '\n\n> 回答觸及 Gemini 模型本身的輸出上限；若內容不完整，請指定要接續的部分。';
   }
-  if (/聯絡|委託|洽談|寄信|contact|commission|hire|email/iu.test(message)) {
+  if (shouldOfferContact(message, history)) {
     answer = ensureCollaborationContact(answer, english);
   }
 
