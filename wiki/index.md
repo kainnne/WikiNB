@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-09-03
+> 最後更新：2026-09-06
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -38,6 +38,7 @@
 
 ### AI 與工作流程
 
+- [[Projects/Workflow/daily-project-recall]] — 以每日為入口，讓 AI 協助找回延宕、待決定或可能遺忘的專案
 - [[Projects/Workflow/kainnne-forms-landing]] — 表單服務入口
 
 ### AI／ML 實驗
