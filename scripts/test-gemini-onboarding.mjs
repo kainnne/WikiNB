@@ -23,6 +23,7 @@ assert.match(visitorGuidance('人資'), /合作情境/);
 assert.doesNotMatch(visitorGuidance('請介紹 Kaine'), /LumaReader|GEO|ScopeCut/);
 assert.match(buildVisitorSystemPrompt('測試來源', '人資'), /招募、薪酬或勞動法規的判斷仍由人資專業人員負責/);
 assert.ok(buildVisitorSystemPrompt('', '人資').length < 2500, 'Keep the system rules compact');
+assert.match(buildVisitorSystemPrompt('第一人稱筆記', '人資').split('第一人稱筆記')[1], /以第三人稱介紹 Kaine/, 'Reinforce identity after source text');
 
 for (const locale of ['zh-TW', 'en']) {
   const strings = JSON.parse(await readFile(new URL(`../src/locales/${locale}.json`, import.meta.url), 'utf8'));
