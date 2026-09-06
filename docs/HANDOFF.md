@@ -32,8 +32,10 @@ WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astr
 
 ### 2026-09-06 Gemini 引導入口與回答規則
 
+- 已測試登入後第 5、6、12 則仍可回答、舊續聊端點不寄信、重新載入不恢復門檻，以及每日額度、頻率限制、無效登入仍攔截。
+
 - 後續調整以合作為主要目的：入口與追問先說 Kaine 可負責的規劃、實作、串接與試行，以及可討論的成果。AI 導入不再預設為自學或訓練。第一次合作／能力回答若模型漏寫聯絡方式，Worker 會補上信箱；後續歷史已有信箱時不重複補，明確詢問聯絡方式則仍提供。
-- 聊天底部固定顯示「與 Kaine 討論需求」與公開信箱；驗證畫面也保留直接聯絡連結。使用 `mailto:` 由訪客自行寄信，不自動傳送或附上對話、不需完成驗證、不消耗模型額度。
+- 介面保持精簡：移除底部與驗證畫面的獨立聯絡按鈕，以及「最新訊息」浮動按鈕；聯絡方式由對話提供。保留原有捲動閱讀與新訊息跟隨行為。
 - `visitorIntent()` 增加明確操作提問的 teaching 路徑，Kuse 操作問題優先取課程資料。一般介紹優先取 AI、軟體實作與協作資料，避免總是變成課程；教學可補充實際工作導入的合作方向，不能以推銷取代回答。
 
 - 已部署至 GitHub Pages 與 Cloudflare Worker；正式 `/gemini/` 已確認五個入口與中性開場正常顯示。移除親暱人設，介紹能力時使用「Kaine／他」，並在公開筆記後再次提醒第一人稱來源不是 AI 本人的身分。
@@ -70,9 +72,9 @@ WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astr
 - 這裡的流程是無密碼 Email OTP，不是「密碼之後再驗證一次」的傳統 2FA。Kaine 口語提到「兩步驟驗證」時，若在談訪客 Gemini，通常是指先填資料、再輸入 Email 驗證碼的兩階段流程。
 - Worker 使用簽章訪客 token；D1 保存 OTP、rate limit、每日對話次數與 token 使用量。
 - 對外角色是介紹 Kaine 的中性 AI 助理，不冒充本人或採用親暱人設；公開 WikiNB 是唯一事實邊界，不能生成未公開私人事實或真實承諾。
-- 每個已驗證 Email 依台北日期先開放 5 則訊息；以 Email hash 的 D1 原子計數強制執行。第 5 則回答後前端要求訪客選擇是否續聊。
-- 訪客明確選擇續聊時，Worker 先寄一封不含對話內容的通知信給 Kaine，同一 Email 每日只通知一次；成功後解除則數門檻，但每日 token 總上限仍有效。
-- 明顯與 Kaine 公開內容無關的問題由 Worker 直接回覆固定說明，不載入 Wiki corpus、不呼叫 Gemini，但仍計入當日 5 則訊息。
+- 免登入試問維持 5 則後要求驗證信箱；登入後取消五則續聊門檻，直接使用至每日 token 額度用完。訊息數僅記錄，不設五則上限。
+- 不再寄送續聊通知；訪客首次完成信箱驗證的既有解鎖通知保留。舊 `/continue` API 僅驗證身分並回傳可聊天狀態，不寄信、不讀寫續聊核准資料。回應保留固定 false 的 `continuationRequired`／`conversationEnded` 以相容舊分頁。
+- 明顯與 Kaine 公開內容無關的問題由 Worker 直接回覆固定說明，不載入 Wiki corpus、不呼叫 Gemini，仍記錄使用次數。
 - Worker 只使用 repository 內不含個人資料的通用回答風格；不提供私人 persona secret 入口，也不讀取或上傳私人 persona 原文／摘要。
 - 目前模型由 `wrangler.jsonc` 的 `GEMINI_MODEL` 指定為 `gemini-3.1-flash-lite`。
 - 每次只選最多 4 份相關 Wiki 內容，corpus 約 6,500 字元；送入模型的對話 history 只保留最近 4 則訊息。
@@ -141,7 +143,7 @@ git diff --check
 
 - `scripts/test-nav-auth-visibility.mjs`：公開首頁、權限可見性、品牌介面、登入 i18n。
 - `scripts/test-gemini-budget.mjs`：模型、檢索預算、節流 Prompt、代表專案與錯誤翻譯。
-- `scripts/test-kaine-chat-policy.mjs`：限定聊天 scope、雙語拒絕與 4–5 則設定邊界。
+- `scripts/test-kaine-chat-policy.mjs`：限定聊天 scope、雙語拒絕與合作聯絡政策。
 - `npm run build`：Astro 靜態頁面與 sitemap。
 - `npm run wiki:check`：巢狀 Wiki link 是否有效。
 

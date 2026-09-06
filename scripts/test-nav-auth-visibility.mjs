@@ -237,7 +237,7 @@ assert.match(geminiPage, /#gemini-unlock \.search-input/);
 assert.match(geminiPage, /<section id="gemini-unlock" class="gemini-card hidden /);
 assert.match(geminiPage, /<section id="gemini-chat" class="gemini-window">/);
 assert.match(geminiPage, /id="gemini-fs-toggle"/);
-assert.match(geminiPage, /id="gemini-scroll-latest"/);
+assert.doesNotMatch(geminiPage, /id="gemini-scroll-latest"/);
 assert.match(geminiPage, /function openAnonymousChat\(\)/);
 assert.match(geminiPage, /const ANONYMOUS_QUESTION_LIMIT = 5/);
 assert.match(geminiPage, /if \(!verified && anonymousQuestionsUsed >= ANONYMOUS_QUESTION_LIMIT\)/);
@@ -250,7 +250,7 @@ assert.doesNotMatch(geminiPage, /gemini-welcome-title|gemini-welcome-identity|ge
 assert.match(geminiPage, /classList\.toggle\('gemini-fs-active', fullscreen\)/);
 assert.match(geminiPage, /mobileFullscreenLocked \? true : Boolean\(on\)/);
 assert.match(geminiPage, /fsToggle\?\.toggleAttribute\('hidden', mobileFullscreenLocked\)/);
-assert.match(geminiPage, /!continuationRequired && !mobileFullscreenLocked/);
+assert.match(geminiPage, /!mobileFullscreenLocked/);
 assert.match(geminiPage, /body\.gemini-fs-active #site-header/);
 assert.match(geminiPage, /@media \(max-width: 640px\), \(hover: none\) and \(pointer: coarse\)[\s\S]*?\.gemini-fs-btn \{[\s\S]*?display: none;/);
 assert.match(geminiPage, /overscroll-behavior-y: contain/);

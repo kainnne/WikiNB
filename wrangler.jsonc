@@ -15,7 +15,6 @@
     "EMAIL_REPLY_TO": "ryanzhu@kainnne.com",
     "WIKI_SEARCH_URL": "https://wikinb.kainnne.com/search/",
     "GEMINI_MODEL": "gemini-3.1-flash-lite",
-    "MAX_CHAT_TURNS": "5",
     "DAILY_TOKEN_LIMIT": "60000"
   },
   "d1_databases": [

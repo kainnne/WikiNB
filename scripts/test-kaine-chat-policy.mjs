@@ -1,11 +1,8 @@
 import assert from 'node:assert/strict';
 
 import {
-  appendContinuationPrompt,
-  continuationPromptMessage,
   ensureCollaborationContact,
   isKaineScopeQuestion,
-  maxChatTurns,
   outOfScopeMessage,
   prefersEnglish,
 } from '../worker/chat-policy.js';
@@ -62,9 +59,6 @@ assert.equal(
 
 assert.equal(prefersEnglish('Tell me about Kaine'), true);
 assert.equal(prefersEnglish('請介紹 Kaine'), false);
-assert.equal(maxChatTurns({ MAX_CHAT_TURNS: '5' }), 5);
-assert.equal(maxChatTurns({ MAX_CHAT_TURNS: '99' }), 5);
-assert.equal(maxChatTurns({ MAX_CHAT_TURNS: '1' }), 4);
 assert.equal(
   outOfScopeMessage(false),
   '為了節省 Kaine 的免費 Gemini API 額度，我可能無法回答與主要任務無關的請求 🙏',
@@ -73,11 +67,6 @@ assert.equal(
   outOfScopeMessage(true),
   "To help conserve Kaine's free Gemini API quota, I may not be able to answer requests unrelated to this chat's main purpose. 🙏",
 );
-assert.match(continuationPromptMessage(5, false), /前 5 則訊息/);
-assert.match(continuationPromptMessage(5, false), /寄一封通知信給 Kaine/);
-assert.match(continuationPromptMessage(5, true), /first 5 messages/i);
-assert.match(continuationPromptMessage(5, true), /email Kaine/i);
-assert.match(appendContinuationPrompt('回答', 5, false), /^回答[\s\S]*前 5 則訊息/);
 assert.equal(
   ensureCollaborationContact('這是一段依公開資料生成的合作回答。', false),
   '這是一段依公開資料生成的合作回答。\n\n如果想和 Kaine 進一步討論這個專案，可以直接寄信到 ryanzhu@kainnne.com。',
@@ -91,4 +80,4 @@ assert.match(
   /email ryanzhu@kainnne\.com\.$/,
 );
 
-console.log('OK: Kaine 限定聊天範圍與 5 則續聊確認政策');
+console.log('OK: Kaine 限定聊天範圍與合作聯絡政策');

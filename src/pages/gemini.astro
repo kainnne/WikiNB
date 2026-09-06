@@ -39,7 +39,6 @@ import '@fontsource/iansui/latin-400.css';
         </p>
       </div>
 
-      <p class="gemini-unlock-contact"><a href="mailto:ryanzhu@kainnne.com" data-i18n="gemini.contact.label">與 Kaine 討論需求</a></p>
       <form id="gemini-profile-form" class="space-y-4">
         <label class="block text-sm font-semibold text-berry-800">
           <span data-i18n="gemini.name">使用者名稱</span>
@@ -125,9 +124,6 @@ import '@fontsource/iansui/latin-400.css';
         </button>
       </div>
       <div id="gemini-output" class="gemini-output" aria-live="polite"></div>
-      <button id="gemini-scroll-latest" type="button" class="gemini-scroll-latest hidden" data-i18n="gemini.latest">
-        ↓ 最新訊息
-      </button>
       <form id="gemini-chat-form" class="gemini-input-row">
         <input
           id="gemini-input"
@@ -144,10 +140,6 @@ import '@fontsource/iansui/latin-400.css';
           送出
         </button>
       </form>
-      <div class="gemini-contact">
-        <a id="gemini-contact-link" href="mailto:ryanzhu@kainnne.com" data-i18n="gemini.contact.label">與 Kaine 討論需求</a>
-        <div><p data-i18n="gemini.contact.note">可先說明目前的作業與希望改善的地方。</p><span>ryanzhu@kainnne.com</span></div>
-      </div>
     </section>
   </div>
 </BaseLayout>
@@ -159,7 +151,6 @@ import '@fontsource/iansui/latin-400.css';
   import {
     askGuestGemini,
     askGuestGeminiAnonymous,
-    continueGuestGemini,
     fetchGuestAiMe,
     getGuestAiSession,
     requestGuestAiCode,
@@ -187,7 +178,6 @@ import '@fontsource/iansui/latin-400.css';
   const chatSend = document.getElementById('gemini-chat-send');
   const fsToggle = document.getElementById('gemini-fs-toggle');
   const fsIcon = fsToggle?.querySelector('.gemini-fs-icon');
-  const scrollLatestBtn = document.getElementById('gemini-scroll-latest');
 
   let pendingEmail = '';
   let running = false;
@@ -196,9 +186,6 @@ import '@fontsource/iansui/latin-400.css';
   let fullscreen = false;
   let mobileFullscreenLocked = false;
   let followLatest = true;
-  let submittedTurns = 0;
-  let continuationRequired = false;
-  let continuationDismissed = false;
   const ANONYMOUS_QUESTION_LIMIT = 5;
   let anonymousQuestionsUsed = 0;
   let pendingPostAuthMessage = '';
@@ -209,32 +196,17 @@ import '@fontsource/iansui/latin-400.css';
   let history = [];
 
   function syncConversationControls() {
-    const disabled = running || continuationRequired || continuationDismissed;
     output?.querySelectorAll('.gemini-choice, .gemini-followup, .gemini-change-topic').forEach((button) => {
-      button.disabled = disabled;
+      button.disabled = running;
     });
     if (chatInput) {
-      chatInput.disabled = disabled;
-      const placeholderKey = continuationDismissed
-        ? 'gemini.endedPlaceholder'
-        : continuationRequired
-          ? 'gemini.continuePlaceholder'
-          : 'gemini.placeholder';
-      chatInput.setAttribute(
-        'data-i18n-placeholder',
-        placeholderKey,
-      );
-      chatInput.placeholder = t(placeholderKey);
+      chatInput.disabled = running;
+      chatInput.setAttribute('data-i18n-placeholder', 'gemini.placeholder');
+      chatInput.placeholder = t('gemini.placeholder');
     }
     if (chatSend) {
-      chatSend.disabled = disabled;
-      const key = continuationDismissed
-        ? 'gemini.ended'
-        : continuationRequired
-          ? 'gemini.continueRequired'
-          : running
-            ? 'gemini.sending'
-            : 'gemini.send';
+      chatSend.disabled = running;
+      const key = running ? 'gemini.sending' : 'gemini.send';
       chatSend.setAttribute('data-i18n', key);
       chatSend.textContent = t(key);
     }
@@ -273,24 +245,17 @@ import '@fontsource/iansui/latin-400.css';
     return output.scrollHeight - output.scrollTop - output.clientHeight < 96;
   }
 
-  function syncLatestButton() {
-    scrollLatestBtn?.classList.toggle('hidden', followLatest);
-  }
-
   function scrollToLatest({ force = false, behavior = 'smooth' } = {}) {
     if (!output || (!force && !followLatest)) return;
     window.requestAnimationFrame(() => {
       output.scrollTo({ top: output.scrollHeight, behavior });
       followLatest = true;
-      syncLatestButton();
     });
   }
 
   output?.addEventListener('scroll', () => {
     followLatest = isOutputNearBottom();
-    syncLatestButton();
   }, { passive: true });
-  scrollLatestBtn?.addEventListener('click', () => scrollToLatest({ force: true }));
 
   if (unlock && window.matchMedia('(pointer: fine)').matches) {
     unlock.addEventListener(
@@ -380,77 +345,7 @@ import '@fontsource/iansui/latin-400.css';
     line.appendChild(bubble);
     output?.appendChild(line);
     if (shouldFollow) scrollToLatest({ force: true });
-    else syncLatestButton();
     return bubble;
-  }
-
-  function rememberContinuationState(approved) {
-    const session = getGuestAiSession();
-    if (!session) return;
-    setGuestAiSession({
-      ...session,
-      continuationApproved: approved,
-      continuationRequired: !approved,
-      conversationEnded: !approved,
-    });
-  }
-
-  function appendContinuationActions() {
-    if (!output || output.querySelector('.gemini-continuation-actions')) return;
-    const line = document.createElement('div');
-    line.className = 'gemini-line gemini-line-system gemini-continuation-actions';
-    const actions = document.createElement('div');
-    actions.className = 'grid gap-2 sm:grid-cols-2';
-
-    const continueButton = document.createElement('button');
-    continueButton.type = 'button';
-    continueButton.className = 'gemini-example';
-    continueButton.setAttribute('data-i18n', 'gemini.continueAndNotify');
-    continueButton.textContent = t('gemini.continueAndNotify');
-
-    const stopButton = document.createElement('button');
-    stopButton.type = 'button';
-    stopButton.className = 'gemini-example';
-    stopButton.setAttribute('data-i18n', 'gemini.stopHere');
-    stopButton.textContent = t('gemini.stopHere');
-
-    continueButton.addEventListener('click', async () => {
-      if (running) return;
-      running = true;
-      continueButton.disabled = true;
-      stopButton.disabled = true;
-      continueButton.textContent = t('gemini.notifying');
-      try {
-        const result = await continueGuestGemini();
-        continuationRequired = false;
-        continuationDismissed = false;
-        rememberContinuationState(Boolean(result.continuationApproved));
-        line.remove();
-        appendMessage(t('gemini.continueApproved'), 'system');
-      } catch (error) {
-        const described = describeGuestAiMessage(error.message || '', 'gemini.continueError');
-        appendMessage(t(described.key, described.vars), 'error');
-        continueButton.disabled = false;
-        stopButton.disabled = false;
-        continueButton.textContent = t('gemini.continueAndNotify');
-      } finally {
-        running = false;
-        syncConversationControls();
-        if (!continuationRequired) chatInput?.focus();
-      }
-    });
-
-    stopButton.addEventListener('click', () => {
-      line.remove();
-      continuationDismissed = true;
-      appendMessage(t('gemini.stopConfirmed'), 'system');
-      syncConversationControls();
-    });
-
-    actions.append(continueButton, stopButton);
-    line.appendChild(actions);
-    output.appendChild(line);
-    scrollToLatest({ force: true });
   }
 
   function startResponseTimer() {
@@ -478,7 +373,7 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   function submitChoice(questionKey) {
-    if (!chatInput || running || continuationRequired || continuationDismissed) return;
+    if (!chatInput || running) return;
     selectedQuestion = t(questionKey);
     chatInput.value = selectedQuestion;
     chatForm?.requestSubmit();
@@ -513,7 +408,7 @@ import '@fontsource/iansui/latin-400.css';
         button.appendChild(text);
       }
       button.addEventListener('click', () => {
-        if (running || continuationRequired || continuationDismissed) return;
+        if (running) return;
         activeTopic = topic;
         topicTurns = 0;
         submitChoice(`gemini.entry.${topic}.question`);
@@ -526,7 +421,7 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   function appendFollowups() {
-    if (!output || continuationRequired || continuationDismissed) return;
+    if (!output) return;
     output.querySelectorAll('.gemini-next').forEach((node) => node.remove());
     const group = document.createElement('div');
     group.className = 'gemini-next';
@@ -544,7 +439,7 @@ import '@fontsource/iansui/latin-400.css';
       button.dataset.i18n = labelKey;
       button.textContent = t(labelKey);
       button.addEventListener('click', () => {
-        if (running || continuationRequired || continuationDismissed) return;
+        if (running) return;
         if (isTopic) { activeTopic = choice; topicTurns = 0; }
         submitChoice(questionKey);
       });
@@ -556,7 +451,7 @@ import '@fontsource/iansui/latin-400.css';
     change.dataset.i18n = 'gemini.changeTopic';
     change.textContent = t('gemini.changeTopic');
     change.addEventListener('click', () => {
-      if (running || continuationRequired || continuationDismissed) return;
+      if (running) return;
       appendTopicPicker();
       output.querySelector('.gemini-choice')?.focus({ preventScroll: true });
       scrollToLatest({ force: true });
@@ -574,22 +469,12 @@ import '@fontsource/iansui/latin-400.css';
       identity.hidden = false;
       identity.textContent = `${session.name} · ${session.email}`;
     }
-    const serverTurns = Math.max(0, Number(session.chatTurnsUsed || 0));
-    submittedTurns = preserveConversation ? Math.max(submittedTurns, serverTurns) : serverTurns;
-    continuationRequired = Boolean(
-      session.continuationRequired ?? session.conversationEnded,
-    );
-    continuationDismissed = false;
     if (!preserveConversation) {
       history = [];
       appendWelcome();
     }
-    if (continuationRequired) {
-      appendMessage(t('gemini.limitMessage'), 'system');
-      appendContinuationActions();
-    }
     syncConversationControls();
-    if (!continuationRequired && !mobileFullscreenLocked && preserveConversation) chatInput?.focus();
+    if (!mobileFullscreenLocked && preserveConversation) chatInput?.focus();
   }
 
   function openAnonymousChat() {
@@ -601,9 +486,6 @@ import '@fontsource/iansui/latin-400.css';
       identity.textContent = '';
       identity.hidden = true;
     }
-    submittedTurns = 0;
-    continuationRequired = false;
-    continuationDismissed = false;
     anonymousQuestionsUsed = 0;
     history = [];
     appendWelcome();
@@ -653,11 +535,6 @@ import '@fontsource/iansui/latin-400.css';
         name: result.name,
         email: result.email,
         expiresAt: result.expiresAt,
-        chatTurnsUsed: result.chatTurnsUsed,
-        chatTurnLimit: result.chatTurnLimit,
-        continuationApproved: result.continuationApproved,
-        continuationRequired: result.continuationRequired,
-        conversationEnded: result.conversationEnded,
       };
       setGuestAiSession(session);
       const shouldResume = anonymousQuestionsUsed > 0;
@@ -683,8 +560,7 @@ import '@fontsource/iansui/latin-400.css';
 
   chatForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (running || continuationRequired) return;
-    if (continuationDismissed) return;
+    if (running) return;
     const message = String(chatInput?.value || '').trim();
     if (!message) return;
 
@@ -717,7 +593,6 @@ import '@fontsource/iansui/latin-400.css';
         : await askGuestGeminiAnonymous({ message: requestMessage, history, originalMessage: message });
       responseTimer.stop();
       appendMessage(result.answer, 'assistant');
-      submittedTurns = Math.max(submittedTurns + 1, Number(result.chatTurnsUsed || 0));
       if (!verified) anonymousQuestionsUsed += 1;
       if (result.kind === 'answer') {
         selectedQuestion = '';
@@ -726,15 +601,7 @@ import '@fontsource/iansui/latin-400.css';
         history.push({ role: 'assistant', content: result.answer });
         history = history.slice(-4);
       }
-      continuationRequired = Boolean(
-        result.continuationRequired ?? result.conversationEnded,
-      );
-      if (continuationRequired) {
-        continuationDismissed = false;
-        appendContinuationActions();
-      } else if (result.kind === 'answer') {
-        appendFollowups();
-      }
+      if (result.kind === 'answer') appendFollowups();
     } catch (error) {
       responseTimer.stop();
       const raw = error.message || '';
@@ -755,7 +622,7 @@ import '@fontsource/iansui/latin-400.css';
     } finally {
       running = false;
       syncConversationControls();
-      if (!continuationRequired && !mobileFullscreenLocked && !chat?.classList.contains('hidden')) chatInput?.focus();
+      if (!mobileFullscreenLocked && !chat?.classList.contains('hidden')) chatInput?.focus();
     }
   });
 
@@ -1357,25 +1224,6 @@ import '@fontsource/iansui/latin-400.css';
     font-size: 0.92em;
   }
 
-  .gemini-scroll-latest {
-    position: absolute;
-    right: 1rem;
-    bottom: 5.2rem;
-    z-index: 4;
-    border: 1px solid rgba(255, 255, 255, 0.86);
-    border-radius: 999px;
-    padding: 0.45rem 0.8rem;
-    background: rgba(255, 250, 253, 0.92);
-    color: #633c55;
-    box-shadow: 0 10px 28px rgba(91, 70, 135, 0.16);
-    font-size: 0.75rem;
-    font-weight: 800;
-    backdrop-filter: blur(18px);
-  }
-
-  .gemini-scroll-latest.hidden {
-    display: none;
-  }
 
   :global(.gemini-bubble.wiki-content th),
   :global(.gemini-bubble.wiki-content td) {
@@ -1492,37 +1340,6 @@ import '@fontsource/iansui/latin-400.css';
     :global(.gemini-choice) { min-height: 0; padding: 0.85rem 1rem; gap: 0.25rem; }
     :global(.gemini-choice-intro) { margin-bottom: 1rem; }
   }
-
-  .gemini-contact {
-    display: flex;
-    flex: 0 0 auto;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.45rem 1rem;
-    padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom));
-    border-top: 1px solid rgba(183, 148, 244, 0.2);
-    background: #faf6ff;
-    color: #685574;
-    font-size: 0.82rem;
-    line-height: 1.5;
-  }
-  .gemini-contact a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0.5rem 0.85rem;
-    border-radius: 0.8rem;
-    background: #735384;
-    color: #fff;
-    font-weight: 600;
-    text-decoration: none;
-  }
-  .gemini-contact a:focus-visible, .gemini-unlock-contact a:focus-visible {
-    outline: 2px solid #735384;
-    outline-offset: 3px;
-  }
-  .gemini-contact span { font-size: 0.78rem; }
-  .gemini-unlock-contact { margin: 0 0 1rem; text-align: center; text-decoration: underline; }
 
   .gemini-input-row {
     display: flex;

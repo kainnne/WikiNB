@@ -1,5 +1,3 @@
-export const DEFAULT_MAX_CHAT_TURNS = 5;
-
 const KNOWN_KAINE_TOPICS =
   /\b(?:kaine|kainnne|wikinb|lumareader|scopecut|codexrules|agents\s+cli|kainnne\s+geo|geo\s+automation|kcis|kuse)\b|朱璽|康橋|AI\s*(?:導入|教育訓練)/iu;
 
@@ -61,13 +59,6 @@ export function prefersEnglish(message, history = []) {
   return /[a-z]/i.test(combined);
 }
 
-export function maxChatTurns(env = {}) {
-  const configured = Number(env.MAX_CHAT_TURNS || DEFAULT_MAX_CHAT_TURNS);
-  return Number.isFinite(configured)
-    ? Math.min(5, Math.max(4, Math.floor(configured)))
-    : DEFAULT_MAX_CHAT_TURNS;
-}
-
 export function outOfScopeMessage(english = false) {
   return english
     ? "To help conserve Kaine's free Gemini API quota, I may not be able to answer requests unrelated to this chat's main purpose. 🙏"
@@ -81,14 +72,4 @@ export function ensureCollaborationContact(answer, english = false) {
     ? 'To discuss the project with Kaine, email ryanzhu@kainnne.com.'
     : '如果想和 Kaine 進一步討論這個專案，可以直接寄信到 ryanzhu@kainnne.com。';
   return `${text}\n\n${contact}`.trim();
-}
-
-export function continuationPromptMessage(limit, english = false) {
-  return english
-    ? `You have used the first ${limit} messages. Would you like to continue? If you choose to continue, the system will email Kaine to let him know that you requested more chat time. The email will not include your conversation.`
-    : `你已使用前 ${limit} 則訊息。要繼續聊嗎？如果你選擇繼續，系統會寄一封通知信給 Kaine，讓他知道你希望延長聊天；信中不會附上對話內容。`;
-}
-
-export function appendContinuationPrompt(answer, limit, english = false) {
-  return `${String(answer || '').trim()}\n\n---\n${continuationPromptMessage(limit, english)}`.trim();
 }

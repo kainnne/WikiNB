@@ -76,8 +76,8 @@ const workerSource = await readFile(new URL('../worker/index.js', import.meta.ur
 const testModule = workerSource
   .replace("'./chat-policy.js'", JSON.stringify(new URL('../worker/chat-policy.js', import.meta.url).href))
   .replace("'./visitor-policy.js'", JSON.stringify(new URL('../worker/visitor-policy.js', import.meta.url).href))
-  + '\nexport { buildRelevantCorpus, retrievalQuestion };';
-const { buildRelevantCorpus, retrievalQuestion } = await import(`data:text/javascript;base64,${Buffer.from(testModule).toString('base64')}`);
+  + '\nexport { buildRelevantCorpus, retrievalQuestion, issueGuestToken };';
+const { buildRelevantCorpus, retrievalQuestion, issueGuestToken } = await import(`data:text/javascript;base64,${Buffer.from(testModule).toString('base64')}`);
 const pages = [
   ['AboutMe/work-with-kaine', '網站服務與工作室規劃'],
   ['Projects/Products/kainnne-lumareader', '閱讀器技術'],
@@ -138,6 +138,65 @@ try {
   assert.equal(modelRequests[0].contents.at(-1).parts[0].text, '我是人資，Kaine 可以如何協助？');
   assert.ok(modelRequests[0].systemInstruction.parts[0].text.includes(visitorGuidance('人資')));
   assert.equal(modelRequests[0].generationConfig.thinkingConfig.thinkingLevel, 'minimal');
+
+  // Exercise real signed-session handling across the retired five-turn gate.
+  let turns = 4;
+  let tokens = 0;
+  let burstBlocked = false;
+  const verifiedEnv = {
+    GEMINI_API_KEY: 'test-only-key', TOKEN_SECRET: 'test-only-signing-secret', DAILY_TOKEN_LIMIT: '1000',
+    DB: { prepare(sql) { return {
+      bind(...values) { this.values = values; return this; },
+      async first() {
+        assert.ok(!String(this.values?.[0]).startsWith('chat-continuation:'), 'No continuation approval records are read');
+        if (sql.includes('FROM daily_usage')) return { count: turns, token_count: tokens };
+        if (String(this.values?.[0]).startsWith('chat-turns:')) {
+          if (sql.includes('RETURNING count')) return { count: ++turns };
+          return { count: turns };
+        }
+        if (burstBlocked && String(this.values?.[0]).startsWith('chat:')) return { count: 1, window_start: Date.now() };
+        return null;
+      },
+      async run() {
+        if (sql.includes('INSERT INTO daily_usage')) tokens += Number(this.values[2] || 0);
+        return { success: true };
+      },
+    }; } },
+  };
+  const token = await issueGuestToken({ email: 'visitor@example.com', name: 'Test visitor' }, verifiedEnv);
+  const signedRequest = (path = 'chat', method = 'POST', bearer = token) => new Request(`https://local.test/api/guest-ai/${path}`, {
+    method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${bearer}` },
+    ...(method === 'POST' ? { body: JSON.stringify({ message: 'Kaine 可以協助哪些工作？', history: [] }) } : {}),
+  });
+  for (const prior of [4, 5, 11]) {
+    turns = prior;
+    const reply = await workerHandler.fetch(signedRequest(), verifiedEnv, {});
+    assert.equal(reply.status, 200);
+    const data = await reply.json();
+    assert.equal(data.kind, 'answer');
+    assert.equal(data.chatTurnsUsed, prior + 1);
+    assert.equal(data.continuationRequired, false);
+    assert.equal(data.conversationEnded, false);
+    assert.equal(data.chatTurnLimit, null);
+    assert.doesNotMatch(data.answer, /是否續聊|繼續聊天並通知/);
+  }
+  const callsBeforeChecks = modelRequests.length;
+  const meResponse = await workerHandler.fetch(signedRequest('me', 'GET'), verifiedEnv, {});
+  assert.equal((await meResponse.json()).continuationRequired, false, 'Reopening an older session cannot restore the gate');
+  const legacyResponse = await workerHandler.fetch(signedRequest('continue'), verifiedEnv, {});
+  const legacy = await legacyResponse.json();
+  assert.equal(legacy.continuationRequired, false);
+  assert.equal(legacy.notificationSent, false, 'Older tabs never send a continuation email');
+  assert.equal((await workerHandler.fetch(signedRequest('continue', 'POST', 'invalid'), verifiedEnv, {})).status, 401);
+  tokens = 1000;
+  const exhausted = await workerHandler.fetch(signedRequest(), verifiedEnv, {});
+  assert.equal(exhausted.status, 429);
+  assert.match((await exhausted.json()).error, /共享額度已達上限/);
+  tokens = 0; burstBlocked = true;
+  assert.equal((await workerHandler.fetch(signedRequest(), verifiedEnv, {})).status, 429, 'Burst protection remains active');
+  assert.equal((await workerHandler.fetch(signedRequest('chat', 'POST', 'invalid'), verifiedEnv, {})).status, 401);
+  assert.equal(modelRequests.length, callsBeforeChecks, 'Quota, authentication and session refresh never call the model');
+
 } finally {
   globalThis.fetch = originalFetch;
   if (originalCaches === undefined) delete globalThis.caches;

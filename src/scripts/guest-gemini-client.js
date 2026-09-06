@@ -21,9 +21,6 @@ const GUEST_AI_MESSAGE_KEYS = new Map([
   ['請稍等幾秒再送出下一個問題', 'gemini.errorQuestionRate'],
   ['今天的訪客 AI 共享額度已達上限，請明天再來', 'gemini.errorDailyChatLimit'],
   ['這個網路的免登入提問次數已用完，請驗證信箱後繼續', 'gemini.anonymousLimit'],
-  ['尚未達到續聊確認門檻', 'gemini.continueNotReady'],
-  ['續聊通知正在寄送，請稍候再試', 'gemini.continuePending'],
-  ['無法寄送續聊通知，請稍後再試', 'gemini.continueError'],
   ['Gemini API 設定目前無法使用，已停止這次請求', 'gemini.errorApiConfig'],
   ['Gemini 沒有產生回答，請換個方式再問一次', 'gemini.errorEmptyAnswer'],
 ]);
@@ -146,15 +143,4 @@ export function askGuestGeminiAnonymous({ message, history, originalMessage = me
     method: 'POST',
     body: JSON.stringify({ message, history, originalMessage, anonymous: true }),
   });
-}
-
-export function continueGuestGemini() {
-  return guestAiFetch(
-    '/api/guest-ai/continue',
-    {
-      method: 'POST',
-      body: JSON.stringify({}),
-    },
-    true,
-  );
 }

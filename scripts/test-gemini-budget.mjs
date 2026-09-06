@@ -90,11 +90,7 @@ assert.match(wrangler, /"EMAIL_FROM": "Kainnne × Gemini <login@auth\.kainnne\.c
 assert.doesNotMatch(worker, /cloudflare-smtp|env\.SMTP_/);
 assert.doesNotMatch(wrangler, /SMTP_|chaos60649@gmail\.com/);
 assert.match(worker, /systemPrompt\(corpus, expandedDetailRequested, message\)/);
-assert.match(worker, /reserveChatTurn\(env, session\.email, turnLimit\)/);
 assert.match(worker, /incrementChatTurn\(env, session\.email\)/);
-assert.match(worker, /chat-continuation:/);
-assert.match(worker, /Kainnne x Gemini 訪客要求續聊/);
-assert.match(worker, /通知信不包含訪客的聊天內容/);
 assert.match(worker, /url\.pathname === '\/api\/guest-ai\/continue'/);
 assert.match(worker, /ON CONFLICT\(rate_key\) DO UPDATE SET count = rate_limits\.count \+ 1/);
 assert.match(worker, /kind: 'out_of_scope'/);
@@ -105,7 +101,6 @@ assert.match(worker, /const history = Array\.isArray\(body\.history\) \? body\.h
 assert.match(worker, /ANONYMOUS_NETWORK_DAILY_LIMIT/);
 assert.match(worker, /ANONYMOUS_GLOBAL_DAILY_LIMIT/);
 assert.match(worker, /requiresVerification: anonymous/);
-assert.match(chatPolicy, /DEFAULT_MAX_CHAT_TURNS = 5/);
 assert.match(chatPolicy, /isKaineScopeQuestion/);
 assert.match(chatPolicy, /outOfScopeMessage/);
 assert.match(chatPolicy, /PROJECT_DISCUSSION/);
@@ -115,7 +110,6 @@ assert.match(guestClient, /askGuestGeminiAnonymous\(\{ message, history, origina
 assert.match(guestClient, /JSON\.stringify\(\{ message, history, originalMessage, anonymous: true \}\)/);
 assert.match(page, /askGuestGeminiAnonymous\(\{ message: requestMessage, history, originalMessage: message \}\)/);
 assert.match(worker, /不要因為問題沒有命中特定專案名稱或固定關鍵字就拒答/);
-assert.match(wrangler, /"MAX_CHAT_TURNS": "5"/);
 
 const retiredSourceIds = new Set([
   'musicmatch',
@@ -145,11 +139,8 @@ assert.match(workWithKaine, /正式 MVP 仍在規劃與驗證階段/);
 assert.match(workWithKaine, /ryanzhu@kainnne\.com/);
 
 assert.match(page, /maxlength="1200"/);
-assert.match(page, /let submittedTurns = 0/);
-assert.match(page, /let continuationRequired = false/);
 assert.match(page, /const ANONYMOUS_QUESTION_LIMIT = 5/);
 assert.match(page, /let anonymousQuestionsUsed = 0/);
-assert.match(page, /if \(running \|\| continuationRequired\) return/);
 assert.match(
   page,
   /if \(!verified && anonymousQuestionsUsed >= ANONYMOUS_QUESTION_LIMIT\)[\s\S]*?openUnlock\(message\)/,
@@ -159,16 +150,13 @@ assert.match(page, /function openAnonymousChat\(\)/);
 assert.match(page, /openChat\(session, \{ preserveConversation: shouldResume \}\)/);
 assert.match(page, /requestAnimationFrame\(\(\) => chatForm\?\.requestSubmit\(\)\)/);
 assert.match(page, /result\.kind === 'answer'/);
-assert.match(page, /gemini\.continuePlaceholder/);
-assert.match(page, /appendContinuationActions/);
-assert.match(page, /continueGuestGemini\(\)/);
 assert.match(page, /GEMINI_TOPICS\.forEach/);
 assert.match(page, /submitChoice\(`gemini\.entry\.\$\{topic\}\.question`\)/);
 assert.match(page, /prepareVisitorRequest\(message, t\('gemini\.plainPreference'\), selectedQuestion, history, getLocale\(\) === 'en'\)/);
 assert.doesNotMatch(page, /gemini\.unlockHint|gemini\.home/);
 assert.doesNotMatch(page, /gemini-quota|remainingPercent|gemini\.remaining/);
 assert.match(guestClient, /\['請等待 1 分鐘後再重新寄送', 'gemini\.errorResendWait'\]/);
-assert.match(guestClient, /'\/api\/guest-ai\/continue'/);
+assert.doesNotMatch(guestClient, /'\/api\/guest-ai\/continue'/);
 assert.match(guestClient, /function askGuestGeminiAnonymous/);
 assert.match(guestClient, /anonymous: true/);
 assert.match(guestClient, /function describeGuestAiMessage/);
@@ -183,18 +171,12 @@ assert.equal(zh['gemini.unlockTitle'], '解鎖訪客 AI');
 assert.equal('gemini.anonymousIdentity' in zh, false);
 assert.doesNotMatch(zh['gemini.welcomeMessage'], /第一個問題|第一題|免驗證/);
 assert.doesNotMatch(zh['gemini.welcomeMessage'], /數位助理|分身/);
-assert.match(zh['gemini.limitMessage'], /前 5 則訊息/);
-assert.match(zh['gemini.limitMessage'], /寄一封通知信給 Kaine/);
-assert.equal(zh['gemini.continueAndNotify'], '繼續聊天並通知 Kaine');
 assert.equal('gemini.connected' in en, false);
 assert.match(en['gemini.welcomeMessage'], /Kaine/);
 assert.equal(en['gemini.unlockTitle'], 'Unlock guest AI');
 assert.equal('gemini.anonymousIdentity' in en, false);
 assert.doesNotMatch(en['gemini.welcomeMessage'], /first question|no sign-in|without verification/i);
 assert.doesNotMatch(en['gemini.welcomeMessage'], /digital assistant|digital twin/i);
-assert.match(en['gemini.limitMessage'], /first 5 messages/i);
-assert.match(en['gemini.limitMessage'], /email Kaine/i);
-assert.equal(en['gemini.continueAndNotify'], 'Continue and notify Kaine');
 assert.equal('gemini.unlockHint' in zh, false);
 assert.equal('gemini.unlockHint' in en, false);
 assert.equal('gemini.home' in zh, false);
@@ -203,3 +185,7 @@ assert.equal('gemini.remaining' in zh, false);
 assert.equal('gemini.remaining' in en, false);
 
 console.log('OK: Kaine 限定聊天維持免費額度節流與不顯示百分比');
+
+assert.doesNotMatch(worker, /reserveChatTurn|chat-continuation:|訪客要求續聊|appendContinuationPrompt/);
+assert.doesNotMatch(page, /continuationRequired|continueGuestGemini|gemini-scroll-latest|gemini-contact|gemini-unlock-contact/);
+assert.doesNotMatch(wrangler, /MAX_CHAT_TURNS/);
