@@ -1,9 +1,11 @@
+import { findDiscoveryTopic } from './discovery-topics.js';
 // Small, deterministic routing: no additional classifier/model request.
 const PROJECT = /(?:LumaReader|ScopeCut|WikiNB|CodexRules|\bGEO\b|agents\s+CLI)|(?:專案|作品).{0,12}(?:技術|架構|怎麼做|如何做|清單|總覽)|(?:所有|全部|代表).{0,8}(?:作品|專案)|(?:project|portfolio).{0,12}(?:architecture|implementation|list|overview)|representative project/iu;
 const INTRODUCTION = /(?:認識|介紹|了解).{0,20}(?:Kaine|Kainnne|朱璽)|(?:Kaine|Kainnne|朱璽).{0,12}(?:是誰|專長|背景|能力)|你是誰|你會什麼|(?:介紹|了解).{0,6}(?:你|他)(?:自己|的專長|的背景)?|who (?:is kaine|are you)|(?:introduce|know|about).{0,12}kaine/iu;
 
 export function visitorIntent(message) {
   const text = String(message || '').normalize('NFKC');
+  if (findDiscoveryTopic(text)) return 'project';
   if (/(?:教我|怎麼(?:用|使用|操作|設定)|如何(?:使用|操作|設定)|使用教學|操作步驟|teach me|how (?:do i|to) (?:use|configure|set up))/iu.test(text)) return 'teaching';
   if (PROJECT.test(text)) return 'project';
   if (INTRODUCTION.test(text)) return 'introduction';

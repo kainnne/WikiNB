@@ -1,3 +1,4 @@
+import { DISCOVERY_TOPICS, drawDiscoveryTopics, discoveryQuestion } from '../worker/discovery-topics.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { GEMINI_TOPICS, GEMINI_FOLLOWUPS, withPlainLanguagePreference, prepareVisitorRequest } from '../src/scripts/gemini-onboarding.js';
@@ -75,9 +76,30 @@ for (const locale of ['zh-TW', 'en']) {
 const workerSource = await readFile(new URL('../worker/index.js', import.meta.url), 'utf8');
 const testModule = workerSource
   .replace("'./chat-policy.js'", JSON.stringify(new URL('../worker/chat-policy.js', import.meta.url).href))
+  .replace("'./discovery-topics.js'", JSON.stringify(new URL('../worker/discovery-topics.js', import.meta.url).href))
   .replace("'./visitor-policy.js'", JSON.stringify(new URL('../worker/visitor-policy.js', import.meta.url).href))
   + '\nexport { buildRelevantCorpus, retrievalQuestion, issueGuestToken };';
 const { buildRelevantCorpus, retrievalQuestion, issueGuestToken } = await import(`data:text/javascript;base64,${Buffer.from(testModule).toString('base64')}`);
+const firstDraw = drawDiscoveryTopics([], () => 0.4);
+const secondDraw = drawDiscoveryTopics(firstDraw.map((topic) => topic.id), () => 0.7);
+assert.equal(firstDraw.length, 5);
+assert.equal(new Set(firstDraw.map((topic) => topic.id)).size, 5);
+assert.ok(secondDraw.every((topic) => !firstDraw.some((old) => old.id === topic.id)));
+for (const topic of DISCOVERY_TOPICS) {
+  const source = await readFile(new URL(`../wiki/${topic.slug}.md`, import.meta.url), 'utf8');
+  assert.ok(source.length > 0);
+  for (const english of [false, true]) {
+    const question = discoveryQuestion(topic, english);
+    assert.ok(question.length <= 1200);
+    assert.equal(visitorIntent(question), 'project');
+    assert.equal(isKaineScopeQuestion(question), true);
+  }
+  const corpus = buildRelevantCorpus([
+    { slug: 'Projects/Products/kainnne-lumareader', bodyText: 'Reading', tags: [] },
+    { slug: topic.slug, bodyText: source, tags: [] },
+  ], discoveryQuestion(topic));
+  assert.ok(corpus.startsWith(`\n---\n筆記：${topic.slug}`), 'The selected discovery topic must be the first retrieved source');
+}
 const pages = [
   ['AboutMe/work-with-kaine', '網站服務與工作室規劃'],
   ['Projects/Products/kainnne-lumareader', '閱讀器技術'],

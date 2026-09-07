@@ -1,3 +1,4 @@
+import { findDiscoveryTopic } from './discovery-topics.js';
 import { buildVisitorSystemPrompt, visitorIntent, shouldOfferContact } from './visitor-policy.js';
 import {
   ensureCollaborationContact,
@@ -633,6 +634,8 @@ function buildRelevantCorpus(pages, question, maxChars = 6500, intent = visitorI
   const findBySlug = (slug) =>
     availablePages.find((page) => String(page.slug || '').toLowerCase() === slug.toLowerCase());
 
+  const discovery = findDiscoveryTopic(question);
+  if (discovery) add(findBySlug(discovery.slug));
   const projectOverviewRequested = asksForProjectOverview(question);
   const collaborationRequested = asksForCollaboration(question);
 

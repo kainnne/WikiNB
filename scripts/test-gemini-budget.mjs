@@ -150,7 +150,7 @@ assert.match(page, /function openAnonymousChat\(\)/);
 assert.match(page, /openChat\(session, \{ preserveConversation: shouldResume \}\)/);
 assert.match(page, /requestAnimationFrame\(\(\) => chatForm\?\.requestSubmit\(\)\)/);
 assert.match(page, /result\.kind === 'answer'/);
-assert.match(page, /GEMINI_TOPICS\.forEach/);
+assert.match(page, /randomize \? discoveryTopics : GEMINI_TOPICS/);
 assert.match(page, /submitChoice\(`gemini\.entry\.\$\{topic\}\.question`\)/);
 assert.match(page, /prepareVisitorRequest\(message, t\('gemini\.plainPreference'\), selectedQuestion, history, getLocale\(\) === 'en'\)/);
 assert.doesNotMatch(page, /gemini\.unlockHint|gemini\.home/);

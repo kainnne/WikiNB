@@ -196,7 +196,7 @@
   "keyword.KCIS": "KCIS",
   "gemini.chooseTitle": "Get to know Kaine and how he could help",
   "gemini.followupTitle": "What would you like to explore next?",
-  "gemini.changeTopic": "Explore another direction",
+  "gemini.changeTopic": "Explore more",
   "gemini.plainPreference": "Use clear, professional English, around 70–120 words. Explain what Kaine could take responsibility for, a concrete result and how to start working together. Default to help with implementation, not self-study. Teach only when asked for instructions. Ground proposals in public skills; do not invent client results, packages or commitments.",
   "gemini.entry.automation.title": "Reduce repetitive administrative work",
   "gemini.entry.automation.description": "Explore Kaine’s help designing automation for data entry, spreadsheets and routine reports.",
@@ -234,5 +234,6 @@
   "gemini.next.personalAi.label": "Improve an individual workflow",
   "gemini.next.personalAi.question": "I would like Kaine’s help adding AI to a routine task. What design and implementation could he handle? Give a possible outcome and explain how to discuss it with him.",
   "gemini.next.teamAi.label": "Plan team AI adoption",
-  "gemini.next.teamAi.question": "How could Kaine help a team assess needs, design workflows and pilot AI? Explain possible outcomes and how to start working together, with training as a supporting option if needed."
+  "gemini.next.teamAi.question": "How could Kaine help a team assess needs, design workflows and pilot AI? Explain possible outcomes and how to start working together, with training as a supporting option if needed.",
+  "gemini.discoverTitle": "Explore more of Kaine’s work"
 }

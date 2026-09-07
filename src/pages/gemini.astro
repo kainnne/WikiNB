@@ -147,6 +147,7 @@ import '@fontsource/iansui/latin-400.css';
 <script>
   import { renderMarkdownWithMath } from '../scripts/markdown-math.js';
   import { t, getLocale } from '../scripts/i18n.js';
+  import { drawDiscoveryTopics, discoveryQuestion } from '../../worker/discovery-topics.js';
   import { GEMINI_TOPICS, GEMINI_FOLLOWUPS, prepareVisitorRequest } from '../scripts/gemini-onboarding.js';
   import {
     askGuestGemini,
@@ -192,6 +193,8 @@ import '@fontsource/iansui/latin-400.css';
   let activeTopic = '';
   let topicTurns = 0;
   let selectedQuestion = '';
+  let discoveryTopics = [];
+  let showingDiscovery = false;
   /** @type {{role: 'user'|'assistant', content: string}[]} */
   let history = [];
 
@@ -369,6 +372,8 @@ import '@fontsource/iansui/latin-400.css';
     followLatest = true;
     activeTopic = '';
     topicTurns = 0;
+    showingDiscovery = false;
+    discoveryTopics = [];
     appendTopicPicker();
   }
 
@@ -379,7 +384,7 @@ import '@fontsource/iansui/latin-400.css';
     chatForm?.requestSubmit();
   }
 
-  function appendTopicPicker() {
+  function appendTopicPicker(randomize = false) {
     if (!output) return;
     output.querySelectorAll('.gemini-suggestions, .gemini-next').forEach((node) => node.remove());
     const box = document.createElement('div');
@@ -392,13 +397,35 @@ import '@fontsource/iansui/latin-400.css';
     intro.className = 'gemini-choice-intro';
     intro.dataset.i18n = 'gemini.welcomeMessage';
     intro.textContent = t('gemini.welcomeMessage');
-    box.append(heading, intro);
+    box.append(heading);
+    if (!randomize) box.append(intro);
+    showingDiscovery = randomize;
+    if (randomize) {
+      discoveryTopics = drawDiscoveryTopics(discoveryTopics.map((topic) => topic.id));
+      heading.dataset.i18n = 'gemini.discoverTitle';
+      heading.textContent = t('gemini.discoverTitle');
+    }
     const examples = document.createElement('div');
     examples.className = 'gemini-choice-grid';
-    GEMINI_TOPICS.forEach((topic) => {
+    (randomize ? discoveryTopics : GEMINI_TOPICS).forEach((topic) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'gemini-choice';
+      if (randomize) {
+        button.dataset.discovery = topic.id;
+        const label = document.createElement('strong');
+        const subject = document.createElement('span');
+        button.append(label, subject);
+        button.addEventListener('click', () => {
+          if (running || !chatInput) return;
+          activeTopic = ''; topicTurns = 0;
+          selectedQuestion = discoveryQuestion(topic, getLocale() === 'en');
+          chatInput.value = selectedQuestion;
+          chatForm?.requestSubmit();
+        });
+        examples.appendChild(button);
+        return;
+      }
       button.dataset.topic = topic;
       for (const part of ['title', 'description']) {
         const text = document.createElement(part === 'title' ? 'strong' : 'span');
@@ -416,7 +443,9 @@ import '@fontsource/iansui/latin-400.css';
       examples.appendChild(button);
     });
     box.appendChild(examples);
+    box.appendChild(createChangeButton());
     output.appendChild(box);
+    renderDiscoveryLabels();
     syncConversationControls();
   }
 
@@ -445,6 +474,11 @@ import '@fontsource/iansui/latin-400.css';
       });
       group.appendChild(button);
     });
+    group.prepend(createChangeButton());
+    output.appendChild(group);
+  }
+
+  function createChangeButton() {
     const change = document.createElement('button');
     change.type = 'button';
     change.className = 'gemini-change-topic';
@@ -452,12 +486,25 @@ import '@fontsource/iansui/latin-400.css';
     change.textContent = t('gemini.changeTopic');
     change.addEventListener('click', () => {
       if (running) return;
-      appendTopicPicker();
+      appendTopicPicker(true);
       output.querySelector('.gemini-choice')?.focus({ preventScroll: true });
-      scrollToLatest({ force: true });
+      window.requestAnimationFrame(() => {
+        const picker = output.querySelector('.gemini-suggestions');
+        if (picker) output.scrollTo({ top: picker.offsetTop - output.offsetTop, behavior: 'smooth' });
+      });
     });
-    group.appendChild(change);
-    output.appendChild(group);
+    return change;
+  }
+
+  function renderDiscoveryLabels() {
+    if (!showingDiscovery) return;
+    const language = getLocale() === 'en' ? 'en' : 'zh';
+    output?.querySelectorAll('[data-discovery]').forEach((button) => {
+      const topic = discoveryTopics.find((item) => item.id === button.dataset.discovery);
+      if (!topic) return;
+      button.querySelector('strong').textContent = topic.label[language];
+      button.querySelector('span').textContent = topic.subject[language];
+    });
   }
 
   function openChat(session, { preserveConversation = false } = {}) {
@@ -627,6 +674,7 @@ import '@fontsource/iansui/latin-400.css';
   });
 
   document.addEventListener('wikinb:locale-change', () => {
+    renderDiscoveryLabels();
     renderMessageState(authMessage, authMessageState);
     renderMessageState(codeSent, codeSentState);
     syncConversationControls();
@@ -654,21 +702,28 @@ import '@fontsource/iansui/latin-400.css';
 <style>
   :global(body.gemini-public-page main) {
     max-width: 72rem;
+    padding-top: 5rem;
+    padding-bottom: 0.75rem;
   }
 
   .gemini-page {
     width: min(100%, 68rem);
     margin-inline: auto;
     font-family: 'Iansui', 'Noto Sans TC', sans-serif;
+    height: calc(100dvh - 5.75rem);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   .gemini-product-lockup {
     position: relative;
     display: flex;
-    min-height: clamp(8rem, 17vw, 11rem);
+    min-height: clamp(3.5rem, 9vh, 5.5rem);
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    margin-bottom: clamp(1rem, 3vw, 1.8rem);
+    margin-bottom: 0.5rem;
     text-align: center;
   }
 
@@ -948,6 +1003,10 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   .gemini-window {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
     position: relative;
     min-width: 0;
     overflow: hidden;
@@ -1068,8 +1127,9 @@ import '@fontsource/iansui/latin-400.css';
 
   .gemini-output {
     min-width: 0;
-    min-height: 420px;
-    max-height: min(62vh, 680px);
+    min-height: 0;
+    flex: 1 1 auto;
+    max-height: none;
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
@@ -1267,7 +1327,7 @@ import '@fontsource/iansui/latin-400.css';
 
   :global(.gemini-choice-intro) {
     max-width: 42rem;
-    margin: 0.65rem 0 1.35rem;
+    margin: 0.5rem 0 0.8rem;
     color: #76576c;
     font-size: 1rem;
     line-height: 1.75;
@@ -1285,7 +1345,7 @@ import '@fontsource/iansui/latin-400.css';
     flex-direction: column;
     justify-content: center;
     gap: 0.45rem;
-    min-height: 7rem;
+    min-height: 5.5rem;
     border: 1px solid #d6c7e8;
     border-radius: 1.15rem;
     padding: 0.9rem 1rem;
@@ -1324,7 +1384,10 @@ import '@fontsource/iansui/latin-400.css';
     text-align: left;
     cursor: pointer;
   }
-  :global(.gemini-change-topic) { border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 4px; }
+  :global(.gemini-change-topic) { border: 1px solid #72508c; background: #785591; color: #fff; font-weight: 700; box-shadow: 0 3px 0 #543767; text-align: center; }
+  :global(.gemini-suggestions > .gemini-change-topic) { margin-top: 0.9rem; min-width: 10rem; }
+  :global(.gemini-change-topic:hover:not(:disabled)) { background: #65427e; }
+  :global(.gemini-change-topic:active:not(:disabled)) { transform: translateY(2px); box-shadow: 0 1px 0 #543767; }
   :global(.gemini-followup:hover:not(:disabled)) { background: #f4f0ff; }
   :global(.gemini-choice:focus-visible), :global(.gemini-followup:focus-visible), :global(.gemini-change-topic:focus-visible) {
     outline: 3px solid #7d5bac;
@@ -1340,6 +1403,8 @@ import '@fontsource/iansui/latin-400.css';
     :global(.gemini-choice) { min-height: 0; padding: 0.85rem 1rem; gap: 0.25rem; }
     :global(.gemini-choice-intro) { margin-bottom: 1rem; }
   }
+
+  .gemini-chrome, .gemini-input-row { flex: 0 0 auto; }
 
   .gemini-input-row {
     display: flex;
@@ -1382,7 +1447,7 @@ import '@fontsource/iansui/latin-400.css';
 
   @media (max-width: 520px) {
     .gemini-product-lockup {
-      min-height: 7rem;
+      min-height: 5.5rem;
       margin-bottom: 0.7rem;
     }
 
@@ -1402,7 +1467,7 @@ import '@fontsource/iansui/latin-400.css';
     }
 
     .gemini-output {
-      min-height: 360px;
+      min-height: 0;
       padding: 0.75rem;
     }
 

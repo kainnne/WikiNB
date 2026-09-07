@@ -234,5 +234,6 @@
   "gemini.next.personalAi.label": "改善個人作業流程",
   "gemini.next.personalAi.question": "我想請 Kaine 協助把一項日常作業改成有 AI 輔助的流程。他可以負責哪些設計與實作？請舉一個可能成果，並說明如何與他討論。",
   "gemini.next.teamAi.label": "規劃團隊 AI 導入",
-  "gemini.next.teamAi.question": "如果團隊想導入 AI，Kaine 可以如何協助需求盤點、流程設計與小規模試行？請說明可以討論的成果及合作起點，需要時再補充教育訓練。"
+  "gemini.next.teamAi.question": "如果團隊想導入 AI，Kaine 可以如何協助需求盤點、流程設計與小規模試行？請說明可以討論的成果及合作起點，需要時再補充教育訓練。",
+  "gemini.discoverTitle": "探索 Kaine 的更多作品"
 }
