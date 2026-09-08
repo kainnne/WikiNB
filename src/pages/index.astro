@@ -49,16 +49,9 @@ const base = import.meta.env.BASE_URL;
       ))}
     </h1>
     <a id="home-gemini-btn" href={`${base}gemini`} class="home-gemini-btn">
-      <span class="home-gemini-aura" aria-hidden="true"></span>
-      <span class="home-gemini-orbit home-gemini-orbit-a" aria-hidden="true"></span>
-      <span class="home-gemini-orbit home-gemini-orbit-b" aria-hidden="true"></span>
       <span class="home-gemini-copy">
-        <span class="home-gemini-label">Kainnne x Gemini</span>
+        <span class="home-gemini-label">Kainnne × Gemini</span>
       </span>
-      <span class="home-gemini-particles" aria-hidden="true">
-        <i></i><i></i><i></i><i></i>
-      </span>
-      <span class="home-gemini-light" aria-hidden="true"></span>
     </a>
 
     <section class="home-quick-guide" aria-label="How to use WikiNB">
@@ -1265,4 +1258,42 @@ const base = import.meta.env.BASE_URL;
       transition-duration: 0.001ms !important;
     }
   }
+
+  /* Match the primary site's translucent glass key without changing Codex. */
+  #home-gemini-btn {
+    width: min(31.875rem, calc(100vw - 3rem));
+    min-height: clamp(78px, 8vw, 98px);
+    padding: 1.2rem;
+    border: 1px solid rgba(255,255,255,0.72);
+    border-radius: 999px;
+    background:
+      linear-gradient(125deg, rgba(110,168,255,0.08), transparent 42%, rgba(94,234,212,0.09)),
+      linear-gradient(165deg, rgba(255,255,255,0.26), transparent 55%),
+      rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px) saturate(1.45);
+    box-shadow: 0 6px 0 rgba(163,133,177,0.42), 0 14px 22px rgba(121,65,105,0.14), inset 0 2px 2px rgba(255,255,255,0.65), inset 0 -2px 4px rgba(163,133,177,0.12);
+  }
+  #home-gemini-btn::before {
+    inset: 5px;
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: inherit;
+    background: transparent;
+    animation: none;
+  }
+  #home-gemini-btn::after { display: none; }
+  #home-gemini-btn .home-gemini-copy { padding: 0; filter: none; transform: none; }
+  #home-gemini-btn .home-gemini-label {
+    font-size: clamp(1.35rem, 4.2vw, 2.25rem);
+    letter-spacing: -0.045em;
+    white-space: nowrap;
+  }
+  #home-gemini-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 rgba(163,133,177,0.42), 0 18px 26px rgba(121,65,105,0.16), inset 0 2px 2px rgba(255,255,255,0.7);
+  }
+  #home-gemini-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 rgba(163,133,177,0.42), inset 0 2px 5px rgba(163,133,177,0.18);
+  }
+  #home-gemini-btn:focus-visible { outline: 3px solid #b794ff; outline-offset: 9px; }
 </style>
