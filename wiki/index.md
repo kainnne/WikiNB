@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-09-06
+> 最後更新：2026-09-12
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -38,6 +38,7 @@
 
 ### AI 與工作流程
 
+- [[Projects/Workflow/ai-interview-self-observation]] — 自己設計並參與多角色 AI 口語模擬面試，保存思考事件與可修正的個人觀察
 - [[Projects/Workflow/daily-project-recall]] — 以每日為入口，讓 AI 協助找回延宕、待決定或可能遺忘的專案
 - [[Projects/Workflow/kainnne-forms-landing]] — 表單服務入口
 
@@ -61,6 +62,7 @@
 - [[AboutMe/02-software-development]] — AI Agent 與軟體開發
 - [[AboutMe/03-ai-and-data]] — 機器學習與資料分析
 - [[AboutMe/04-collaboration-and-workstyle]] — 協作方式與工作風格
+- [[AboutMe/interview-thinking-snapshot-2026-09]] — 入職約兩個月的階段紀錄：模擬面試原話、思考與口語模式，以及尚待驗證的能力
 
 ## 學習中
 

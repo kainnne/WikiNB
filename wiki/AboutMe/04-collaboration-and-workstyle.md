@@ -195,6 +195,8 @@
 
 ## 相關連結
 
+- [[AboutMe/interview-thinking-snapshot-2026-09]] — 2026 年 9 月的 AI 口語模擬面試紀錄，以原話與事件補充思考、表達及工作風格；屬於階段觀察。
+- [[Projects/Workflow/ai-interview-self-observation]] — 我設計的多角色模擬面試方法與下一輪驗證方向。
 - [我的綜合作品知識庫](https://wikinb.kainnne.com/)
 - [我的個人網站](https://kainnne.com/)
 - [GitHub](https://github.com/kainnne)
