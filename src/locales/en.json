@@ -237,6 +237,7 @@
   "gemini.next.teamAi.question": "How could Kaine help a team assess needs, design workflows and pilot AI? Explain possible outcomes and how to start working together, with training as a supporting option if needed.",
   "gemini.discoverTitle": "Explore more of Kaine’s work",
   "nav.openaiDemo": "Codex (temporary)",
+  "openai.elapsed": "Codex is generating a response · {n}s",
   "openai.title": "Kainnne x Codex",
   "openai.note": "Temporary access · Funded by Kaine; pauses when the allowance runs out.",
   "openai.conversation": "Conversation",

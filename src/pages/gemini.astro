@@ -372,10 +372,11 @@ import '@fontsource/iansui/latin-400.css';
 
   function startResponseTimer() {
     let seconds = 1;
-    const bubble = appendMessage(t('gemini.elapsed', { n: seconds }), 'system');
+    const elapsedKey = isOpenAI ? 'openai.elapsed' : 'gemini.elapsed';
+    const bubble = appendMessage(t(elapsedKey, { n: seconds }), 'system');
     const timerId = window.setInterval(() => {
       seconds += 1;
-      if (bubble) bubble.textContent = t('gemini.elapsed', { n: seconds });
+      if (bubble) bubble.textContent = t(elapsedKey, { n: seconds });
     }, 1000);
     return {
       stop() {
