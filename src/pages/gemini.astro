@@ -1,19 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PublicDreamBackdrop from '../components/PublicDreamBackdrop.astro';
+import openaiConfig from '../../config/openai-demo.json';
+
+interface Props { provider?: 'gemini' | 'openai'; }
+const { provider = 'gemini' } = Astro.props;
+const isOpenAI = provider === 'openai';
 import '@fontsource/iansui/chinese-traditional-400.css';
 import '@fontsource/iansui/latin-400.css';
 ---
 
 <BaseLayout
-  title="Kainnne x Gemini"
+  title={isOpenAI ? "Kainnne x Codex" : "Kainnne x Gemini"}
   description="由公開 WikiNB 驅動的 Kaine 限定聊天"
   pageClass="public-wiki-page gemini-public-page"
   visitorNav={true}
-  publicSection="gemini"
+  publicSection={isOpenAI ? "openai" : "gemini"}
 >
   <PublicDreamBackdrop />
-  <div class="animate-fadeIn gemini-page">
+  <div class="animate-fadeIn gemini-page" data-provider={provider} data-api-url={isOpenAI ? openaiConfig.apiUrl : undefined}>
     <header class="gemini-product-lockup">
       <span class="gemini-product-orbit" aria-hidden="true">
         <i></i>
@@ -23,7 +28,7 @@ import '@fontsource/iansui/latin-400.css';
       <h1 class="gemini-heading">
         <span>Kainnne</span>
         <span class="gemini-heading-cross" aria-hidden="true">×</span>
-        <span>Gemini</span>
+        <span class:list={{ "codex-wordmark": isOpenAI }}>{isOpenAI ? "Codex" : "Gemini"}</span>
       </h1>
     </header>
 
@@ -110,7 +115,7 @@ import '@fontsource/iansui/latin-400.css';
     <section id="gemini-chat" class="gemini-window">
       <div class="gemini-chrome">
         <div class="gemini-chrome-copy">
-          <p class="gemini-chrome-title" data-i18n="gemini.title">Kainnne x Gemini</p>
+          <p class="gemini-chrome-title" data-i18n={isOpenAI ? undefined : "gemini.title"}>{isOpenAI ? <><span>Kainnne x </span><span class="codex-wordmark">Codex</span></> : "Kainnne x Gemini"}</p>
           <p id="gemini-identity" class="gemini-chrome-identity"></p>
         </div>
         <button
@@ -145,6 +150,7 @@ import '@fontsource/iansui/latin-400.css';
 </BaseLayout>
 
 <script>
+  import { askOpenAI, checkOpenAI, safeAnswer } from '../scripts/openai-chat.js';
   import { renderMarkdownWithMath } from '../scripts/markdown-math.js';
   import { t, getLocale } from '../scripts/i18n.js';
   import { drawDiscoveryTopics, discoveryQuestion } from '../../worker/discovery-topics.js';
@@ -159,6 +165,17 @@ import '@fontsource/iansui/latin-400.css';
     setGuestAiSession,
     verifyGuestAiCode,
   } from '../scripts/guest-gemini-client.js';
+
+  const providerRoot = document.querySelector('[data-provider]');
+  const isOpenAI = providerRoot?.getAttribute('data-provider') === 'openai';
+  const openaiApi = providerRoot?.getAttribute('data-api-url') || '';
+  let openaiAvailable = !isOpenAI;
+  let openaiStateKey = '';
+
+  function showOpenAIState(key) {
+    openaiStateKey = key;
+    if (identity) { identity.hidden = !key; identity.textContent = key ? t(key) : ''; }
+  }
 
   const unlock = document.getElementById('gemini-unlock');
   const profileForm = document.getElementById('gemini-profile-form');
@@ -199,16 +216,17 @@ import '@fontsource/iansui/latin-400.css';
   let history = [];
 
   function syncConversationControls() {
+    const blocked = running || (isOpenAI && !openaiAvailable);
     output?.querySelectorAll('.gemini-choice, .gemini-followup, .gemini-change-topic').forEach((button) => {
-      button.disabled = running;
+      button.disabled = blocked;
     });
     if (chatInput) {
-      chatInput.disabled = running;
+      chatInput.disabled = blocked;
       chatInput.setAttribute('data-i18n-placeholder', 'gemini.placeholder');
       chatInput.placeholder = t('gemini.placeholder');
     }
     if (chatSend) {
-      chatSend.disabled = running;
+      chatSend.disabled = blocked;
       const key = running ? 'gemini.sending' : 'gemini.send';
       chatSend.setAttribute('data-i18n', key);
       chatSend.textContent = t(key);
@@ -341,7 +359,8 @@ import '@fontsource/iansui/latin-400.css';
     bubble.className = 'gemini-bubble';
     if (role === 'assistant') {
       bubble.classList.add('wiki-content');
-      bubble.innerHTML = sanitizeRenderedMarkdown(text);
+      if (isOpenAI) bubble.append(safeAnswer(text));
+      else bubble.innerHTML = sanitizeRenderedMarkdown(text);
     } else {
       bubble.textContent = text;
     }
@@ -607,11 +626,11 @@ import '@fontsource/iansui/latin-400.css';
 
   chatForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (running) return;
+    if (running || (isOpenAI && !openaiAvailable)) return;
     const message = String(chatInput?.value || '').trim();
     if (!message) return;
 
-    const verified = Boolean(getGuestAiSession()?.token);
+    const verified = isOpenAI || Boolean(getGuestAiSession()?.token);
     if (!verified && anonymousQuestionsUsed >= ANONYMOUS_QUESTION_LIMIT) {
       openUnlock(message);
       return;
@@ -635,11 +654,14 @@ import '@fontsource/iansui/latin-400.css';
 
     try {
       const requestMessage = prepareVisitorRequest(message, t('gemini.plainPreference'), selectedQuestion, history, getLocale() === 'en');
-      const result = verified
+      const result = isOpenAI
+        ? await askOpenAI(openaiApi, { message, history })
+        : verified
         ? await askGuestGemini({ message: requestMessage, history, originalMessage: message })
         : await askGuestGeminiAnonymous({ message: requestMessage, history, originalMessage: message });
       responseTimer.stop();
       appendMessage(result.answer, 'assistant');
+      if (isOpenAI) showOpenAIState(result.incomplete ? 'openai.incomplete' : '');
       if (!verified) anonymousQuestionsUsed += 1;
       if (result.kind === 'answer') {
         selectedQuestion = '';
@@ -651,6 +673,13 @@ import '@fontsource/iansui/latin-400.css';
       if (result.kind === 'answer') appendFollowups();
     } catch (error) {
       responseTimer.stop();
+      if (isOpenAI) {
+        if (error.code === 'budget_exhausted') openaiAvailable = false;
+        showOpenAIState(error.message);
+        appendMessage(t(error.message), 'error');
+        if (chatInput) chatInput.value = message;
+        return;
+      }
       const raw = error.message || '';
       const described = describeGuestAiMessage(raw);
       if (described.key === 'gemini.anonymousLimit') {
@@ -675,6 +704,7 @@ import '@fontsource/iansui/latin-400.css';
 
   document.addEventListener('wikinb:locale-change', () => {
     renderDiscoveryLabels();
+    if (isOpenAI) showOpenAIState(openaiStateKey);
     renderMessageState(authMessage, authMessageState);
     renderMessageState(codeSent, codeSentState);
     syncConversationControls();
@@ -683,6 +713,16 @@ import '@fontsource/iansui/latin-400.css';
   });
 
   async function init() {
+    if (isOpenAI) {
+      openAnonymousChat();
+      showOpenAIState('openai.checking');
+      try {
+        openaiAvailable = await checkOpenAI(openaiApi);
+        showOpenAIState(openaiAvailable ? '' : 'openai.paused');
+      } catch { showOpenAIState('openai.error.unavailable'); }
+      syncConversationControls();
+      return;
+    }
     const session = getGuestAiSession();
     if (!session) {
       openAnonymousChat();
@@ -790,6 +830,8 @@ import '@fontsource/iansui/latin-400.css';
     line-height: 1;
     filter: drop-shadow(0 14px 32px rgba(123, 97, 255, 0.13));
   }
+
+  .codex-wordmark { color: #000; -webkit-text-fill-color: #000; }
 
   .gemini-heading-cross {
     color: rgba(116, 83, 112, 0.46);
@@ -1384,15 +1426,16 @@ import '@fontsource/iansui/latin-400.css';
     text-align: left;
     cursor: pointer;
   }
-  :global(.gemini-change-topic) { border: 1px solid #72508c; background: #785591; color: #fff; font-weight: 700; box-shadow: 0 3px 0 #543767; text-align: center; }
+  :global(.gemini-change-topic) { border: 1px solid #dd779e; background: #f7a8c4; color: #63273e; font-weight: 700; box-shadow: 0 3px 0 #c6668b; text-align: center; }
   :global(.gemini-suggestions > .gemini-change-topic) { margin-top: 0.9rem; min-width: 10rem; }
-  :global(.gemini-change-topic:hover:not(:disabled)) { background: #65427e; }
-  :global(.gemini-change-topic:active:not(:disabled)) { transform: translateY(2px); box-shadow: 0 1px 0 #543767; }
+  :global(.gemini-change-topic:hover:not(:disabled)) { background: #f393b6; }
+  :global(.gemini-change-topic:active:not(:disabled)) { transform: translateY(2px); box-shadow: 0 1px 0 #c6668b; }
   :global(.gemini-followup:hover:not(:disabled)) { background: #f4f0ff; }
   :global(.gemini-choice:focus-visible), :global(.gemini-followup:focus-visible), :global(.gemini-change-topic:focus-visible) {
     outline: 3px solid #7d5bac;
     outline-offset: 3px;
   }
+  :global(.gemini-change-topic:focus-visible) { outline-color: #cf628f; }
   :global(.gemini-choice:disabled), :global(.gemini-followup:disabled), :global(.gemini-change-topic:disabled) {
     opacity: 0.55;
     cursor: default;

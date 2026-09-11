@@ -32,6 +32,8 @@ WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astr
 
 ### 2026-09-12 OpenAI 臨時入口
 
+- 介面依使用者要求直接共用 Gemini 頁面，顯示黑色 Codex，沿用五題、換方向及追問；兩邊僅將換方向按鈕改為粉紅色。`/openai/` 路徑與付費 API 不變。
+
 - 新增 `/openai/`、右上選單入口與獨立 `worker/openai.js`；共用既有公開回答規則及檢索，不更改 Gemini 個性、登入、額度或 Codex CLI。
 - `wrangler.openai.jsonc` 管理獨立 Worker；專用 D1 表以原子預留限制本入口累計 US$10，沒有每人每日訊息上限，不自動付費重試。
 - 實際啟用取決於獨立 `OPENAI_API_KEY` Secret、`DEMO_ENABLED` 與剩餘啟用額度。請以 `/api/openai/health` 和一筆真實 API 回答確認，不由 Pages 部署狀態推定。

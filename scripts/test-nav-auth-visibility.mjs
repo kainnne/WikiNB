@@ -230,7 +230,7 @@ assert.match(loginPage, /describeLoginError/);
 assert.match(loginPage, /wikinb:locale-change/);
 assert.match(header, /nav\.ownerLogin/);
 assert.match(header, /data-guest-visible/);
-assert.match(geminiPage, /publicSection="gemini"/);
+assert.match(geminiPage, /publicSection=\{isOpenAI \? "openai" : "gemini"\}/);
 assert.match(geminiPage, /class="gemini-product-lockup"/);
 assert.match(geminiPage, /class="gemini-unlock-glow gemini-unlock-glow-a"/);
 assert.match(geminiPage, /#gemini-unlock \.search-input/);
