@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import matter from 'gray-matter';
 import { indexWikiSections } from '../src/lib/wiki-sections.js';
-import { selectWikiExcerpt } from '../worker/wiki-excerpts.js';
+import { selectWikiExcerpt, canonicalizeWikiLinks } from '../worker/wiki-excerpts.js';
 import { buildRelevantCorpus, retrievalQuestion } from '../worker/index.js';
 import { visitorIntent } from '../worker/visitor-policy.js';
 import { GEMINI_TOPICS } from '../src/scripts/gemini-onboarding.js';
@@ -62,4 +62,9 @@ for(let i=0;i<30;i++){
 }
 assert.ok(seen.has('interview'),'The interview can appear in the existing five-card shuffle');
 assert.equal(seen.size,DISCOVERY_TOPICS.length);
+const sourceList = `筆記：${hub}\n筆記：${snapshot}`;
+const shortLink = 'https://wikinb.kainnne.com/wiki/ai-interview-self-observation/';
+assert.equal(canonicalizeWikiLinks(`[紀錄](${shortLink})`, sourceList), `[紀錄](https://wikinb.kainnne.com/wiki/${hub}/)`);
+assert.equal(canonicalizeWikiLinks('https://example.com/wiki/ai-interview-self-observation/', sourceList), 'https://example.com/wiki/ai-interview-self-observation/');
+assert.equal(canonicalizeWikiLinks(shortLink, sourceList+'\n筆記：Other/ai-interview-self-observation'), shortLink, 'Ambiguous names cannot invent a target');
 console.log('OK: topic routing, nested heading ranges, late evidence, follow-up context, topic switching and interview discovery');

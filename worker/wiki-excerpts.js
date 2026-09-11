@@ -1,3 +1,18 @@
+export function canonicalizeWikiLinks(answer, corpus) {
+  const slugs = [...new Set([...String(corpus).matchAll(/^筆記：([^\n]+)/gm)].map(match => match[1].trim()))];
+  return String(answer).replace(/https:\/\/wikinb\.kainnne\.com\/wiki\/[^\s<>"'()[\]。，；]+/g, raw => {
+    try {
+      const url = new URL(raw);
+      const path = decodeURIComponent(url.pathname.slice('/wiki/'.length)).replace(/\/+$/, '');
+      const exact = slugs.find(slug => slug.toLowerCase() === path.toLowerCase());
+      const matches = slugs.filter(slug => slug.split('/').at(-1).toLowerCase() === path.toLowerCase());
+      const slug = exact || (matches.length === 1 ? matches[0] : null);
+      if (!slug) return raw;
+      return `https://wikinb.kainnne.com/wiki/${slug.split('/').map(encodeURIComponent).join('/')}/${url.search}${url.hash}`;
+    } catch { return raw; }
+  });
+}
+
 // Select evidence within a page; preserve the existing per-page and corpus budgets.
 export function selectWikiExcerpt(page, terms, limit) {
   const aliases = [

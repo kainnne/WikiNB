@@ -1,5 +1,5 @@
 import { findDiscoveryTopic } from './discovery-topics.js';
-import { selectWikiExcerpt } from './wiki-excerpts.js';
+import { selectWikiExcerpt, canonicalizeWikiLinks } from './wiki-excerpts.js';
 import { buildVisitorSystemPrompt, visitorIntent, shouldOfferContact } from './visitor-policy.js';
 import {
   ensureCollaborationContact,
@@ -694,6 +694,7 @@ function buildRelevantCorpus(pages, question, maxChars = 6500, intent = visitorI
     const piece = [
       '\n---',
       `筆記：${page.slug}`,
+      `來源網址：https://wikinb.kainnne.com/wiki/${String(page.slug).split('/').map(encodeURIComponent).join('/')}/`,
       `標題：${page.title || ''}`,
       `簡述：${page.description || ''}`,
       `關鍵字：${(page.tags || []).join('、')}`,
@@ -902,6 +903,7 @@ async function chat(request, env) {
     .join('')
     .trim();
   if (!answer) return json({ error: 'Gemini 沒有產生回答，請換個方式再問一次' }, 502);
+  answer = canonicalizeWikiLinks(answer, corpus);
   if (finishReason === 'MAX_TOKENS') {
     answer += '\n\n> 回答觸及 Gemini 模型本身的輸出上限；若內容不完整，請指定要接續的部分。';
   }

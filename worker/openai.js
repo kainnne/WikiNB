@@ -1,6 +1,7 @@
 import { loadWikiPages, buildRelevantCorpus, retrievalQuestion, requestsExpandedDetail } from './index.js';
 import { buildVisitorSystemPrompt, visitorIntent, shouldOfferContact } from './visitor-policy.js';
 import { isKaineScopeQuestion, prefersEnglish, ensureCollaborationContact } from './chat-policy.js';
+import { canonicalizeWikiLinks } from './wiki-excerpts.js';
 
 export const MODEL = 'gpt-5.6-luna';
 export const MAX_OUTPUT_TOKENS = 4096;
@@ -158,6 +159,7 @@ async function chat(request, env) {
   if (data.status && !['completed', 'incomplete'].includes(data.status)) return fail('upstream_unavailable', 502);
   let answer = extractAnswer(data);
   if (!answer) return fail('empty_answer', 502);
+  answer = canonicalizeWikiLinks(answer, corpus);
   if (shouldOfferContact(message, history)) answer = ensureCollaborationContact(answer, english);
   return json({ ok: true, kind: 'answer', answer, incomplete: data.status === 'incomplete' });
 }
