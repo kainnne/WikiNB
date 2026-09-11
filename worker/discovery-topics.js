@@ -1,6 +1,6 @@
 // Only published sources: selection is local and never calls a model.
 export const DISCOVERY_TOPICS = [
-  ['interview', 'Projects/Workflow/ai-interview-self-observation', '透過模擬面試認識 Kaine 的思考', 'Explore Kaine’s thinking through a mock interview', 'AI 多角色模擬面試與自我觀察', 'AI mock interview and self-observation'],
+  ['interview', 'Projects/Workflow/ai-interview-self-observation', '從模擬面試了解 Kaine 的思考方式', 'Explore Kaine’s thinking through a mock interview', 'AI 多角色模擬面試與自我觀察', 'AI mock interview and self-observation'],
   ['reader', 'Projects/Products/kainnne-lumareader', '讓長篇筆記更容易閱讀', 'Make long notes easier to read', 'LumaReader 閱讀器', 'LumaReader'],
   ['wiki', 'Projects/Knowledge/wikinb', '把筆記整理成可對話的網站', 'Turn notes into a conversational website', 'WikiNB 知識網站', 'WikiNB knowledge website'],
   ['school', 'KCIS/WikiNB-KCIS', '讓教材與工作文件方便查找', 'Make teaching and work documents searchable', 'WikiNB for KCIS 教育知識庫', 'WikiNB for KCIS'],
@@ -18,6 +18,9 @@ export const DISCOVERY_TOPICS = [
 ].map(([id, slug, zh, en, subjectZh, subjectEn]) => ({ id, slug, label: { zh, en }, subject: { zh: subjectZh, en: subjectEn } }));
 
 export function discoveryQuestion(topic, english = false) {
+  if (topic.id === 'interview') return english
+    ? 'Using Kaine’s AI mock interview notes, explain how he thinks. Use concrete excerpts to show how he judges, responds to challenges and revises ideas. Separate observed behavior, reasonable interpretations and what remains unverified.'
+    : '請根據 Kaine 的 AI 模擬面試紀錄，介紹他的思考方式。用具體片段說明他如何判斷、回應質疑與修正想法，區分可觀察行為、合理推測與尚未驗證的部分。';
   return english
     ? `Introduce Kaine’s ${topic.subject.en}. Explain its purpose and the skills it demonstrates, then a possible way to work with Kaine. Distinguish completed work from prototypes, research and proposals; focus on this topic rather than a tutorial.`
     : `請介紹 Kaine 的「${topic.subject.zh}」。先說用途與展現的能力，再說可以與他討論的應用或合作；區分已完成成果、原型、研究與建議，聚焦這個主題，不展開操作教學。`;
@@ -25,7 +28,7 @@ export function discoveryQuestion(topic, english = false) {
 
 export function findDiscoveryTopic(message) {
   const normalized = String(message || '').normalize('NFKC');
-  const interview = /模[擬拟]面[試试]|面[試试](?:[紀纪][錄录]|[專专]案|[實实][驗验])|mock[ -]?interview|interview simulation|口[語语]自我[觀观]察/iu.test(normalized);
+  const interview = /模[擬拟]面[試试]|面[試试](?:[紀纪][錄录]|[專专]案|[實实][驗验])|mock[ -]?interview|interview simulation|口[語语]自我[觀观]察|思考(?:方式|模式)|how kaine thinks/iu.test(normalized);
   if (interview) return DISCOVERY_TOPICS.find(topic => topic.id === 'interview');
   return DISCOVERY_TOPICS.find((topic) => [false, true].some((english) => String(message).normalize('NFKC').includes(discoveryQuestion(topic, english).normalize('NFKC'))));
 }

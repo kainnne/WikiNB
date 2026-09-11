@@ -5,6 +5,9 @@ export function selectWikiExcerpt(page, terms, limit) {
     [/critici|feedback|質疑|被動/i, ['被動', '判斷', '評價']],
     [/resource|team|資源|團隊|第一週/i, ['資源', '團隊', '第一週']],
     [/speak|oral|口才|口語/i, ['口語', '表達']],
+    [/thinking|interpret|思考|推測/i, ['判斷', '比較', '判讀']],
+    [/passive/i, ['被動', '判斷']],
+    [/method|unverified|uncertain|方法限制|不能確定/i, ['限制', '不能', '方法']],
     [/abilit|capabilit|能力/i, ['能力', '觀察表']],
   ];
   const query = terms.join(' ');

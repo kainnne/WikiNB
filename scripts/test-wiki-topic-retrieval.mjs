@@ -5,8 +5,10 @@ import { indexWikiSections } from '../src/lib/wiki-sections.js';
 import { selectWikiExcerpt } from '../worker/wiki-excerpts.js';
 import { buildRelevantCorpus, retrievalQuestion } from '../worker/index.js';
 import { visitorIntent } from '../worker/visitor-policy.js';
+import { GEMINI_TOPICS } from '../src/scripts/gemini-onboarding.js';
 import { DISCOVERY_TOPICS, drawDiscoveryTopics, discoveryQuestion, findDiscoveryTopic } from '../worker/discovery-topics.js';
 
+assert.deepEqual(GEMINI_TOPICS, ['about', 'automation', 'knowledge', 'learning', 'website'], 'Keep the five original entry points');
 const hub = 'Projects/Workflow/ai-interview-self-observation';
 const snapshot = 'AboutMe/interview-thinking-snapshot-2026-09';
 const pages = [hub, snapshot, 'Projects/project-overview', 'AboutMe/03-ai-and-data', 'AboutMe/02-software-development', 'AboutMe/04-collaboration-and-workstyle'].map(slug => {
