@@ -1,4 +1,5 @@
 import { findDiscoveryTopic } from './discovery-topics.js';
+import { selectWikiExcerpt } from './wiki-excerpts.js';
 import { buildVisitorSystemPrompt, visitorIntent, shouldOfferContact } from './visitor-policy.js';
 import {
   ensureCollaborationContact,
@@ -469,7 +470,7 @@ async function incrementChatTurn(env, email) {
 
 async function loadWikiPages(env) {
   const cache = caches.default;
-  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v8');
+  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v9');
   const cached = await cache.match(cacheKey);
   if (cached) return cached.json();
 
@@ -597,7 +598,7 @@ function requestsExpandedDetail(text) {
 }
 
 function retrievalQuestion(message, history) {
-  if (!Array.isArray(history) || history.length === 0) return message;
+  if (findDiscoveryTopic(message) || !Array.isArray(history) || history.length === 0) return message;
   const needsContext = requestsExpandedDetail(message) || String(message || '').length <= 80;
   if (!needsContext) return message;
   const recentContext = history
@@ -618,6 +619,7 @@ function buildRelevantCorpus(pages, question, maxChars = 6500, intent = visitorI
     (page) => !EXCLUDED_PUBLIC_SLUGS.has(String(page?.slug || '').toLowerCase()),
   );
   const terms = queryTerms(question);
+  const detailTerms = queryTerms(String(question).split('\n').at(-1));
   const ranked = availablePages
     .map((page, index) => ({ page, index, score: pageRelevance(page, terms) }))
     .sort((a, b) => b.score - a.score || a.index - b.index);
@@ -636,10 +638,15 @@ function buildRelevantCorpus(pages, question, maxChars = 6500, intent = visitorI
 
   const discovery = findDiscoveryTopic(question);
   if (discovery) add(findBySlug(discovery.slug));
+  if (discovery?.id === 'interview') {
+    add(findBySlug('AboutMe/interview-thinking-snapshot-2026-09'));
+  }
   const projectOverviewRequested = asksForProjectOverview(question);
   const collaborationRequested = asksForCollaboration(question);
 
-  if (intent === 'teaching') {
+  if (discovery) {
+    // A named topic outranks general introduction/collaboration defaults.
+  } else if (intent === 'teaching') {
     if (/kuse/iu.test(question)) add(findBySlug('Learning/kuse-ai-practical-course'));
   } else if (intent === 'introduction') {
     BROAD_PROFILE_PRIORITY_SLUGS.forEach((slug) => add(findBySlug(slug)));
@@ -653,7 +660,9 @@ function buildRelevantCorpus(pages, question, maxChars = 6500, intent = visitorI
 
   // 「一個代表專案」有明確編輯順位，避免讓目錄順序或泛用關鍵字
   // 把練習／未完成原型誤選成 Kaine 的代表作。
-  if (projectOverviewRequested) {
+  if (discovery) {
+    // Keep the topic and its linked evidence at the front.
+  } else if (projectOverviewRequested) {
     add(findBySlug(PROJECT_OVERVIEW_SLUG));
   } else if (asksForOneRepresentativeProject(question)) {
     add(findBySlug(SINGLE_REPRESENTATIVE_PROJECT_SLUG));
@@ -661,7 +670,7 @@ function buildRelevantCorpus(pages, question, maxChars = 6500, intent = visitorI
     BROAD_PROFILE_PRIORITY_SLUGS.forEach((slug) => add(findBySlug(slug)));
   }
 
-  if (intent !== 'introduction' && !projectOverviewRequested) {
+  if (!discovery && intent !== 'introduction' && !projectOverviewRequested) {
     ranked.filter((item) => item.score > 0).forEach((item) => add(item.page));
     for (const slug of [
       ...REPRESENTATIVE_PROJECT_SLUGS,
@@ -688,7 +697,7 @@ function buildRelevantCorpus(pages, question, maxChars = 6500, intent = visitorI
       `標題：${page.title || ''}`,
       `簡述：${page.description || ''}`,
       `關鍵字：${(page.tags || []).join('、')}`,
-      String(page.bodyText || '').slice(0, usableExcerptLength),
+      selectWikiExcerpt(page, detailTerms, usableExcerptLength),
     ].join('\n');
     if (used + piece.length > maxChars) break;
     chunks.push(piece);

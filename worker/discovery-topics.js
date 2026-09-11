@@ -1,5 +1,6 @@
 // Only published sources: selection is local and never calls a model.
 export const DISCOVERY_TOPICS = [
+  ['interview', 'Projects/Workflow/ai-interview-self-observation', '透過模擬面試認識 Kaine 的思考', 'Explore Kaine’s thinking through a mock interview', 'AI 多角色模擬面試與自我觀察', 'AI mock interview and self-observation'],
   ['reader', 'Projects/Products/kainnne-lumareader', '讓長篇筆記更容易閱讀', 'Make long notes easier to read', 'LumaReader 閱讀器', 'LumaReader'],
   ['wiki', 'Projects/Knowledge/wikinb', '把筆記整理成可對話的網站', 'Turn notes into a conversational website', 'WikiNB 知識網站', 'WikiNB knowledge website'],
   ['school', 'KCIS/WikiNB-KCIS', '讓教材與工作文件方便查找', 'Make teaching and work documents searchable', 'WikiNB for KCIS 教育知識庫', 'WikiNB for KCIS'],
@@ -23,6 +24,9 @@ export function discoveryQuestion(topic, english = false) {
 }
 
 export function findDiscoveryTopic(message) {
+  const normalized = String(message || '').normalize('NFKC');
+  const interview = /模[擬拟]面[試试]|面[試试](?:[紀纪][錄录]|[專专]案|[實实][驗验])|mock[ -]?interview|interview simulation|口[語语]自我[觀观]察/iu.test(normalized);
+  if (interview) return DISCOVERY_TOPICS.find(topic => topic.id === 'interview');
   return DISCOVERY_TOPICS.find((topic) => [false, true].some((english) => String(message).normalize('NFKC').includes(discoveryQuestion(topic, english).normalize('NFKC'))));
 }
 

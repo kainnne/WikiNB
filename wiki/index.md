@@ -38,7 +38,7 @@
 
 ### AI 與工作流程
 
-- [[Projects/Workflow/ai-interview-self-observation]] — 自己設計並參與多角色 AI 口語模擬面試，保存思考事件與可修正的個人觀察
+- [[Projects/Workflow/ai-interview-self-observation]] — 模擬面試主題入口：設計方法 → 原話與事件 → 能力觀察與下一輪驗證
 - [[Projects/Workflow/daily-project-recall]] — 以每日為入口，讓 AI 協助找回延宕、待決定或可能遺忘的專案
 - [[Projects/Workflow/kainnne-forms-landing]] — 表單服務入口
 

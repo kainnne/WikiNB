@@ -77,6 +77,7 @@ const workerSource = await readFile(new URL('../worker/index.js', import.meta.ur
 const testModule = workerSource
   .replace("'./chat-policy.js'", JSON.stringify(new URL('../worker/chat-policy.js', import.meta.url).href))
   .replace("'./discovery-topics.js'", JSON.stringify(new URL('../worker/discovery-topics.js', import.meta.url).href))
+  .replace("'./wiki-excerpts.js'", JSON.stringify(new URL('../worker/wiki-excerpts.js', import.meta.url).href))
   .replace("'./visitor-policy.js'", JSON.stringify(new URL('../worker/visitor-policy.js', import.meta.url).href))
   + '\nexport { issueGuestToken };';
 const { buildRelevantCorpus, retrievalQuestion, issueGuestToken } = await import(`data:text/javascript;base64,${Buffer.from(testModule).toString('base64')}`);

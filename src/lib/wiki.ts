@@ -3,6 +3,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import matter from 'gray-matter';
 import { marked } from 'marked';
+import { indexWikiSections, stripMarkdown } from './wiki-sections.js';
 
 const WIKI_DIR = path.join(process.cwd(), 'wiki');
 const WIKI_META_PATH = path.join(WIKI_DIR, '_meta.json');
@@ -190,15 +191,6 @@ function extractH1Title(body: string): string | undefined {
   return title || undefined;
 }
 
-function stripMarkdown(text: string): string {
-  return text
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-    .replace(/\[[^\]]*\]\([^)]*\)/g, '$1')
-    .replace(/[#>*_~`-]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 function linkifyWikiLinks(html: string): string {
   const base = (import.meta.env?.BASE_URL as string) || '/';
@@ -505,7 +497,7 @@ export function getSearchIndex(pages: WikiPage[]) {
     date: p.date,
     updated: p.updated,
     html: p.html,
-    bodyText: stripMarkdown(p.body),
+    ...indexWikiSections(p.body),
   }));
 }
 

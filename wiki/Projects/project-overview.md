@@ -10,7 +10,7 @@ tags:
   - agents CLI
   - 音樂
 date: 2026-08-14
-updated: 2026-08-25
+updated: 2026-09-12
 ---
 
 # Kaine 主要專案與能力總覽
@@ -51,6 +51,10 @@ updated: 2026-08-25
 - **小型語言模型客服分類實驗**：比較小型語言模型、Embedding 與分類方法的可行性。
 - **BMS Point Classification**：研究設備點位名稱與 metadata 的自動分類，包含 Embedding、LightGBM、RAG 與小型模型 fine-tuning 方向。
 - **視覺小說模組化製作系統**：把劇本、分支、Ren’Py、素材、QA 與在地化拆成可交接的製作階段；不公開個別小說內容。
+
+## 自我觀察與情境實驗
+
+- **AI 多角色模擬面試**：設計角色與情境，自己加入口語應答，再以原話、行為、判讀與限制保存入職約兩個月時的思考紀錄。已完成一次演練，尚非標準化能力測評。閱讀 [[Projects/Workflow/ai-interview-self-observation]]，再依主題進入完整事件紀錄。
 
 ## 跨領域能力
 
