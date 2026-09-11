@@ -1,6 +1,6 @@
 # WikiNB 工程 Handoff
 
-更新：2026-09-07
+更新：2026-09-12
 
 狀態：公開站、訪客 Gemini、私人登入與 GitHub Pages 部署皆已可用。
 
@@ -29,6 +29,14 @@ WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astr
 | 公開專案選材 | `wiki/Projects/project-overview.md`、`config/project-knowledge-sources.json` |
 
 ## 已完成且有回歸測試的功能
+
+### 2026-09-12 OpenAI 臨時入口
+
+- 新增 `/openai/`、右上選單入口與獨立 `worker/openai.js`；共用既有公開回答規則及檢索，不更改 Gemini 個性、登入、額度或 Codex CLI。
+- `wrangler.openai.jsonc` 管理獨立 Worker；專用 D1 表以原子預留限制本入口累計 US$10，沒有每人每日訊息上限，不自動付費重試。
+- 實際啟用取決於獨立 `OPENAI_API_KEY` Secret、`DEMO_ENABLED` 與剩餘啟用額度。請以 `/api/openai/health` 和一筆真實 API 回答確認，不由 Pages 部署狀態推定。
+- 2026-09-12 已設定專用 Secret，health 顯示可用；真實面試問題回答成功，D1 已記錄該次保守用量。完整測試、建置及桌面／手機介面驗證通過。
+- 操作、驗證、預算與停用方式見 [docs/openai-demo.md](./openai-demo.md)。
 
 ### 2026-09-07 作品抽題與聊天高度
 

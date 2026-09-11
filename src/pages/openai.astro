@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PublicDreamBackdrop from '../components/PublicDreamBackdrop.astro';
+import config from '../../config/openai-demo.json';
+---
+
+<BaseLayout title="Kainnne x OpenAI" description="介紹 Kaine 與公開作品的 OpenAI 臨時聊天入口" pageClass="public-wiki-page openai-demo-page" visitorNav={true} publicSection="openai">
+  <PublicDreamBackdrop />
+  <section id="openai-demo" class="openai-demo" data-api-url={config.apiUrl}>
+    <header class="openai-heading">
+      <h1>Kainnne <span>×</span> OpenAI</h1>
+      <p data-i18n="openai.note">臨時開放 · 費用由 Kaine 提供，額度用完即暫停。</p>
+    </header>
+    <div class="openai-card">
+      <div id="openai-log" class="openai-log" role="log" aria-live="polite" aria-relevant="additions" data-i18n-aria="openai.conversation" aria-label="聊天內容">
+        <div id="openai-start" class="openai-start">
+          <p data-i18n="openai.welcome">想了解 Kaine 的哪一面？</p>
+          <div class="openai-topics">
+            <button type="button" data-question="openai.question.about" data-i18n="openai.topic.about">認識 Kaine</button>
+            <button type="button" data-question="openai.question.challenge" data-i18n="openai.topic.challenge">面對質疑，他怎麼回應？</button>
+            <button type="button" data-question="openai.question.work" data-i18n="openai.topic.work">和他合作</button>
+          </div>
+        </div>
+      </div>
+      <div class="openai-controls">
+        <p id="openai-status" role="status" data-i18n="openai.checking">正在確認服務…</p>
+        <form id="openai-form">
+          <label class="sr-only" for="openai-message" data-i18n="openai.questionLabel">你的問題</label>
+          <textarea id="openai-message" rows="2" maxlength="1200" required data-i18n-placeholder="openai.placeholder" placeholder="詢問 Kaine 的工作、作品或合作方式…"></textarea>
+          <button id="openai-send" type="submit" disabled data-i18n="openai.send">送出</button>
+        </form>
+        <div class="openai-bottom">
+          <span data-i18n="openai.dataNote">問題與最近對話會送至 OpenAI；請勿輸入機密資料。</span>
+          <a href={`${import.meta.env.BASE_URL}gemini/`} data-i18n="openai.gemini">回到 Gemini</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { mountOpenAIChat } from '../scripts/openai-chat.js';
+  mountOpenAIChat();
+</script>
+
+<style>
+  .openai-demo { width: min(100%, 850px); margin: 0 auto; height: calc(100dvh - 9rem); min-height: 420px; display: flex; flex-direction: column; gap: 1.2rem; }
+  .openai-heading { text-align: center; flex-shrink: 0; }
+  h1 { font-family: 'Comfortaa', sans-serif; font-size: clamp(1.4rem, 4vw, 2rem); color: #73485e; font-weight: 700; }
+  h1 span { padding: 0 .2em; color: #b47b98; }
+  .openai-heading p { margin-top: .55rem; color: #7b6171; font-size: .85rem; }
+  .openai-card { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; background: rgba(255,255,255,.65); border: 1px solid rgba(255,255,255,.9); border-radius: 24px; box-shadow: 0 12px 44px rgba(129,73,109,.1); backdrop-filter: blur(18px); }
+  .openai-log { overflow-y: auto; flex: 1; min-height: 0; padding: 1.4rem; scroll-behavior: smooth; }
+  .openai-start { text-align: center; margin: clamp(1rem, 7vh, 4rem) 0 1rem; color: #714b63; }
+  .openai-topics { display: flex; justify-content: center; gap: .6rem; flex-wrap: wrap; margin-top: 1.2rem; }
+  .openai-topics button { background: rgba(255,255,255,.85); border: 1px solid #e6ccdd; border-radius: 14px; padding: .75rem 1rem; min-height: 44px; text-align: left; }
+  .openai-topics button:hover { background: #f8e9f2; }
+  .openai-controls { flex-shrink: 0; padding: .8rem 1.2rem 1rem; border-top: 1px solid #eedfea; background: rgba(255,255,255,.55); }
+  #openai-status { min-height: 1.3rem; margin-bottom: .5rem; color: #825669; font-size: .83rem; }
+  form { display: flex; align-items: flex-end; gap: .7rem; }
+  textarea { flex: 1; min-width: 0; resize: vertical; max-height: 160px; border: 1px solid #ddc5d4; background: #fffcfe; border-radius: 14px; padding: .75rem; color: #4a3543; font-size: 16px; line-height: 1.55; }
+  textarea:focus-visible { outline: 2px solid #b7749e; outline-offset: 1px; }
+  #openai-send { min-height: 46px; padding: .7rem 1.1rem; border-radius: 14px; background: #82546f; color: white; font-weight: 600; }
+  button:disabled { opacity: .45; cursor: wait; }
+  button:focus-visible, a:focus-visible { outline: 2px solid #925878; outline-offset: 3px; }
+  .openai-bottom { display: flex; gap: .8rem; justify-content: space-between; margin-top: .7rem; font-size: .73rem; color: #7b6673; }
+  .openai-bottom a { flex-shrink: 0; text-decoration: underline; text-underline-offset: 3px; }
+  :global(.openai-message) { max-width: 90%; margin: 0 0 1.1rem; padding: .95rem 1.1rem; border-radius: 18px; line-height: 1.85; color: #4e3947; overflow-wrap: anywhere; background: rgba(255,255,255,.92); }
+  :global(.openai-message[data-role="user"]) { margin-left: auto; background: #f2e3ee; white-space: pre-wrap; }
+  :global(.openai-message p + p) { margin-top: .7em; }
+  :global(.openai-message ul), :global(.openai-message ol) { padding-left: 1.5em; list-style: revert; }
+  :global(.openai-message a) { text-decoration: underline; color: #854566; }
+  :global(.openai-message pre) { white-space: pre-wrap; overflow-wrap: anywhere; padding: .6rem; background: #f6eef3; border-radius: 8px; }
+  :global(.openai-message blockquote) { border-left: 3px solid #d8b5cd; padding-left: .8em; }
+  @media (max-width: 600px) {
+    .openai-demo { height: calc(100dvh - 7.5rem); min-height: 350px; gap: .8rem; }
+    .openai-heading p { font-size: .74rem; }
+    .openai-log { padding: .85rem; }
+    .openai-controls { padding: .6rem .75rem .8rem; }
+    .openai-topics { flex-direction: column; }
+    .openai-topics button { text-align: center; }
+    .openai-bottom { flex-direction: column; gap: .35rem; }
+    :global(.openai-message) { max-width: 96%; padding: .8rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .openai-log { scroll-behavior: auto; } }
+</style>

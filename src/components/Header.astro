@@ -3,7 +3,7 @@ import sites from '../../config/sites.json';
 
 interface Props {
   visitorNav?: boolean;
-  publicSection?: 'wiki' | 'gemini' | 'login';
+  publicSection?: 'wiki' | 'gemini' | 'login' | 'openai';
 }
 
 const { visitorNav = false, publicSection = 'wiki' } = Astro.props;
@@ -12,7 +12,7 @@ const meUrl = sites.sites.me.url;
 const aboutLabel = visitorNav ? 'kainnne.com' : 'About Me';
 const loginLabel = visitorNav ? '私人登入' : '登入';
 const loginI18nKey = visitorNav ? 'nav.ownerLogin' : 'nav.login';
-const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSection === 'login';
+const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSection === 'login' || publicSection === 'openai';
 ---
 
 <header id="site-header" class="site-header fixed inset-x-0 top-0 z-50 border-b border-white/40 bg-white/40 backdrop-blur-xl">
@@ -85,6 +85,7 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
           <span class="nav-menu-bars" aria-hidden="true"></span>
         </button>
         <div id="nav-menu-panel" class="nav-menu-panel" hidden>
+          <a id="nav-openai" href={`${base}openai/`} class="nav-menu-item" data-i18n="nav.openaiDemo">OpenAI（臨時開放）</a>
           <a id="nav-login" href={`${base}login`} class="nav-menu-item" data-i18n={loginI18nKey}>{loginLabel}</a>
           <a
             id="nav-menu-home"

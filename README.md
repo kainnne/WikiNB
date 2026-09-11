@@ -46,6 +46,7 @@ Bridge 初次使用前先執行 `npm run bridge:install`，並依
 
 ## 部署邊界
 
+- 新增的 `/openai/` 臨時聊天使用獨立 `kainnne-openai` Worker，從右上選單進入；不接本機 Codex，也不自動切換或替代 Gemini。部署與停用方式見 [OpenAI 臨時入口](docs/openai-demo.md)。
 - `main` push 會觸發 `.github/workflows/deploy.yml`，只部署 Astro 靜態網站到 GitHub Pages。
 - `worker/index.js` 或 `wrangler.jsonc` 的修改不會隨 Pages 自動上線；需另行執行 `npx wrangler deploy`。
 - WikiNB 與其他專案目前沒有每日自動掃描或自動改寫排程；公開內容由 Kaine 明確觸發並審閱。

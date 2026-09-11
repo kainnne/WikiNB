@@ -932,6 +932,9 @@ async function chat(request, env) {
   });
 }
 
+// Shared read-only context builders; exporting them does not change Gemini routes.
+export { loadWikiPages, buildRelevantCorpus, retrievalQuestion, requestsExpandedDetail };
+
 export default {
   async fetch(request, env, ctx) {
     const cors = corsHeaders(request, env);

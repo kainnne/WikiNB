@@ -72,13 +72,13 @@ for (const locale of ['zh-TW', 'en']) {
   assert.equal(withPlainLanguagePreference(maximumInput, preference, maximumInput), maximumInput, 'Never clip user text to fit guidance');
 }
 
-// Exercise the actual Worker retrieval helpers without adding public test exports.
+// Retrieval helpers are shared with OpenAI; expose only the private token helper for tests.
 const workerSource = await readFile(new URL('../worker/index.js', import.meta.url), 'utf8');
 const testModule = workerSource
   .replace("'./chat-policy.js'", JSON.stringify(new URL('../worker/chat-policy.js', import.meta.url).href))
   .replace("'./discovery-topics.js'", JSON.stringify(new URL('../worker/discovery-topics.js', import.meta.url).href))
   .replace("'./visitor-policy.js'", JSON.stringify(new URL('../worker/visitor-policy.js', import.meta.url).href))
-  + '\nexport { buildRelevantCorpus, retrievalQuestion, issueGuestToken };';
+  + '\nexport { issueGuestToken };';
 const { buildRelevantCorpus, retrievalQuestion, issueGuestToken } = await import(`data:text/javascript;base64,${Buffer.from(testModule).toString('base64')}`);
 const firstDraw = drawDiscoveryTopics([], () => 0.4);
 const secondDraw = drawDiscoveryTopics(firstDraw.map((topic) => topic.id), () => 0.7);
