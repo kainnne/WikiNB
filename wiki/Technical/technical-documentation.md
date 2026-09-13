@@ -9,7 +9,7 @@ tags:
   - 系統架構
   - 專案索引
 date: 2026-08-17
-updated: 2026-09-03
+updated: 2026-09-13
 ---
 
 # Kainnne 專案技術文件
@@ -35,7 +35,6 @@ updated: 2026-09-03
 
 ### Agent 與工作流程
 
-- [[Technical/scopecut/01_pipeline_architecture_20260817|ScopeCut：Project Contract 產生管線]]
 - [[Technical/kainnne-geo-automation/01_audit_engine_20260817|Kainnne GEO Automation：稽核引擎]]
 - [[Technical/ai-document-workflow-workshop/01_workflow_and_viewer_20260817|AI 文件工作坊：文件流程與 Viewer]]
 - [[Technical/visual-novel-production-system/01_pipeline_and_qa_20260817|視覺小說製作系統：模組化管線與 QA]]

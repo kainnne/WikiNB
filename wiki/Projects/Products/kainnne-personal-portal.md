@@ -9,7 +9,7 @@ tags:
   - 作品集
   - GitHub Pages
 date: 2026-08-14
-updated: 2026-08-25
+updated: 2026-09-13
 ---
 
 # Kainnne 個人入口網站
@@ -28,7 +28,7 @@ Kainnne.com 是我的對外入口。它不是按年份堆疊經歷的傳統履�
 
 ## 核心成果
 
-- 用產品卡片集中展示 LumaReader、WikiNB、ScopeCut 等可操作作品。
+- 用產品卡片集中展示 LumaReader、WikiNB 等可操作作品。
 - 把軟體開發、AI 協作、資料分析與內容製作整理成容易理解的能力敘事。
 - 建立一致的品牌名稱、網址與搜尋引擎中繼資料，讓人與 AI 搜尋都較容易辨識內容來源。
 - 以靜態網站部署，降低維護成本並保留版本紀錄。
@@ -47,4 +47,3 @@ Kainnne.com 是我的對外入口。它不是按年份堆疊經歷的傳統履�
 
 - [[Projects/Knowledge/wikinb]]
 - [[Projects/Products/kainnne-lumareader]]
-- [[Projects/Workflow/scopecut]]

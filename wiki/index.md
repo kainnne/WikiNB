@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-09-12
+> 最後更新：2026-09-13
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -15,7 +15,6 @@
 - [[Projects/Products/kainnne-personal-portal]] — 三個對外介紹入口與數位產品定位
 - [[Projects/Products/kainnne-lumareader]] — 本機優先 Markdown 閱讀器
 - [[Projects/Knowledge/wikinb]] — 個人知識、公開網站與 AI 問答系統
-- [[Projects/Workflow/scopecut]] — 將模糊點子轉成 Codex Project Contract
 - [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性稽核流程
 - [[Systems/codexrules-agent-system]] — CodexRules、agents CLI 與可審閱的排程邊界
 

@@ -11,6 +11,7 @@ tags:
   - AI 導入
   - Kainnne Studio
 date: 2026-09-03
+updated: 2026-09-13
 ---
 
 # 與 Kaine 合作：客製化呈現與整合曝光
@@ -108,7 +109,6 @@ MusicMatch 最初要解決的是音樂人才「有能力，但缺少一個容易
 - [[AboutMe/02-software-development]]
 - [[AboutMe/04-collaboration-and-workstyle]]
 - [[Projects/project-overview]]
-- [[Projects/Workflow/scopecut]]
 - [[KCIS/WikiNB-KCIS]]
 - [[KCIS/kcis-ai-navigation]]
 - [[Learning/kuse-ai-practical-course]]

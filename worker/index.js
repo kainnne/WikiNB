@@ -540,7 +540,6 @@ const REPRESENTATIVE_PROJECT_SLUGS = [
   'KCIS/WikiNB-KCIS',
   'KCIS/kcis-ai-navigation',
   'Projects/Knowledge/wikinb',
-  'Projects/Workflow/scopecut',
   'Projects/Workflow/kainnne-geo-automation',
   'Systems/codexrules-agent-system',
 ];

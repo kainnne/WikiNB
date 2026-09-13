@@ -10,7 +10,7 @@ tags:
   - agents CLI
   - 音樂
 date: 2026-08-14
-updated: 2026-09-12
+updated: 2026-09-13
 ---
 
 # Kaine 主要專案與能力總覽
@@ -29,7 +29,6 @@ updated: 2026-09-12
 - **LumaReader**：本機優先 Markdown 閱讀器，支援長文、數學式、Mermaid、多媒體、多種閱讀模式與跨語言介面；若只選一個代表專案，以它為首選。
 - **Kainnne 個人入口網站**：透過 [kainnne.com](https://kainnne.com/)、[kainnne.com/me](https://kainnne.com/me) 與 [kcis.kainnne.com/me](https://kcis.kainnne.com/me) 分別呈現產品、個人經歷及教育科技成果。
 - **WikiNB／Kainnne × Gemini**：以巢狀 Markdown、公開網站、搜尋與限定範圍的 Gemini 問答構成人類可讀、AI 可用的知識系統。
-- **ScopeCut**：將模糊需求整理成包含目標、限制、Non-goals 與驗收條件的 Project Contract，再交給 Agent 協作實作。
 - **Kainnne Forms**：集中表單服務入口與部署資訊的輕量網站。
 - **WikiNB Enterprise**：探索多租戶與白標知識庫需求的產品原型，並清楚標示目前的原型邊界。
 
@@ -70,7 +69,6 @@ updated: 2026-09-12
 - [[Learning/kuse-ai-practical-course]]
 - [[Projects/Products/kainnne-personal-portal]]
 - [[Projects/Knowledge/wikinb]]
-- [[Projects/Workflow/scopecut]]
 - [[Projects/Workflow/kainnne-geo-automation]]
 - [[Systems/codexrules-agent-system]]
 - [[AboutMe/01-music]]

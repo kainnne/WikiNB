@@ -7,7 +7,6 @@ export const DISCOVERY_TOPICS = [
   ['navigation', 'KCIS/kcis-ai-navigation', '為不同工作找到 AI 的用法', 'Match AI applications to different jobs', '康橋 AI 應用導航網站', 'KCIS AI navigation website'],
   ['kuse', 'Learning/kuse-ai-practical-course', '讓團隊學會把工作交給 AI', 'Help a team delegate work to AI', 'Kuse AI 實作課', 'Kuse AI practical course'],
   ['novel', 'Projects/Creative/visual-novel-production-system', '把故事做成有分支的互動作品', 'Build a branching interactive story', '視覺小說模組化製作系統', 'modular visual novel production system'],
-  ['scope', 'Projects/Workflow/scopecut', '把模糊需求整理成實作計畫', 'Turn a vague request into a build plan', 'ScopeCut 需求整理流程', 'ScopeCut'],
   ['agents', 'Systems/codexrules-agent-system', '讓多個 AI Agent 協作開發', 'Coordinate AI agents on development work', 'CodexRules 與 agents CLI', 'CodexRules and agents CLI'],
   ['search', 'Projects/Workflow/kainnne-geo-automation', '檢查網站能否被搜尋與 AI 理解', 'Check how search engines and AI read a website', 'Kainnne GEO 網站稽核流程', 'Kainnne GEO website audit workflow'],
   ['forms', 'Projects/Workflow/kainnne-forms-landing', '把表單服務整理成清楚的入口', 'Create a clear entry point for form services', 'Kainnne Forms 表單入口', 'Kainnne Forms'],
