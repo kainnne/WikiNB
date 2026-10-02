@@ -21,14 +21,14 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
       id="brand-link"
       href={base}
       class="brand-link group shrink-0"
-      aria-label="Kainnne home"
+      aria-label="Kain³e home"
     >
       <img
         class="brand-logo"
-        src={`${base}brand/kainnne-wordmark.png`}
-        alt="Kainnne"
-        width="3072"
-        height="996"
+        src={`${base}brand/kain-cubed-wordmark.svg`}
+        alt="Kain³e"
+        width="3015"
+        height="1050"
         decoding="async"
       />
     </a>
@@ -67,7 +67,7 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
         <span
           class="nav-gemini-label"
           data-i18n={visitorNav ? 'nav.guestAi' : undefined}
-        >{visitorNav ? '訪客 AI' : 'Kainnne x Gemini'}</span>
+        >{visitorNav ? '訪客 AI' : 'Kain³e x Gemini'}</span>
       </a>
       <div id="nav-menu" class="nav-menu">
         <button
@@ -97,7 +97,7 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
             id="nav-menu-codex"
             href={`${base}codex`}
             class="nav-menu-item nav-member-menu-item hidden"
-          >Kainnne x Codex</a>
+          >Kain³e x Codex</a>
           <a
             id="nav-menu-search"
             href={`${base}search`}
@@ -269,7 +269,7 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
     outline: none;
   }
 
-  /* 品牌：共用完整 Kainnne 字標，連結行為維持回到首頁。 */
+  /* 品牌：共用完整 Kain³e 字標，連結行為維持回到首頁。 */
   .brand-link {
     display: inline-flex;
     align-items: center;
@@ -339,7 +339,7 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
     transform: scale(1.05);
   }
 
-  /* Kainnne x Gemini：白底彩字（未登入才顯示） */
+  /* Kain³e x Gemini：白底彩字（未登入才顯示） */
   .nav-gemini {
     display: inline-flex;
     align-items: center;
