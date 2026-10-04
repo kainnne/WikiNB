@@ -1,5 +1,6 @@
 import zhTW from '../locales/zh-TW.json';
 import en from '../locales/en.json';
+import { resolveLocale } from './locale-preference.js';
 
 const STORAGE_KEY = 'wikinb-locale-v1';
 const DEFAULT_LOCALE = 'zh-TW';
@@ -9,13 +10,17 @@ const dictionaries = {
 };
 
 export function getLocale() {
+  let saved = null;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'en' || saved === 'zh-TW') return saved;
+    saved = localStorage.getItem(STORAGE_KEY);
   } catch {
     /* ignore */
   }
-  return DEFAULT_LOCALE;
+  const locale = resolveLocale(typeof location === 'undefined' ? '' : location.search, saved);
+  if (locale !== saved) {
+    try { localStorage.setItem(STORAGE_KEY, locale); } catch { /* ignore */ }
+  }
+  return locale;
 }
 
 export function t(key, vars = {}, locale = getLocale()) {
@@ -100,6 +105,11 @@ export function applyI18n(root = document) {
     langBtn.textContent = t('nav.lang', {}, locale);
     langBtn.setAttribute('title', t('nav.langTitle', {}, locale));
   }
+  root.querySelectorAll('a[data-main-home]').forEach((link) => {
+    const url = new URL('https://kainnne.com/');
+    url.searchParams.set('lang', locale);
+    link.href = url.href;
+  });
 }
 
 export function setLocale(locale) {
@@ -108,6 +118,12 @@ export function setLocale(locale) {
     localStorage.setItem(STORAGE_KEY, next);
   } catch {
     /* ignore */
+  }
+  // Keep an explicit language from the main site in sync without adding a Back step.
+  const url = new URL(window.location.href);
+  if (url.searchParams.has('lang')) {
+    url.searchParams.set('lang', next);
+    window.history.replaceState(window.history.state, '', url);
   }
   applyI18n();
   document.dispatchEvent(new CustomEvent('wikinb:locale-change', { detail: { locale: next } }));

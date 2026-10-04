@@ -11,7 +11,7 @@ import '@fontsource/iansui/latin-400.css';
 ---
 
 <BaseLayout
-  title={isOpenAI ? "Kain³e x Codex" : "Kain³e x Gemini"}
+  title={isOpenAI ? "Kain³e x Codex" : "Kain³e 助手"}
   description="由公開 WikiNB 驅動的 Kaine 限定聊天"
   pageClass="public-wiki-page gemini-public-page"
   visitorNav={true}
@@ -27,8 +27,8 @@ import '@fontsource/iansui/latin-400.css';
       </span>
       <h1 class="gemini-heading">
         <span>Kain³e</span>
-        <span class="gemini-heading-cross" aria-hidden="true">×</span>
-        <span class:list={{ "codex-wordmark": isOpenAI }}>{isOpenAI ? "Codex" : "Gemini"}</span>
+        {isOpenAI && <span class="gemini-heading-cross" aria-hidden="true">×</span>}
+        <span class:list={{ "codex-wordmark": isOpenAI }} data-i18n={isOpenAI ? undefined : "gemini.assistantLabel"}>{isOpenAI ? "Codex" : "助手"}</span>
       </h1>
     </header>
 
@@ -103,7 +103,7 @@ import '@fontsource/iansui/latin-400.css';
           class="gemini-primary w-full justify-center py-3"
           data-i18n="gemini.verify"
         >
-          驗證並進入 Gemini
+          驗證並進入助手
         </button>
         <button id="gemini-back" type="button" class="btn-ghost w-full justify-center text-sm" data-i18n="gemini.back">
           ← 修改資料
@@ -115,7 +115,7 @@ import '@fontsource/iansui/latin-400.css';
     <section id="gemini-chat" class="gemini-window">
       <div class="gemini-chrome">
         <div class="gemini-chrome-copy">
-          <p class="gemini-chrome-title" data-i18n={isOpenAI ? undefined : "gemini.title"}>{isOpenAI ? <><span>Kain³e x </span><span class="codex-wordmark">Codex</span></> : "Kain³e x Gemini"}</p>
+          <a class="gemini-chrome-title" href="https://kainnne.com/" data-main-home data-i18n={isOpenAI ? undefined : "gemini.title"} aria-label="返回 kainnne.com" data-i18n-aria="nav.mainHome">{isOpenAI ? <><span>Kain³e x </span><span class="codex-wordmark">Codex</span></> : "Kain³e 助手"}</a>
           <p id="gemini-identity" class="gemini-chrome-identity"></p>
         </div>
         <button
@@ -409,21 +409,9 @@ import '@fontsource/iansui/latin-400.css';
     output.querySelectorAll('.gemini-suggestions, .gemini-next').forEach((node) => node.remove());
     const box = document.createElement('div');
     box.className = 'gemini-suggestions';
-    const heading = document.createElement('h2');
-    heading.className = 'gemini-choice-heading';
-    heading.dataset.i18n = 'gemini.chooseTitle';
-    heading.textContent = t('gemini.chooseTitle');
-    const intro = document.createElement('p');
-    intro.className = 'gemini-choice-intro';
-    intro.dataset.i18n = 'gemini.welcomeMessage';
-    intro.textContent = t('gemini.welcomeMessage');
-    box.append(heading);
-    if (!randomize) box.append(intro);
     showingDiscovery = randomize;
     if (randomize) {
       discoveryTopics = drawDiscoveryTopics(discoveryTopics.map((topic) => topic.id));
-      heading.dataset.i18n = 'gemini.discoverTitle';
-      heading.textContent = t('gemini.discoverTitle');
     }
     const examples = document.createElement('div');
     examples.className = 'gemini-choice-grid';
@@ -502,8 +490,24 @@ import '@fontsource/iansui/latin-400.css';
     const change = document.createElement('button');
     change.type = 'button';
     change.className = 'gemini-change-topic';
-    change.dataset.i18n = 'gemini.changeTopic';
-    change.textContent = t('gemini.changeTopic');
+    change.dataset.i18nAria = 'gemini.changeTopic';
+    change.dataset.i18nTitle = 'gemini.changeTopic';
+    change.setAttribute('aria-label', t('gemini.changeTopic'));
+    change.title = t('gemini.changeTopic');
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('width', '20');
+    icon.setAttribute('height', '20');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '1.8');
+    icon.setAttribute('stroke-linecap', 'round');
+    icon.setAttribute('stroke-linejoin', 'round');
+    icon.setAttribute('aria-hidden', 'true');
+    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    arrow.setAttribute('d', 'M20 7v5h-5 M20 12a8 8 0 1 0-2.3 5.7');
+    icon.appendChild(arrow);
+    change.appendChild(icon);
     change.addEventListener('click', () => {
       if (running) return;
       appendTopicPicker(true);
@@ -704,6 +708,7 @@ import '@fontsource/iansui/latin-400.css';
   });
 
   document.addEventListener('wikinb:locale-change', () => {
+    if (!isOpenAI) document.title = `${t('gemini.title')} · WikiNB`;
     renderDiscoveryLabels();
     if (isOpenAI) showOpenAIState(openaiStateKey);
     renderMessageState(authMessage, authMessageState);
@@ -714,6 +719,7 @@ import '@fontsource/iansui/latin-400.css';
   });
 
   async function init() {
+    if (!isOpenAI) document.title = `${t('gemini.title')} · WikiNB`;
     if (isOpenAI) {
       openAnonymousChat();
       showOpenAIState('openai.checking');
@@ -1129,6 +1135,7 @@ import '@fontsource/iansui/latin-400.css';
   }
 
   .gemini-chrome-title {
+    display: inline-block;
     font-family: Comfortaa, Quicksand, sans-serif;
     font-weight: 700;
     background: linear-gradient(105deg, #4285f4, #9b72cb, #d96570, #34a853);
@@ -1361,21 +1368,6 @@ import '@fontsource/iansui/latin-400.css';
     margin-block: auto;
   }
 
-  :global(.gemini-choice-heading) {
-    color: #4a2146;
-    font-size: clamp(1.35rem, 3vw, 1.75rem);
-    font-weight: 800;
-    line-height: 1.4;
-  }
-
-  :global(.gemini-choice-intro) {
-    max-width: 42rem;
-    margin: 0.5rem 0 0.8rem;
-    color: #76576c;
-    font-size: 1rem;
-    line-height: 1.75;
-  }
-
   :global(.gemini-choice-grid) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1427,16 +1419,16 @@ import '@fontsource/iansui/latin-400.css';
     text-align: left;
     cursor: pointer;
   }
-  :global(.gemini-change-topic) { border: 1px solid #dd779e; background: #f7a8c4; color: #63273e; font-weight: 700; box-shadow: 0 3px 0 #c6668b; text-align: center; }
-  :global(.gemini-suggestions > .gemini-change-topic) { margin-top: 0.9rem; min-width: 10rem; }
-  :global(.gemini-change-topic:hover:not(:disabled)) { background: #f393b6; }
-  :global(.gemini-change-topic:active:not(:disabled)) { transform: translateY(2px); box-shadow: 0 1px 0 #c6668b; }
+  :global(.gemini-change-topic) { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; padding: 0; border: 1px solid #e8c4d1; background: #f8e4eb; color: #885169; box-shadow: 0 2px 0 #dfbccb; }
+  :global(.gemini-suggestions > .gemini-change-topic) { margin-top: 0.75rem; }
+  :global(.gemini-change-topic:hover:not(:disabled)) { background: #f2d6e1; }
+  :global(.gemini-change-topic:active:not(:disabled)) { transform: translateY(1px); box-shadow: 0 1px 0 #dfbccb; }
   :global(.gemini-followup:hover:not(:disabled)) { background: #f4f0ff; }
   :global(.gemini-choice:focus-visible), :global(.gemini-followup:focus-visible), :global(.gemini-change-topic:focus-visible) {
     outline: 3px solid #7d5bac;
     outline-offset: 3px;
   }
-  :global(.gemini-change-topic:focus-visible) { outline-color: #cf628f; }
+  :global(.gemini-change-topic:focus-visible) { outline-color: #a86683; }
   :global(.gemini-choice:disabled), :global(.gemini-followup:disabled), :global(.gemini-change-topic:disabled) {
     opacity: 0.55;
     cursor: default;
@@ -1445,7 +1437,6 @@ import '@fontsource/iansui/latin-400.css';
   @media (max-width: 640px) {
     :global(.gemini-choice-grid) { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
     :global(.gemini-choice) { min-height: 0; padding: 0.85rem 1rem; gap: 0.25rem; }
-    :global(.gemini-choice-intro) { margin-bottom: 1rem; }
   }
 
   .gemini-chrome, .gemini-input-row { flex: 0 0 auto; }

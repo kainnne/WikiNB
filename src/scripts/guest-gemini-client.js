@@ -21,6 +21,10 @@ const GUEST_AI_MESSAGE_KEYS = new Map([
   ['請稍等幾秒再送出下一個問題', 'gemini.errorQuestionRate'],
   ['今天的訪客 AI 共享額度已達上限，請明天再來', 'gemini.errorDailyChatLimit'],
   ['這個網路的免登入提問次數已用完，請驗證信箱後繼續', 'gemini.anonymousLimit'],
+  ['Kain³e 助手目前已達流量或額度限制。為避免重複消耗請求，系統不會自動重試；請稍後再試。', 'gemini.errorQuota'],
+  ['Kaine 的 Gemini 免費 API 目前已觸發流量或額度限制。為避免重複消耗請求，系統不會自動重試；請稍後再試。', 'gemini.errorQuota'],
+  ['AI 服務設定目前無法使用，已停止這次請求', 'gemini.errorApiConfig'],
+  ['Kain³e 助手沒有產生回答，請換個方式再問一次', 'gemini.errorEmptyAnswer'],
   ['Gemini API 設定目前無法使用，已停止這次請求', 'gemini.errorApiConfig'],
   ['Gemini 沒有產生回答，請換個方式再問一次', 'gemini.errorEmptyAnswer'],
 ]);

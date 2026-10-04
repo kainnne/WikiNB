@@ -221,7 +221,7 @@ async function sendTextEmail(env, to, subject, text) {
       'User-Agent': 'Kainnne-Gemini/1.0',
     },
     body: JSON.stringify({
-      from: env.EMAIL_FROM || 'Kainnne × Gemini <login@auth.kainnne.com>',
+      from: env.EMAIL_FROM || 'Kain³e Assistant <login@auth.kainnne.com>',
       reply_to: env.EMAIL_REPLY_TO || 'ryanzhu@kainnne.com',
       to: [to],
       subject,
@@ -286,11 +286,11 @@ async function requestOtp(request, env) {
     await sendTextEmail(
       env,
       email,
-      `Kainnne x Gemini 驗證碼：${code}`,
+      `Kain³e 助手驗證碼：${code}`,
       [
         `${name} 您好，`,
         '',
-        `你的 Kainnne x Gemini 驗證碼是：${code}`,
+        `你的 Kain³e 助手驗證碼是：${code}`,
         '',
         '驗證碼 10 分鐘內有效。',
         '這會解鎖 Kaine 限定聊天，不是 WikiNB 管理員登入。',
@@ -349,16 +349,16 @@ async function verifyOtp(request, env, ctx) {
     sendTextEmail(
       env,
       env.OWNER_EMAIL,
-      'Kainnne x Gemini 訪客解鎖通知',
+      'Kain³e 助手訪客解鎖通知',
       [
-        '有訪客剛剛通過 Email 驗證並解鎖 Gemini。',
+        '有訪客剛剛通過 Email 驗證並解鎖 Kain³e 助手。',
         '',
         `名稱：${pending.name}`,
         `電子信箱：${email}`,
         `時間：${when}（台北時間）`,
         `來源 IP：${pending.ip || clientIp(request)}`,
         '',
-        '此訪客只有 Gemini 問答權限，沒有 WikiNB 管理、上傳、修改或同步權限。',
+        '此訪客只有助手問答權限，沒有 WikiNB 管理、上傳、修改或同步權限。',
       ].join('\n'),
     ).catch((error) => console.error('Owner alert failed', error)),
   );
@@ -872,7 +872,7 @@ async function chat(request, env) {
     console.error('Gemini network failure after retry', error);
     return json({
       error:
-        'Gemini 暫時無法回應，系統已自動重試。這通常是 Gemini API 或網路的短暫狀況；請等待約 10 秒後再送一次。',
+        'Kain³e 助手暫時無法回應，系統已自動重試。請等待約 10 秒後再送一次。',
     }, 502);
   }
 
@@ -883,17 +883,17 @@ async function chat(request, env) {
       return json(
         {
           error:
-            'Kaine 的 Gemini 免費 API 目前已觸發流量或額度限制。為避免重複消耗請求，系統不會自動重試；請稍後再試。',
+            'Kain³e 助手目前已達流量或額度限制。為避免重複消耗請求，系統不會自動重試；請稍後再試。',
         },
         429,
       );
     }
     if (response.status === 400 || response.status === 403) {
-      return json({ error: 'Gemini API 設定目前無法使用，已停止這次請求' }, 502);
+      return json({ error: 'AI 服務設定目前無法使用，已停止這次請求' }, 502);
     }
     return json({
       error:
-        'Gemini 暫時無法回應，系統已自動重試。這通常是 Gemini API 或網路的短暫狀況；請等待約 10 秒後再送一次。',
+        'Kain³e 助手暫時無法回應，系統已自動重試。請等待約 10 秒後再送一次。',
     }, 502);
   }
 
@@ -902,10 +902,10 @@ async function chat(request, env) {
     .map((part) => part.text || '')
     .join('')
     .trim();
-  if (!answer) return json({ error: 'Gemini 沒有產生回答，請換個方式再問一次' }, 502);
+  if (!answer) return json({ error: 'Kain³e 助手沒有產生回答，請換個方式再問一次' }, 502);
   answer = canonicalizeWikiLinks(answer, corpus);
   if (finishReason === 'MAX_TOKENS') {
-    answer += '\n\n> 回答觸及 Gemini 模型本身的輸出上限；若內容不完整，請指定要接續的部分。';
+    answer += '\n\n> 回答已達單次輸出上限；若內容不完整，請指定要接續的部分。';
   }
   if (shouldOfferContact(message, history)) {
     answer = ensureCollaborationContact(answer, english);

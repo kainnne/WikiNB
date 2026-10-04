@@ -196,7 +196,7 @@ export function createWikiSearch(searchIndex, options = {}) {
           </div>
         </div>
         <div id="content-${escapeAttr(id)}" class="wiki-panel hidden border-t border-pink-100/60 bg-white/30 px-4 pb-6 pt-2 md:px-6" hidden>
-          <div class="wiki-content pl-11 md:pl-12">${page.html}</div>
+          <div class="wiki-content pl-11 md:pl-12"></div>
           <div class="mt-6 pl-11 md:pl-12">
             <a href="${escapeAttr(href)}" class="text-sm font-semibold text-pink-600 hover:text-pink-700">${escapeHtml(t('search.openPage'))}</a>
           </div>
@@ -265,6 +265,14 @@ export function createWikiSearch(searchIndex, options = {}) {
     const expandBtn = item.querySelector('.wiki-expand');
     const chevron = item.querySelector('.wiki-chevron');
     if (!panel || !expandBtn) return;
+
+    // Collapsed previews need no DOM. Inserting every note on each keystroke
+    // stalls mobile browsers even though none of that content is visible.
+    const content = panel.querySelector('.wiki-content');
+    if (content && !content.hasAttribute('data-loaded')) {
+      content.innerHTML = pageBySlug.get(item.getAttribute('data-slug'))?.html || '';
+      content.setAttribute('data-loaded', 'true');
+    }
 
     item
       .closest('[data-search-results]')
@@ -394,16 +402,32 @@ export function createWikiSearch(searchIndex, options = {}) {
 
   const getQueryFromUrl = () => new URLSearchParams(window.location.search).get('q') || '';
 
-  const mount = ({ input, form, resultsEl, emptyEl, metaEl, syncUrl = false }) => {
+  const mount = ({ input, form, resultsEl, emptyEl, metaEl, statusEl, retryEl, syncUrl = false }) => {
+    let renderedQuery;
     const runSearch = () => {
       const q = input?.value ?? '';
-      if (syncUrl) {
-        const url = new URL(window.location.href);
-        if (q.trim()) url.searchParams.set('q', q.trim());
-        else url.searchParams.delete('q');
-        window.history.replaceState({}, '', url);
+      try {
+        if (syncUrl) {
+          const url = new URL(window.location.href);
+          if (q.trim()) url.searchParams.set('q', q.trim());
+          else url.searchParams.delete('q');
+          window.history.replaceState(window.history.state, '', url);
+        }
+        renderResults({ query: q, resultsEl, emptyEl, metaEl });
+        renderedQuery = q;
+        if (statusEl) statusEl.hidden = true;
+        if (retryEl) retryEl.hidden = true;
+        resultsEl.setAttribute('aria-busy', 'false');
+      } catch (error) {
+        resultsEl.setAttribute('aria-busy', 'false');
+        if (statusEl) {
+          statusEl.textContent = t('search.loadError');
+          statusEl.setAttribute('data-i18n', 'search.loadError');
+          statusEl.hidden = false;
+        }
+        if (retryEl) retryEl.hidden = false;
+        console.error('Wiki search could not render', error);
       }
-      renderResults({ query: q, resultsEl, emptyEl, metaEl });
     };
 
     input?.addEventListener('input', runSearch);
@@ -412,6 +436,12 @@ export function createWikiSearch(searchIndex, options = {}) {
       runSearch();
     });
     document.addEventListener('wikinb:locale-change', runSearch);
+    // Safari can restore an input after module initialization or from bfcache.
+    // Keep existing expanded previews when the restored result is still valid.
+    window.addEventListener('pageshow', () => {
+      const blank = !resultsEl.innerHTML.trim() && (!emptyEl || emptyEl.classList.contains('hidden'));
+      if (renderedQuery !== (input?.value ?? '') || blank) runSearch();
+    });
 
     return { runSearch, getQueryFromUrl };
   };

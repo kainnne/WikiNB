@@ -19,9 +19,11 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 md:px-8">
     <a
       id="brand-link"
-      href={base}
+      href={meUrl}
+      data-main-home
       class="brand-link group shrink-0"
-      aria-label="Kain³e home"
+      aria-label="返回 kainnne.com"
+      data-i18n-aria="nav.mainHome"
     >
       <img
         class="brand-logo"
@@ -66,8 +68,8 @@ const showGuestAiNav = !visitorNav || publicSection === 'gemini' || publicSectio
       >
         <span
           class="nav-gemini-label"
-          data-i18n={visitorNav ? 'nav.guestAi' : undefined}
-        >{visitorNav ? '訪客 AI' : 'Kain³e x Gemini'}</span>
+          data-i18n="nav.guestAi"
+        >Kain³e 助手</span>
       </a>
       <div id="nav-menu" class="nav-menu">
         <button

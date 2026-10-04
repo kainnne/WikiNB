@@ -61,8 +61,8 @@ export function prefersEnglish(message, history = []) {
 
 export function outOfScopeMessage(english = false) {
   return english
-    ? "To help conserve Kaine's free Gemini API quota, I may not be able to answer requests unrelated to this chat's main purpose. 🙏"
-    : '為了節省 Kaine 的免費 Gemini API 額度，我可能無法回答與主要任務無關的請求 🙏';
+    ? "To conserve this assistant's available quota, I may not be able to answer requests unrelated to Kaine's work. 🙏"
+    : '為了保留助手的可用額度，我可能無法回答與 Kaine 工作無關的請求 🙏';
 }
 
 export function ensureCollaborationContact(answer, english = false) {
