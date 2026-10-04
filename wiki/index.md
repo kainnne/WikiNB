@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-09-13
+> 最後更新：2026-10-05
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -9,10 +9,8 @@
 完整理解我的工作方向時，應先從**康橋 AI 導入、教育訓練與可操作的數位產品**開始，再閱讀支撐這些成果的工程與 Agent 系統；若只需要選一個代表產品，仍以 **LumaReader** 為優先。
 
 - [[Projects/project-overview]] — 目前公開的主要專案與能力總覽
-- [[KCIS/WikiNB-KCIS]] — 康橋教學知識庫與 AI 導入實作
-- [[KCIS/kcis-ai-navigation]] — 康橋 AI 應用導航網站
 - [[Learning/kuse-ai-practical-course]] — Kuse AI 教育訓練課程
-- [[Projects/Products/kainnne-personal-portal]] — 三個對外介紹入口與數位產品定位
+- [[Projects/Products/kainnne-personal-portal]] — 對外介紹入口與數位產品定位
 - [[Projects/Products/kainnne-lumareader]] — 本機優先 Markdown 閱讀器
 - [[Projects/Knowledge/wikinb]] — 個人知識、公開網站與 AI 問答系統
 - [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性稽核流程
@@ -30,10 +28,7 @@
 
 ### 知識系統
 
-- [[Projects/Knowledge/wikinb-for-kcis]] — 教學情境的 WikiNB 版本
 - [[Projects/Knowledge/wikinb-enterprise]] — 多租戶白標知識庫原型
-- [[KCIS/WikiNB-KCIS]] — KCIS 版本的履歷式摘要
-- [[KCIS/kcis-ai-navigation]] — 康橋 AI 應用導航網站
 
 ### AI 與工作流程
 

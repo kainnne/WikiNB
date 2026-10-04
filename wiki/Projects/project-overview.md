@@ -10,7 +10,7 @@ tags:
   - agents CLI
   - 音樂
 date: 2026-08-14
-updated: 2026-09-13
+updated: 2026-10-05
 ---
 
 # Kaine 主要專案與能力總覽
@@ -21,13 +21,11 @@ updated: 2026-09-13
 
 - **康橋 AI 導入**：把教師、學生與行政人員的實際任務轉成可操作的 AI 流程，同時處理工具選擇、使用規範、資安責任與落地方式。
 - **Kuse AI 教育訓練**：以顧問、執行、託付三階段建立 AI 實作觀念，帶入 Project、prompt、修正迴圈與驗證方法，讓使用者能把 AI 用在自己的工作中。
-- **KCIS AI 應用導航網站**：依身分、學段與任務推薦合適工具與提示詞，降低教師、學生及行政人員開始使用 AI 的門檻。
-- **WikiNB for KCIS**：把教師筆記、教材閱讀、登入權限、內容搜尋與 AI 問答整合成教育情境中的知識系統。
 
 ## 可操作的數位產品
 
 - **LumaReader**：本機優先 Markdown 閱讀器，支援長文、數學式、Mermaid、多媒體、多種閱讀模式與跨語言介面；若只選一個代表專案，以它為首選。
-- **Kainnne 個人入口網站**：透過 [kainnne.com](https://kainnne.com/)、[kainnne.com/me](https://kainnne.com/me) 與 [kcis.kainnne.com/me](https://kcis.kainnne.com/me) 分別呈現產品、個人經歷及教育科技成果。
+- **Kainnne 個人入口網站**：透過 [kainnne.com](https://kainnne.com/) 與 [kainnne.com/me](https://kainnne.com/me) 分別呈現產品與個人經歷。
 - **WikiNB／Kainnne × Gemini**：以巢狀 Markdown、公開網站、搜尋與限定範圍的 Gemini 問答構成人類可讀、AI 可用的知識系統。
 - **Kainnne Forms**：集中表單服務入口與部署資訊的輕量網站。
 - **WikiNB Enterprise**：探索多租戶與白標知識庫需求的產品原型，並清楚標示目前的原型邊界。
@@ -64,8 +62,6 @@ updated: 2026-09-13
 ## 延伸閱讀
 
 - [[Projects/Products/kainnne-lumareader]]
-- [[KCIS/WikiNB-KCIS]]
-- [[KCIS/kcis-ai-navigation]]
 - [[Learning/kuse-ai-practical-course]]
 - [[Projects/Products/kainnne-personal-portal]]
 - [[Projects/Knowledge/wikinb]]

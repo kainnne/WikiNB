@@ -470,7 +470,7 @@ async function incrementChatTurn(env, email) {
 
 async function loadWikiPages(env) {
   const cache = caches.default;
-  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v9');
+  const cacheKey = new Request('https://cache.kainnne.local/wiki-pages-v10');
   const cached = await cache.match(cacheKey);
   if (cached) return cached.json();
 
@@ -532,19 +532,20 @@ const BROAD_PROFILE_PRIORITY_SLUGS = [
   'AboutMe/03-ai-and-data',
   'AboutMe/02-software-development',
   'AboutMe/04-collaboration-and-workstyle',
-  'KCIS/WikiNB-KCIS',
 ];
 
 const REPRESENTATIVE_PROJECT_SLUGS = [
   SINGLE_REPRESENTATIVE_PROJECT_SLUG,
-  'KCIS/WikiNB-KCIS',
-  'KCIS/kcis-ai-navigation',
   'Projects/Knowledge/wikinb',
   'Projects/Workflow/kainnne-geo-automation',
   'Systems/codexrules-agent-system',
 ];
 
 const EXCLUDED_PUBLIC_SLUGS = new Set([
+  'kcis/wikinb-kcis',
+  'kcis/kcis-ai-navigation',
+  'projects/knowledge/wikinb-for-kcis',
+  'technical/wikinb-for-kcis/01_prototype_architecture_20260817',
   'projects/products/musicmatch',
   'projects/products/ambient-ai',
   'projects/machine-learning/house-price-regression',

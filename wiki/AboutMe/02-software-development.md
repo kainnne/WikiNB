@@ -29,8 +29,6 @@
 
 - **康橋 AI 導入**：把 AI 應用整理成教師、學生與行政人員可以理解並操作的流程，而不只介紹工具名稱。
 - **Kuse AI 教育訓練**：用顧問、執行、託付三階段，搭配 Project、prompt、修正迴圈與資安責任建立實作課程。
-- **KCIS AI 應用導航**：依身分、學段與任務推薦工具並產生可直接使用的提示詞。
-- **WikiNB for KCIS**：建立教師筆記、教材搜尋、登入權限與 AI 問答流程。
 
 ## 目前代表產品與工作系統
 
@@ -45,22 +43,6 @@
 - **Kainnne GEO**：把網站可發現性檢查整理成可重複執行、保留人工決策的稽核流程。
 - **CodexRules／agents CLI**：以中央規則、按需路由與專案層指令降低 Agent 重讀內容與 token 消耗。
 - **排程與監測設計**：能把來源偵測、摘要、人工決策與發布拆成不同階段；目前排程已暫停，改由人工觸發，以避免錯誤內容被持續放大。
-
-## 教育科技專案連結
-
-### WikiNB for KCIS
-
-為康橋國際學校設計的 AI 教學知識庫，包含教師筆記建立、學生教材閱讀、登入驗證、內容搜尋與 AI 問答等流程。
-
-- [查看 WikiNB-KCIS 專案完整筆記](https://wikinb.kainnne.com/wiki/KCIS/WikiNB-KCIS/)
-- [GitHub Repository](https://github.com/kainnne/WikiNB-KCIS)
-
-### KCIS AI 導航網站
-
-依使用者身分、學段及需求，協助教師、行政與學生找到適合的 AI 工具。
-
-- [查看 KCIS AI 導航網站完整筆記](https://wikinb.kainnne.com/wiki/KCIS/kcis-ai-navigation/)
-- [前往網站](https://kcis.kainnne.com/)
 
 ## 相關連結
 

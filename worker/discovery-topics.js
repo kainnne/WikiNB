@@ -3,8 +3,6 @@ export const DISCOVERY_TOPICS = [
   ['interview', 'Projects/Workflow/ai-interview-self-observation', '從模擬面試了解 Kaine 的思考方式', 'Explore Kaine’s thinking through a mock interview', 'AI 多角色模擬面試與自我觀察', 'AI mock interview and self-observation'],
   ['reader', 'Projects/Products/kainnne-lumareader', '讓長篇筆記更容易閱讀', 'Make long notes easier to read', 'LumaReader 閱讀器', 'LumaReader'],
   ['wiki', 'Projects/Knowledge/wikinb', '把筆記整理成可對話的網站', 'Turn notes into a conversational website', 'WikiNB 知識網站', 'WikiNB knowledge website'],
-  ['school', 'KCIS/WikiNB-KCIS', '讓教材與工作文件方便查找', 'Make teaching and work documents searchable', 'WikiNB for KCIS 教育知識庫', 'WikiNB for KCIS'],
-  ['navigation', 'KCIS/kcis-ai-navigation', '為不同工作找到 AI 的用法', 'Match AI applications to different jobs', '康橋 AI 應用導航網站', 'KCIS AI navigation website'],
   ['kuse', 'Learning/kuse-ai-practical-course', '讓團隊學會把工作交給 AI', 'Help a team delegate work to AI', 'Kuse AI 實作課', 'Kuse AI practical course'],
   ['novel', 'Projects/Creative/visual-novel-production-system', '把故事做成有分支的互動作品', 'Build a branching interactive story', '視覺小說模組化製作系統', 'modular visual novel production system'],
   ['agents', 'Systems/codexrules-agent-system', '讓多個 AI Agent 協作開發', 'Coordinate AI agents on development work', 'CodexRules 與 agents CLI', 'CodexRules and agents CLI'],

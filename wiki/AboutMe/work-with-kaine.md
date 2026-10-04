@@ -109,6 +109,4 @@ MusicMatch 最初要解決的是音樂人才「有能力，但缺少一個容易
 - [[AboutMe/02-software-development]]
 - [[AboutMe/04-collaboration-and-workstyle]]
 - [[Projects/project-overview]]
-- [[KCIS/WikiNB-KCIS]]
-- [[KCIS/kcis-ai-navigation]]
 - [[Learning/kuse-ai-practical-course]]

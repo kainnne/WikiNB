@@ -633,7 +633,6 @@ AI Agent 開發
 | 專案 | 類型 | 連結 |
 |---|---|---|
 | **WikiNB** | 知識庫 | [前往網站](https://wikinb.kainnne.com/) |
-| **KCIS AI Navigator** | AI 工具導覽 | [前往網站](https://kcis.kainnne.com/) |
 ```
 
 ---

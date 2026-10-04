@@ -37,11 +37,6 @@
       "files": ["README.md"]
     },
     {
-      "id": "wikinb-kcis",
-      "root": "../WikiNB_for_KCIS",
-      "files": ["README.md"]
-    },
-    {
       "id": "wikinb-enterprise",
       "root": "../WikiNB_Enterprise",
       "files": ["README.md"]

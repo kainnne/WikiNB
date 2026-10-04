@@ -72,13 +72,13 @@ V2 計畫已確立下列方向，但清單中的能力尚未因文件存在而�
 - 全站 login wall；登入前不提供教材、搜尋索引或 AI 主介面。
 - Authentication 與 authorization 分離：外部 IdP 證明身分，WikiNB 仍以自己的 membership、role、group 與狀態決定權限。
 - Default deny；新帳號、新文件、新 API 與新租戶在沒有明確規則時預設拒絕。
-- 核心模型改成可容納不同學校、機構或公司的 tenant，不把 KCIS 名稱、網域、角色文字或資料夾規則寫死。
+- 核心模型改成可容納不同學校、機構或公司的 tenant，不把特定組織的名稱、網域、角色文字或資料夾規則寫死。
 - 使用真正的交易型資料庫保存 tenant、identity、membership、permission、session、login attempts 與 audit events。
 - 受保護文件與 blob 分離保存，但每次讀取、搜尋、下載、AI 檢索與匯出都走同一套 server-side authorization。
 - 搜尋與 RAG 必須在檢索前按 tenant、group、owner 與使用者能力過濾，不能先把完整索引送到前端或模型後再遮蔽。
 - 使用可撤銷的 opaque session、持久化節流、稽核紀錄、資料保存與備份／還原流程。
 - Google Workspace／OIDC 作為優先方向，同時保留其他企業身分提供者的接入邊界。
-- KCIS 若日後採用，應以標準 tenant onboarding 與資料遷移流程接入，而不是直接複製原型私有資料。
+- 組織若日後採用，應以標準 tenant onboarding 與資料遷移流程接入，而不是直接複製原型私有資料。
 
 ## 資料流
 
@@ -141,7 +141,7 @@ V1 把品牌切換、visibility、登入後內容與來源式問答串成一條�
 
 ### V2 決策
 
-#### 1. 不在 V1／KCIS 架構上持續堆疊正式需求
+#### 1. 不在特定組織的 V1 架構上持續堆疊正式需求
 
 V2 採重建而非局部修補，因為公開靜態內容、記憶體認證、JSON 帳號與完整多租戶授權的安全模型根本不同。
 
@@ -229,7 +229,7 @@ V2 計畫要求至少補齊下列 negative permission tests：
 - 目前是已決定的 master plan，phase checklist 尚未完成。
 - 多租戶 schema、authorization service、IdP integration、object storage、audit log 與 migration pipeline 都需實作。
 - 正式商業條款、資料處理區域、法遵與組織 onboarding 尚未定案。
-- 從 KCIS 或 V1 遷移任何資料前，仍需獨立的資料盤點、授權與驗證流程。
+- 從既有原型遷移任何資料前，仍需獨立的資料盤點、授權與驗證流程。
 
 ## 公開邊界
 

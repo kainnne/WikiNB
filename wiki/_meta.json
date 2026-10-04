@@ -1,11 +1,4 @@
 {
-  "KCIS/WikiNB-KCIS_履歷版專案簡述": {
-    "title": "WikiNB · KCIS",
-    "description": "康橋國際學校教學筆記知識庫與 AI 複習平台（履歷版專案簡述）。",
-    "tags": [
-      "專案"
-    ]
-  },
   "AboutMe/01-music": {
     "title": "About Music",
     "description": "一個有音樂會經歷跟專輯的業餘音樂家。",
@@ -19,15 +12,6 @@
       "音樂會",
       "原創作品",
       "紙本專輯"
-    ]
-  },
-  "KCIS/kcis-ai-navigation": {
-    "title": "康橋 AI 應用導航網站",
-    "description": "一個依照身分、學段與實際任務，引導教師、學生及行政人員找到合適 AI 工具並產生可直接使用 prompt 的智慧導覽網站。",
-    "tags": [
-      "教育科技",
-      "推薦演算法",
-      "AI應用推薦"
     ]
   },
   "AboutMe/02-software-development": {

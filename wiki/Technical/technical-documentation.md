@@ -1,6 +1,6 @@
 ---
 title: Kainnne 專案技術文件
-description: 將產品功能說明與可公開的工程架構分開保存，集中連結十二個專案來源的技術文件。
+description: 將產品功能說明與可公開的工程架構分開保存，集中連結十一個專案來源的技術文件。
 type: note
 status: active
 tags:
@@ -9,7 +9,7 @@ tags:
   - 系統架構
   - 專案索引
 date: 2026-08-17
-updated: 2026-09-13
+updated: 2026-10-05
 ---
 
 # Kainnne 專案技術文件
@@ -30,7 +30,6 @@ updated: 2026-09-13
 ### 知識系統與教育應用
 
 - [[Technical/wikinb/01_system_architecture_20260817|WikiNB：公開內容、訪客 AI 與私人 Bridge 架構]]
-- [[Technical/wikinb-for-kcis/01_prototype_architecture_20260817|WikiNB for KCIS：原型架構]]
 - [[Technical/wikinb-enterprise/01_v1_prototype_and_v2_plan_20260817|WikiNB Enterprise：第一版原型與第二版規劃邊界]]
 
 ### Agent 與工作流程
@@ -46,7 +45,6 @@ updated: 2026-09-13
 
 ### 目前不建立詳細技術頁
 
-- **KCIS AI Navigation**：尚未納入正式跨專案 source 白名單，因此先維持 [[KCIS/kcis-ai-navigation|既有公開功能頁]]，不依零散檔案推測架構。
 - **CodexRules／agents CLI**：[[Systems/codexrules-agent-system|既有 Systems 公開摘要]] 已到安全邊界。系統價值與公開使用方式可以說明，但中央私人規則、個人協作設定與本機導覽資料不建立公開技術鏡像。
 - **BMS Point Classification**：目前缺少可安全引用的公開 source，且可能涉及合作方與設備點位資料；在資料權利與公開邊界確認前，不建立技術頁。
 
@@ -54,7 +52,7 @@ MusicMatch、房價預測、ambient-ai 與 moonbase 已從正式知識同步 bas
 
 ## 已確認技術
 
-- 十二個入口對應 `config/project-knowledge-sources.json` 的十二個策展來源；「列入來源」只代表可追蹤，不代表來源中的所有內容都適合公開。
+- 十一個入口對應 `config/project-knowledge-sources.json` 的十一個策展來源；「列入來源」只代表可追蹤，不代表來源中的所有內容都適合公開。
 - 每份技術文件會把狀態分成「已實作」、「既有文件記錄但本輪未重跑」與「規劃／尚未驗證」，避免把願景寫成現況。
 - 文件採 WikiNB 的巢狀 slug、繁體中文 frontmatter 與時間軸命名，方便後續新增下一版而不覆蓋架構歷史。
 
@@ -86,7 +84,7 @@ MusicMatch、房價預測、ambient-ai 與 moonbase 已從正式知識同步 bas
 ## 部署與執行邊界
 
 - `Technical/` 與其他 `wiki/` 筆記一樣屬於公開靜態內容；本身不會啟動後端、排程或重新部署來源專案。
-- WikiNB 的 Pages 發布只代表這批 Markdown 已成為網站內容，不代表十二個來源專案都在同一時間重新建置或重新部署。
+- WikiNB 的 Pages 發布只代表這批 Markdown 已成為網站內容，不代表十一個來源專案都在同一時間重新建置或重新部署。
 - 各專案若有獨立 Worker、本機服務、桌面封裝或其他部署線，必須依各自技術頁的邊界判讀。
 
 ## 已知限制

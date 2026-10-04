@@ -45,12 +45,6 @@
 
 將 AI 應用於教育工具推薦、教材知識庫、內容搜尋與 AI 問答流程。
 
-相關專案：
-
-- [康橋 AI Notebook](https://wikinb.kainnne.com/wiki/KCIS/kcis-ai-navigation/)
-- [網站連結](https://kcis.kainnne.com/)
-- [WikiNB-KCIS Notebook](https://wikinb.kainnne.com/wiki/KCIS/WikiNB-KCIS/)
-- [網站連結](https://kainnne.github.io/WikiNB-KCIS/)
 
 - [我的綜合作品知識庫](https://wikinb.kainnne.com/)
 - [GitHub](https://github.com/kainnne)
