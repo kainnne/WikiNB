@@ -86,7 +86,7 @@ assert.match(worker, /function systemPrompt\(corpus, expandedDetailRequested = f
 assert.match(worker, /最相關的 1–3 份 WikiNB 文件/);
 assert.match(worker, /https:\/\/api\.resend\.com\/emails/);
 assert.match(worker, /env\.RESEND_API_KEY/);
-assert.match(wrangler, /"EMAIL_FROM": "Kain³e Assistant <login@auth\.kainnne\.com>"/);
+assert.match(wrangler, /"EMAIL_FROM": "Kain³e AI <login@auth\.kainnne\.com>"/);
 assert.doesNotMatch(worker, /cloudflare-smtp|env\.SMTP_/);
 assert.doesNotMatch(wrangler, /SMTP_|chaos60649@gmail\.com/);
 assert.match(worker, /systemPrompt\(corpus, expandedDetailRequested, message\)/);

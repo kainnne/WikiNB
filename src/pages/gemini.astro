@@ -11,7 +11,7 @@ import '@fontsource/iansui/latin-400.css';
 ---
 
 <BaseLayout
-  title={isOpenAI ? "Kain³e x Codex" : "Kain³e 助手"}
+  title={isOpenAI ? "Kain³e x Codex" : "Kain³e AI"}
   description="由公開 WikiNB 驅動的 Kaine 限定聊天"
   pageClass="public-wiki-page gemini-public-page"
   visitorNav={true}
@@ -115,7 +115,7 @@ import '@fontsource/iansui/latin-400.css';
     <section id="gemini-chat" class="gemini-window">
       <div class="gemini-chrome">
         <div class="gemini-chrome-copy">
-          <a class="gemini-chrome-title" href="https://kainnne.com/" data-main-home data-i18n={isOpenAI ? undefined : "gemini.title"} aria-label="返回 kainnne.com" data-i18n-aria="nav.mainHome">{isOpenAI ? <><span>Kain³e x </span><span class="codex-wordmark">Codex</span></> : "Kain³e 助手"}</a>
+          <a class="gemini-chrome-title" href="https://kainnne.com/" data-main-home data-i18n={isOpenAI ? undefined : "gemini.title"} aria-label="返回 kainnne.com" data-i18n-aria="nav.mainHome">{isOpenAI ? <><span>Kain³e x </span><span class="codex-wordmark">Codex</span></> : "Kain³e AI"}</a>
           <p id="gemini-identity" class="gemini-chrome-identity"></p>
         </div>
         <button

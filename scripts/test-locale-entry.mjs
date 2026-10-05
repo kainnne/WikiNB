@@ -12,4 +12,9 @@ assert.match(i18n,/history\.replaceState\(window\.history\.state/);
 assert.doesNotMatch(i18n,/history\.pushState/);
 const header=readFileSync(new URL('../src/components/Header.astro',import.meta.url),'utf8');
 assert.match(header,/id="brand-link"\s+href=\{meUrl\}\s+data-main-home/);
+for (const locale of ['zh-TW', 'en']) {
+  const copy = JSON.parse(readFileSync(new URL(`../src/locales/${locale}.json`, import.meta.url), 'utf8'));
+  assert.equal(copy['gemini.title'], 'Kain³e AI');
+  assert.equal(copy['nav.guestAi'], 'Kain³e AI');
+}
 console.log('OK: explicit entry language overrides stored locale; home links preserve language without extra Back entries.');
