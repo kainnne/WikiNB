@@ -268,7 +268,7 @@
   "openai.error.knowledge_unavailable": "暫時無法讀取 WikiNB 筆記，請稍後再試。",
   "openai.error.upstream_unavailable": "這次未能取得回答，系統沒有自動重送；請稍後再試。",
   "openai.error.empty_answer": "這次沒有產生可顯示的回答，請換個方式提問。",
-  "gemini.assistantLabel": "助手",
+  "gemini.assistantLabel": "AI",
   "nav.mainHome": "返回 kainnne.com",
   "search.loading": "正在載入筆記…",
   "search.loadError": "筆記未能載入，請重新整理再試一次。",

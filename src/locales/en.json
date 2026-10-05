@@ -268,7 +268,7 @@
   "openai.error.knowledge_unavailable": "WikiNB notes are temporarily unavailable. Please try later.",
   "openai.error.upstream_unavailable": "No response was received. Your request was not retried automatically. Please try later.",
   "openai.error.empty_answer": "No displayable answer was produced. Please try rephrasing.",
-  "gemini.assistantLabel": "Assistant",
+  "gemini.assistantLabel": "AI",
   "nav.mainHome": "Back to kainnne.com",
   "search.loading": "Loading notes…",
   "search.loadError": "Notes could not be loaded. Please refresh and try again.",

@@ -16,5 +16,6 @@ for (const locale of ['zh-TW', 'en']) {
   const copy = JSON.parse(readFileSync(new URL(`../src/locales/${locale}.json`, import.meta.url), 'utf8'));
   assert.equal(copy['gemini.title'], 'Kain³e AI');
   assert.equal(copy['nav.guestAi'], 'Kain³e AI');
+  assert.equal(copy['gemini.assistantLabel'], 'AI');
 }
 console.log('OK: explicit entry language overrides stored locale; home links preserve language without extra Back entries.');

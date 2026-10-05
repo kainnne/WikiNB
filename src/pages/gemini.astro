@@ -28,7 +28,7 @@ import '@fontsource/iansui/latin-400.css';
       <h1 class="gemini-heading">
         <span>Kain³e</span>
         {isOpenAI && <span class="gemini-heading-cross" aria-hidden="true">×</span>}
-        <span class:list={{ "codex-wordmark": isOpenAI }} data-i18n={isOpenAI ? undefined : "gemini.assistantLabel"}>{isOpenAI ? "Codex" : "助手"}</span>
+        <span class:list={{ "codex-wordmark": isOpenAI }} data-i18n={isOpenAI ? undefined : "gemini.assistantLabel"}>{isOpenAI ? "Codex" : "AI"}</span>
       </h1>
     </header>
 
@@ -103,7 +103,7 @@ import '@fontsource/iansui/latin-400.css';
           class="gemini-primary w-full justify-center py-3"
           data-i18n="gemini.verify"
         >
-          驗證並進入助手
+          驗證並進入 Kain³e AI
         </button>
         <button id="gemini-back" type="button" class="btn-ghost w-full justify-center text-sm" data-i18n="gemini.back">
           ← 修改資料
