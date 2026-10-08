@@ -1,13 +1,14 @@
 import { DISCOVERY_TOPICS, drawDiscoveryTopics, discoveryQuestion } from '../worker/discovery-topics.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { GEMINI_TOPICS, GEMINI_FOLLOWUPS, withPlainLanguagePreference, prepareVisitorRequest } from '../src/scripts/gemini-onboarding.js';
+import { GEMINI_TOPICS, GEMINI_INITIAL_TOPICS, GEMINI_FOLLOWUPS, withPlainLanguagePreference, prepareVisitorRequest } from '../src/scripts/gemini-onboarding.js';
 import { isKaineScopeQuestion } from '../worker/chat-policy.js';
 import { visitorIntent, visitorGuidance, buildVisitorSystemPrompt, shouldOfferContact } from '../worker/visitor-policy.js';
 import workerHandler from '../worker/index.js';
 
 assert.equal(GEMINI_TOPICS[0], 'about');
 assert.equal(GEMINI_TOPICS.includes('build'), false);
+assert.deepEqual(GEMINI_INITIAL_TOPICS, ['automation', 'knowledge', 'learning', 'website']);
 
 for (const [question, intent] of [
   ['請介紹 Kaine 的主要專長', 'introduction'],
@@ -88,6 +89,10 @@ const secondDraw = drawDiscoveryTopics(firstDraw.map((topic) => topic.id), () =>
 assert.equal(firstDraw.length, 5);
 assert.equal(new Set(firstDraw.map((topic) => topic.id)).size, 5);
 assert.ok(secondDraw.every((topic) => !firstDraw.some((old) => old.id === topic.id)));
+const fourDraw = drawDiscoveryTopics([], () => 0.4, 4);
+assert.equal(fourDraw.length, 4);
+assert.equal(new Set(fourDraw.map((topic) => topic.id)).size, 4);
+assert.ok(drawDiscoveryTopics(fourDraw.map(topic => topic.id), () => 0.7, 4).every(topic => !fourDraw.some(old => old.id === topic.id)));
 for (const topic of DISCOVERY_TOPICS) {
   const source = await readFile(new URL(`../wiki/${topic.slug}.md`, import.meta.url), 'utf8');
   assert.ok(source.length > 0);

@@ -30,11 +30,11 @@ export function findDiscoveryTopic(message) {
   return DISCOVERY_TOPICS.find((topic) => [false, true].some((english) => String(message).normalize('NFKC').includes(discoveryQuestion(topic, english).normalize('NFKC'))));
 }
 
-export function drawDiscoveryTopics(previousIds = [], random = Math.random) {
+export function drawDiscoveryTopics(previousIds = [], random = Math.random, count = 5) {
   const fresh = DISCOVERY_TOPICS.filter((topic) => !previousIds.includes(topic.id));
   for (let i = fresh.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
   }
-  return fresh.slice(0, 5);
+  return fresh.slice(0, count);
 }

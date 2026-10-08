@@ -3,6 +3,7 @@ import { isKaineScopeQuestion } from '../../worker/chat-policy.js';
 import { visitorGuidance } from '../../worker/visitor-policy.js';
 
 export const GEMINI_TOPICS = ['about', 'automation', 'knowledge', 'learning', 'website'];
+export const GEMINI_INITIAL_TOPICS = ['automation', 'knowledge', 'learning', 'website'];
 
 export const GEMINI_FOLLOWUPS = {
   automation: ['prepare', 'documents', 'repetitive'],
