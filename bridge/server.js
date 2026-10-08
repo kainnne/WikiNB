@@ -270,11 +270,7 @@ function authMiddleware(req, res, next) {
 }
 
 app.get('/api/health', (_req, res) => {
-  const wikiDir = path.join(PROJECT_ROOT, 'wiki');
-  let wikiPages = 0;
-  if (fs.existsSync(wikiDir)) {
-    wikiPages = fs.readdirSync(wikiDir).filter((f) => isSiteWikiMarkdown(f)).length;
-  }
+  const wikiPages = collectWikiMdFiles().length;
   res.json({
     online: true,
     codex: 'ready',
