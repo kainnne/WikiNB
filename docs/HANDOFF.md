@@ -41,7 +41,7 @@ WikiNB 的公開內容以 `wiki/` 為來源。Astro／GitHub Pages 負責閱讀�
 - `visibility: private` 或 `private: true` 的 Markdown 不能經公開上傳／覆蓋 API 寫入 wiki；建置也會阻擋落在公開路徑的私人 Markdown。新增其他私人教材需同樣先放私人儲存區，再更新僅有標題的 catalog 與 Agent 所需資料，不自動把公開文章「轉私人」或抹除 Git 歷史。
 - `AZURE_STUDY_BANK_DIR` 可在未追蹤的 `bridge/.env` 指定私人題庫來源，供私人 Codex 在公開 Wiki 尚未發布時按需讀取；不得把實際路徑或私人學習紀錄寫進公開文件。
 - 目前 Codex 頁面 history 只存在分頁記憶體，CLI 使用 ephemeral 模式。用每次講評的進度摘要接續，不宣稱跨分頁或跨聊天自動記憶。
-- Gemini 主頁提供私人 Azure 學習連結；公開介紹聊天沿用原規則。私人 Azure 教學使用 Gemini，私人 Codex 使用本機題庫，OpenAI 公開展示不讀私人資料。
+- 右上角三條線選單提供私人 Azure 學習入口；公開介紹聊天沿用原規則。私人 Azure 教學使用 Gemini，私人 Codex 使用本機題庫，OpenAI 公開展示不讀私人資料。
 - 管理者在私人 Codex 頁產生／撤銷邀請碼。`PRIVATE_STUDY_ADMIN_SECRET` 僅存在 Cloudflare secret 與本機未追蹤 `.env`；不可放前端、catalog 或 repository。`PRIVATE_STUDY_WIKI_DIR` 指向本機私人文章區。
 
 ## 最小來源
