@@ -394,6 +394,8 @@ import '@fontsource/iansui/latin-400.css';
     topicTurns = 0;
     showingDiscovery = false;
     discoveryTopics = [];
+    const welcome = appendMessage(t('gemini.welcomeMessage'));
+    if (welcome) welcome.dataset.i18n = 'gemini.welcomeMessage';
     appendTopicPicker();
   }
 

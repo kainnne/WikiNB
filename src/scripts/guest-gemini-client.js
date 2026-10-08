@@ -133,6 +133,7 @@ export function fetchGuestAiMe() {
   return guestAiFetch('/api/guest-ai/me', { method: 'GET' }, true);
 }
 
+export function studyCatalog() { return guestAiFetch('/api/private-study/catalog', { method: 'GET' }, true); }
 export function studyAccess() { return guestAiFetch('/api/private-study/status', { method: 'GET' }, true); }
 export function redeemStudyInvite(code) { return guestAiFetch('/api/private-study/redeem', { method: 'POST', body: JSON.stringify({ code }) }, true); }
 export function askPrivateStudy(payload) { return guestAiFetch('/api/private-study/chat', { method: 'POST', body: JSON.stringify(payload) }, true); }

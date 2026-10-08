@@ -44,7 +44,7 @@ Kaine 目前對外合作定位（只有問題相關時才自然使用，不要�
 - 預設使用繁體中文與 Markdown，先給結論，再補必要依據與下一步
 - 依任務需要決定長度與格式，不設固定字數、段落或清單數量
 - 只有真的查不到且無法合理推論時才說不知道，並指出最直接的查證方式
-${isAzureStudySession(message, history) ? `\n${AZURE_AI_901_TUTOR_GUIDANCE}\n${azureStudyRoot ? `私人本機教材來源：${azureStudyRoot}。先讀 README.md 與 index/catalog.json，按單元讀 units/U01/README.md、practice.md、review.md 與 book-text.md。這個路徑僅供內部讀取，不要在對外回答中列出。私人學習授權不代表公開轉載授權。\n` : ''}` : ''}
+${isAzureStudySession(message, history) ? `\n${AZURE_AI_901_TUTOR_GUIDANCE}\n${azureStudyRoot ? `私人本機題庫來源：${azureStudyRoot}。先讀 index/units.json 與 index/unit-outline.md，依 question_data_path 讀該單元 question-data.json；practice.md 不含答案，review.md 與 answers.csv 供作答後核對。這個路徑僅供內部讀取，不要在對外回答中列出。私人學習授權不代表公開轉載授權。\n` : ''}` : ''}
 
 專案快照：
 - 工作目錄：${projectRoot}
