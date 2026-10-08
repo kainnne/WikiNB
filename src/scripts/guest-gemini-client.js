@@ -108,7 +108,9 @@ async function guestAiFetch(path, options = {}, authenticated = false) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401) clearGuestAiSession();
-    throw new Error(data.error || `HTTP ${response.status}`);
+    const error = new Error(data.error || `HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
   return data;
 }
@@ -130,6 +132,10 @@ export function verifyGuestAiCode({ email, code }) {
 export function fetchGuestAiMe() {
   return guestAiFetch('/api/guest-ai/me', { method: 'GET' }, true);
 }
+
+export function studyAccess() { return guestAiFetch('/api/private-study/status', { method: 'GET' }, true); }
+export function redeemStudyInvite(code) { return guestAiFetch('/api/private-study/redeem', { method: 'POST', body: JSON.stringify({ code }) }, true); }
+export function askPrivateStudy(payload) { return guestAiFetch('/api/private-study/chat', { method: 'POST', body: JSON.stringify(payload) }, true); }
 
 export function askGuestGemini({ message, history, originalMessage = message }) {
   return guestAiFetch(

@@ -1,193 +1,111 @@
 # WikiNB 工程 Handoff
 
-更新：2026-09-12
+更新：2026-10-08（台北時間）
 
-狀態：公開站、訪客 Gemini、私人登入與 GitHub Pages 部署皆已可用。
+WikiNB 的公開內容以 `wiki/` 為來源。Astro／GitHub Pages 負責閱讀與搜尋，Cloudflare Worker／D1 負責訪客 AI，本機 Bridge 負責私人維護與 Codex。公開筆記不因管理者登入而變成私人資料。
 
-## 一句話
+## 接手基準與本輪核對
 
-WikiNB 是以 `wiki/` Markdown 為公開內容來源的個人知識網站；Astro／GitHub Pages 負責閱讀體驗，Cloudflare Worker／D1 負責訪客 Gemini，本機 Bridge 負責 Kaine 的私人維護與 Codex。
+- 本輪整理起點為 GitHub `main` 的 `489b7d2`，2026-10-06 的 Pages 部署成功；正式首頁、搜尋、Gemini、OpenAI、登入頁回傳 HTTP 200。
+- 常用本機 checkout 原停在 `c9d2be8`，落後 10 個 commit；已保存 12 個原有未提交草稿，再快轉至正式版本。草稿沒有混入本輪公開修改。
+- 2026-10-08 唯讀下載並比對線上 Worker：Gemini 與 OpenAI 的 JavaScript 和 `489b7d2` 建置產物一致（比較排除 source map 註解）。沒有發現需從線上反向補回的程式差異。
+- Gemini 核對時版本為 `1c04180e-8a8a-4b2b-b749-67be51565327`，部署於 2026-10-05 08:58；OpenAI 為 `370f4055-4e91-4f57-917a-3eef5d8e5707`，部署於 2026-10-05 01:13。
+- 兩個 health 正常；Gemini 模型 `gemini-3.1-flash-lite`，OpenAI 模型 `gpt-5.6-luna`。本輪沒有呼叫付費聊天、寄 OTP 或做私人登入驗收；health 不代表完整生成品質驗收。
+- 以上是核對時的快照。接手仍需先讀 `git status -sb`、最新 remote 與 deployment，不能把日期或 commit 當成永久現況。
 
-## 接手時先讀
+## 目前功能
 
-依序只讀以下檔案，通常不需要先掃完整個 repository：
+| 層 | 已有能力 | 存取條件 |
+| --- | --- | --- |
+| 公開站 | 首頁、最近更新、巢狀 Wiki、文章、全文搜尋、中英文、404 | 不需 Mac／登入 |
+| 公開 Kain³e AI | 五個初始方向、抽題與追問；依公開筆記介紹 Kaine、作品及合作方向 | Gemini／OpenAI 分開服務 |
+| Gemini | 免登入試問五則；Email OTP 後使用至每日 token 額度；限定相關問題、節流與檢索 | Cloudflare Worker + D1 |
+| OpenAI | 共用聊天介面；獨立累計 US$10 保守預算與速率控制，沒有自動付費重試 | 獨立 Worker，與私人 Codex 不同 |
+| 私人 Bridge | 帳密與 OTP、新增／覆蓋／更名／刪除／建夾、顯示 metadata、Git 同步 | Mac 與有效管理者 session |
+| 私人 Codex | 可深入讀本機 Wiki 與專案資料、分析、出題、教學；CLI 固定 read-only | 私人登入與 Bridge |
 
-1. 根目錄 `AGENTS.md` 與目標路徑中更深層的 `AGENTS.md`。
-2. `git status -sb`，先保留使用者現有修改與未追蹤檔案。
-3. 本文件與 `README.md`。
-4. 依任務選讀下表中的 source of truth。
+公開入口使用 **Kain³e／Kain³e AI**；repository 和知識庫名稱仍是 WikiNB。不要把尚未採用的舊工作室文案草稿整份覆蓋回去。
 
-| 任務 | 最小來源 |
-|---|---|
-| 公開導覽／品牌／首頁 | `src/pages/index.astro`、`src/components/Header.astro`、`src/components/PublicDreamBackdrop.astro` |
-| 公開 Wiki／搜尋 | `src/pages/wiki/`、`src/pages/search.astro`、`src/scripts/wiki-search.js`、`wiki/` |
-| 中英文 | `src/scripts/i18n.js`、`src/locales/zh-TW.json`、`src/locales/en.json` |
-| 訪客 Gemini UI | `src/pages/gemini.astro`、`src/scripts/guest-gemini-client.js` |
-| Gemini 後端／檢索／額度 | `worker/index.js`、`worker/chat-policy.js`、`wrangler.jsonc`、`worker/schema.sql`、`worker/migrations/` |
-| 私人登入／Wiki 管理／Codex | `src/pages/login.astro`、`src/scripts/bridge-client.js`、`bridge/server.js` |
-| Pages 部署 | `.github/workflows/deploy.yml`、`astro.config.mjs` |
-| 公開專案選材 | `wiki/Projects/project-overview.md`、`config/project-knowledge-sources.json` |
+2026-10 的變更已包含品牌與分享素材、手機搜尋狀態恢復、入口語言優先設定、聊天提示樣式。KCIS 專屬知識庫、AI 導航與架構頁已撤下；公開職業背景仍保留。維持 `scripts/test-kcis-public-boundary.mjs`，不要從舊索引或草稿補回撤下材料。
 
-## 已完成且有回歸測試的功能
+## Azure AI-901 學習入口
 
-### 2026-09-12 主題入口與段落檢索
+- 私人 Codex 新增「Azure AI-901：開始學習」預設提示，點選填入、送出才開始，不自動呼叫模型。
+- 預設按 U01→U10，一次一個觀念、一個例子與一題；等使用者作答後才給來源答案、判題線索與補充解析。保留原題號、題型及作答規則，AI 新增例題必須標示。
+- 教材來源共 584 個不重複題號、797 筆單元紀錄、315 頁文字。題目答案與原網站一致不等於 Microsoft 官方事實審查，U10 的 208 題不是全部題目。
+- 教材正文、完整題目及答案保留在 Git ignore 保護的本機私人區域，以及 Gemini Worker 的私人 D1 表。公開 repository、Pages、搜尋索引只含 70 個文章標題，沒有原文或下載附件。
+- `/private-study/` 是 Gemini 私人學習入口：先 Email OTP 驗證，再兌換管理者產生的六碼英數邀請碼；一碼綁定一個訪客身份，生成一小時後失效，也可提前撤銷。每次教學前後重新查權限，不沿用過期授權。
+- 搜尋頁的私人標題預設不可點，邀請訪客也無法打開原文。只有 Bridge 管理者 session 可以啟用標題並從本機 `/api/private-study/document` 讀取原文；雲端沒有原文／附件讀取 API。
+- 私人教學按單元原題序出題，答案提交後才給來源答案與講評。D1 以訪客身份雜湊記錄單元題序與最後作答；沒有完整對話紀錄或公開成績。
+- `visibility: private` 或 `private: true` 的 Markdown 不能經公開上傳／覆蓋 API 寫入 wiki；建置也會阻擋落在公開路徑的私人 Markdown。新增其他私人教材需同樣先放私人儲存區，再更新僅有標題的 catalog 與 Agent 所需資料，不自動把公開文章「轉私人」或抹除 Git 歷史。
+- `AZURE_STUDY_BANK_DIR` 可在未追蹤的 `bridge/.env` 指定私人題庫來源，供私人 Codex 在公開 Wiki 尚未發布時按需讀取；不得把實際路徑或私人學習紀錄寫進公開文件。
+- 目前 Codex 頁面 history 只存在分頁記憶體，CLI 使用 ephemeral 模式。用每次講評的進度摘要接續，不宣稱跨分頁或跨聊天自動記憶。
+- Gemini 主頁提供私人 Azure 學習連結；公開介紹聊天沿用原規則。私人 Azure 教學使用 Gemini，私人 Codex 使用本機題庫，OpenAI 公開展示不讀私人資料。
+- 管理者在私人 Codex 頁產生／撤銷邀請碼。`PRIVATE_STUDY_ADMIN_SECRET` 僅存在 Cloudflare secret 與本機未追蹤 `.env`；不可放前端、catalog 或 repository。`PRIVATE_STUDY_WIKI_DIR` 指向本機私人文章區。
 
-- 模擬面試專案頁作為主題入口，連到階段紀錄的評價、資源、比較、能力與口語段落；專案總覽與 Wiki 目錄同步加入入口。
-- 搜尋索引保留一份正文，另存標題巢狀路徑與字元範圍；Worker 依問題挑選段落，不只取長文開頭。每篇及整體輸入上限不變，舊索引仍可回退使用。
-- 中英文模擬面試問法優先取主題與觀察兩篇；不讓一般人物介紹蓋過具體主題。追問只沿用使用者上下文，切換明確題目時不黏住舊主題。
-- 共用抽題池加入模擬面試，仍每次五題、與前組不重複，抽題不呼叫模型。Gemini 與 OpenAI Worker 都需部署；先發布含段落索引的 Pages，再更新 Worker 與快取版本。
-- 回歸測試見 `scripts/test-wiki-topic-retrieval.mjs`；公開內容來源與人格設定分開，沒有增加私人記憶或能力定論。
+## 最小來源
 
-### 2026-09-12 OpenAI 臨時入口
+| 任務 | 檔案 |
+| --- | --- |
+| 首頁／品牌／導覽 | `src/pages/index.astro`、`src/components/Header.astro`、`src/layouts/BaseLayout.astro` |
+| Wiki／搜尋 | `src/lib/wiki.ts`、`src/lib/wiki-sections.js`、`src/pages/search.astro`、`src/scripts/wiki-search.js`、`wiki/` |
+| 語言／入口 | `src/scripts/i18n.js`、`src/scripts/locale-preference.js`、兩份 locale |
+| 公開 AI UI | `src/pages/gemini.astro`、`src/pages/openai.astro`、`src/scripts/guest-gemini-client.js`、`src/scripts/gemini-onboarding.js` |
+| 公開 AI 規則與檢索 | `worker/index.js`、`worker/openai.js`、`worker/chat-policy.js`、`worker/visitor-policy.js`、`worker/wiki-excerpts.js`、`worker/discovery-topics.js` |
+| 私人教材／邀請／教學 | `worker/private-study.js`、`worker/private-study-model.js`、`worker/migrations/0004_private_study.sql`、`bridge/private-study.js`、`src/pages/private-study.astro`、`config/private-study-catalog.json` |
+| 私人 Codex／學習提示 | `src/pages/codex.astro`、`src/scripts/study-presets.js`、`bridge/codex-prompt.js`、`bridge/server.js` |
+| 管理／登入 | `src/pages/login.astro`、`src/components/ManagementUploader.astro`、`src/scripts/bridge-client.js` |
+| 部署 | `.github/workflows/deploy.yml`、`astro.config.mjs`、兩份 wrangler config |
 
-- 介面依使用者要求直接共用 Gemini 頁面，顯示黑色 Codex，沿用五題、換方向及追問；兩邊僅將換方向按鈕改為粉紅色。`/openai/` 路徑與付費 API 不變。
+## 本機啟動與埠
 
-- 新增 `/openai/`、右上選單入口與獨立 `worker/openai.js`；共用既有公開回答規則及檢索，不更改 Gemini 個性、登入、額度或 Codex CLI。
-- `wrangler.openai.jsonc` 管理獨立 Worker；專用 D1 表以原子預留限制本入口累計 US$10，沒有每人每日訊息上限，不自動付費重試。
-- 實際啟用取決於獨立 `OPENAI_API_KEY` Secret、`DEMO_ENABLED` 與剩餘啟用額度。請以 `/api/openai/health` 和一筆真實 API 回答確認，不由 Pages 部署狀態推定。
-- 2026-09-12 已設定專用 Secret，health 顯示可用；真實面試問題回答成功，D1 已記錄該次保守用量。完整測試、建置及桌面／手機介面驗證通過。
-- 操作、驗證、預算與停用方式見 [docs/openai-demo.md](./openai-demo.md)。
-
-### 2026-09-07 作品抽題與聊天高度
-
-- 首次開啟 Gemini 保留既有五個需求入口；主要按鈕「換個方向」從 `worker/discovery-topics.js` 的 14 個公開主題抽五題，當組不重複，也不與上一組重複。抽題不呼叫 Gemini、不計入提問次數；點選題目才送出。
-- 題庫含中英文標題與對應公開筆記。後端辨識題庫提問後優先讀取該主題來源，避免選小說或音樂卻又介紹閱讀器。來源存在、雙語提問長度、抽題與檢索順位都有回歸測試。
-- 桌面頁以可視高度配置標題、聊天區與輸入列；只有聊天內容區捲動，手機保留滿版模式。換方向時捲至題組開頭。
-- kainnne.com 首頁改動位於獨立 Me repository：主站移除產品 Q&A 與開場短句，將明確的大型 Gemini 按鈕放在社群連結前，`/me` 保留個人 Q&A。
-
-### 2026-09-06 Gemini 引導入口與回答規則
-
-- 已測試登入後第 5、6、12 則仍可回答、舊續聊端點不寄信、重新載入不恢復門檻，以及每日額度、頻率限制、無效登入仍攔截。
-
-- 後續調整以合作為主要目的：入口與追問先說 Kaine 可負責的規劃、實作、串接與試行，以及可討論的成果。AI 導入不再預設為自學或訓練。第一次合作／能力回答若模型漏寫聯絡方式，Worker 會補上信箱；後續歷史已有信箱時不重複補，明確詢問聯絡方式則仍提供。
-- 介面保持精簡：移除底部與驗證畫面的獨立聯絡按鈕，以及「最新訊息」浮動按鈕；聯絡方式由對話提供。保留原有捲動閱讀與新訊息跟隨行為。
-- `visitorIntent()` 增加明確操作提問的 teaching 路徑，Kuse 操作問題優先取課程資料。一般介紹優先取 AI、軟體實作與協作資料，避免總是變成課程；教學可補充實際工作導入的合作方向，不能以推銷取代回答。
-
-- 已部署至 GitHub Pages 與 Cloudflare Worker；正式 `/gemini/` 已確認五個入口與中性開場正常顯示。移除親暱人設，介紹能力時使用「Kaine／他」，並在公開筆記後再次提醒第一人稱來源不是 AI 本人的身分。
-
-- 開場收斂為五個方向：認識 Kaine 與他的專長（第一個）、行政作業、文件知識、AI 工作應用，以及請 Kaine 協助規劃個人或業務網站。移除抽象的「將想法做成可用的工具」。點選直接提問；回答後提供相關追問與切換方向，保留自由輸入。文案兼顧專業感與易讀性。
-- 本輪定位為展示個人 AI、自動化、網站設計與 AI Agent 能力；工作室與業務尚在規劃，不應描述為已營運服務或保證成果。
-- 前端連接 `config/sites.json` 中的既有 Gemini Worker。前端先以原始問題做範圍判斷，再為相關提問附加簡短的任務與語氣指引；完全無關的要求不加指引。新增 `originalMessage` 傳送原始問題，舊 Worker 忽略此欄位；新版 Worker 用它檢索、判斷範圍與生成，不把前端文案當系統規則。
-- 新增 `worker/visitor-policy.js`：以規則區分能力介紹、合作情境、作品技術與明確操作教學，不增加模型分類或重寫呼叫。介紹先說用途與能力，明確問作品才說名稱；人資等其他領域以合作情境處理，不能捏造 Kaine 的專業資格或代做該領域的決策。Worker 系統提示與檢索同步套用這些規則。
-- 檢索仍最多四份、6,500 字元；能力介紹不補入無關作品，總覽節錄縮短。檢索歷史只參考訪客訊息，避免模型先前推論反過來影響資料選擇。沿用 `gemini-3.1-flash-lite`、minimal thinking、每日額度及重試限制；未接入付費模型。
-- `src/scripts/gemini-onboarding.js` 管理入口、追問與請求長度；雙語文案位於兩份 locale。`scripts/test-gemini-onboarding.mjs` 檢查語系完整性、範圍與 API 長度邊界。
-- 已完成本機編譯、回歸測試、Worker dry-run，以及新版請求使用原始問題／阻擋無關問題／只呼叫一次模型的模擬整合測試。正式 API 已試問能力介紹與人資合作情境；介紹未列產品名稱，人資回答聚焦資料與流程。生成式回答仍可能偏離語氣規格，模擬測試不等同語意品質保證。尚未完成所有裝置與觸控的視覺驗收。
-- 本機試用以 `npm run build` 後的 `npm run preview -- --host localhost --port 4321` 提供。曾在開發伺服器運行期間建置後，發生 Vite 預先打包的 `marked`／`katex` 資源回傳 504，導致聊天初始化失敗、只剩空框；改用靜態預覽後已在 Codex 右側分頁確認選項及中英文切換正常。後續修改須重新建置再重新整理預覽；不把單純 HTTP 200 當成介面已初始化的證明。
-
-### 公開體驗
-
-- 公開首頁、搜尋、文章、404、Gemini 與私人登入共用粉紅夢幻視覺系統。
-- 響應式導覽包含 Kainnne 首頁、WikiNB、語言切換與主選單。
-- 首頁提供聚焦式 `Kainnne x Gemini` CTA、雙側輕量裝飾、巢狀 Q&A 與隨機色調的最近更新卡片。
-- favicon 與 apple touch icon 使用圓形漸層 K 標誌。
-- 登入後才顯示 `+ md.`、Codex 與管理功能；單純前往 `/login` 不會取得權限。
-
-### 中英文
-
-- `data-i18n` 系統處理文字、HTML、placeholder、title、ARIA 與關鍵字。
-- Gemini OTP／API 錯誤會由 `describeGuestAiMessage()` 映射為語系 key。
-- 私人登入的靜態內容、執行中狀態與 Bridge 錯誤都會跟著語言按鈕重新渲染。
-- 後端新增或修改固定提示文字時，必須同步更新 client mapping、兩份 locale 與測試。
-
-### 訪客 Gemini
-
-- 訪客以名稱、Email、6 位數 OTP 解鎖；session 與管理者登入完全分離。
-- 2026-08-20 起，訪客 OTP 改由 Resend 與已驗證的寄件子網域寄送，寄件者固定為 `Kainnne × Gemini <login@auth.kainnne.com>`，Reply-To 為 `ryanzhu@kainnne.com`。
-- `auth.kainnne.com` 只是 Kainnne 旗下服務共用的自動驗證信寄件網域，與公開網站位於 `wikinb.kainnne.com` 並不衝突；不要因網站網域不同而改回 Gmail 或另外建立寄件網域。
-- 這裡的流程是無密碼 Email OTP，不是「密碼之後再驗證一次」的傳統 2FA。Kaine 口語提到「兩步驟驗證」時，若在談訪客 Gemini，通常是指先填資料、再輸入 Email 驗證碼的兩階段流程。
-- Worker 使用簽章訪客 token；D1 保存 OTP、rate limit、每日對話次數與 token 使用量。
-- 對外角色是介紹 Kaine 的中性 AI 助理，不冒充本人或採用親暱人設；公開 WikiNB 是唯一事實邊界，不能生成未公開私人事實或真實承諾。
-- 免登入試問維持 5 則後要求驗證信箱；登入後取消五則續聊門檻，直接使用至每日 token 額度用完。訊息數僅記錄，不設五則上限。
-- 不再寄送續聊通知；訪客首次完成信箱驗證的既有解鎖通知保留。舊 `/continue` API 僅驗證身分並回傳可聊天狀態，不寄信、不讀寫續聊核准資料。回應保留固定 false 的 `continuationRequired`／`conversationEnded` 以相容舊分頁。
-- 明顯與 Kaine 公開內容無關的問題由 Worker 直接回覆固定說明，不載入 Wiki corpus、不呼叫 Gemini，仍記錄使用次數。
-- Worker 只使用 repository 內不含個人資料的通用回答風格；不提供私人 persona secret 入口，也不讀取或上傳私人 persona 原文／摘要。
-- 目前模型由 `wrangler.jsonc` 的 `GEMINI_MODEL` 指定為 `gemini-3.1-flash-lite`。
-- 每次只選最多 4 份相關 Wiki 內容，corpus 約 6,500 字元；送入模型的對話 history 只保留最近 4 則訊息。
-- 使用 minimal thinking，沒有設定 `maxOutputTokens` 硬截斷；Prompt 要求短而完整。
-- 429 額度／速率錯誤不自動重試；500／502／503／504 或網路失敗最多重試一次。
-- 未指定單一代表專案時只介紹 LumaReader；主要專案清單以 `wiki/Projects/project-overview.md` 為準。
-- 詳細請求會改成精簡重點、延伸閱讀與聯絡方式，不產生長篇回答。
-
-### 私人維護
-
-- 管理者登入使用帳密 + Email OTP；OTP 失敗次數會累積並觸發暫停。
-- 可新增、覆蓋、改名、刪除、建巢狀資料夾與修改顯示中繼資料。
-- Bridge 可啟動／停止 Codex，並支援串流問答。
-- 明確管理操作可自動 commit／push；沒有背景每日排程。
-
-## 部署
-
-### Astro / GitHub Pages
+本機有其他 KCIS 專案占用 8787／4322；不能看到這些埠回傳 HTTP 200 就當成個人 WikiNB。
 
 ```bash
+npm run dev                         # 預設 4321
+npm run bridge                      # PORT 由 bridge/.env 決定
 npm test
-npm run build
-git diff --check
-git push origin main
-```
-
-`main` push 會觸發 `.github/workflows/deploy.yml`。部署後檢查：
-
-- `https://wikinb.kainnne.com/`
-- `https://wikinb.kainnne.com/search/`
-- `https://wikinb.kainnne.com/gemini/`
-- `https://wikinb.kainnne.com/login/`
-
-### Cloudflare Worker
-
-Pages push 不會部署 Worker。修改 `worker/index.js` 或 `wrangler.jsonc` 後，先驗證再獨立部署：
-
-```bash
-npx wrangler deploy --dry-run
-npx wrangler deploy
-```
-
-全新 D1 可載入完整 schema；既有 D1 只執行尚未套用的 migration：
-
-```bash
-npx wrangler d1 execute wikinb-guest-ai --remote --file=worker/schema.sql
-npx wrangler d1 execute wikinb-guest-ai --remote --file=worker/migrations/0002_daily_token_usage.sql
-```
-
-Cloudflare secrets 必須留在平台，不得寫入 Markdown、Git 或前端：
-
-- `GEMINI_API_KEY`
-- `RESEND_API_KEY`：使用 WikiNB 自己的 sending-only、僅限 `auth.kainnne.com` 的 Resend API key，不與 ScopeCut 共用 key。
-- `TOKEN_SECRET`
-
-舊的 `SMTP_PASSWORD` 已不再被程式使用；若 Cloudflare 後台仍保留，只是待 Kaine 明確確認後清除的歷史 secret，不得重新接回功能。
-
-## 驗證與完成條件
-
-```bash
-npm test
-npm run build
 npm run wiki:check
-git diff --check
+npm run build
+npm run preview -- --host localhost --port 4321
 ```
 
-- `scripts/test-nav-auth-visibility.mjs`：公開首頁、權限可見性、品牌介面、登入 i18n。
-- `scripts/test-gemini-budget.mjs`：模型、檢索預算、節流 Prompt、代表專案與錯誤翻譯。
-- `scripts/test-kaine-chat-policy.mjs`：限定聊天 scope、雙語拒絕與合作聯絡政策。
-- `npm run build`：Astro 靜態頁面與 sitemap。
-- `npm run wiki:check`：巢狀 Wiki link 是否有效。
+本機私人 `.env` 可設定 `PUBLIC_BRIDGE_URL`，使靜態頁面連到選定 Bridge 埠；Bridge 的 `PORT`、前端 URL 和 `CORS_ORIGINS` 需一致。此機本輪配置使用 8788，不停止其他專案服務。正式部署仍以 GitHub variable／公開 config 為準，不把本機來源路徑發布上去。
 
-完成部署前確認只 stage 本輪檔案，不要順手納入既有 dirty files。
+本輪發現舊 `node_modules` 的 Astro／Tailwind 等 import 逾時。依既有 lockfile 執行專案內 `npm ci --no-audit --no-fund` 後，測試與靜態建置成功；沒有修改全域 runtime。遇到同類問題先縮小到專案依賴，不清理系統或全域套件。
 
-## 已知限制與不要誤判的事項
+## 部署與驗證
 
-- WikiNB 與 GEO 沒有自動排程，不會每日自行掃描、改寫或發布。
-- 公開 Gemini 使用共享免費 API 額度，遇到額度限制只能稍後再試或更換由 Kaine 提供的有效 key／方案。
-- 私人 Bridge 依賴 Kaine 的 Mac 與可達網路；Bridge 離線不影響公開閱讀與訪客 Gemini。
-- Worker 與 Pages 是兩條部署線；只 push GitHub 不代表 Worker 已更新。
-- 公開 Wiki 不是專案 repository 或 CodexRules 的鏡像，不要把私人規則、secret、未完成原型或完整執行紀錄發布上去。
-- MusicMatch、房價預測、未完成硬體、結構工程與個別小說不是目前對外代表成果；不要讓 Gemini 主動用它們描述 Kaine。
+```bash
+npm run wiki:check
+npm test
+npm run build
+git diff --check
+# test-private-study 使用 SQLite 驗證到期、兌換、撤銷、拒讀原文及失敗不跳題
+```
 
-## 下一次修改的安全路徑
+精準 stage 本輪檔案，確認沒有 private Agent 路徑、.env、其他草稿或未授權第三方材料，再 commit／push。`main` push 由 GitHub Actions 部署 Pages；成功推送不等於部署已完成。
 
-1. 先判斷修改屬於 Pages、Worker、Bridge 或 `wiki/`。
-2. 只讀上方對應的最小來源。
-3. 修改固定後端訊息時，同步更新中英文 mapping 與測試。
-4. 修改公開專案優先級時，同步檢查 Worker 規則、`project-overview.md` 與 Gemini 回歸測試。
-5. 跑對應測試與 build；需要部署時分別處理 Pages 與 Worker。
-6. 更新本文件的現況段落，不在底部無限追加工作日誌。
+Pages 不會部署 Worker。只有修改 Worker 時才各自驗證、部署，避免以舊本機程式覆蓋正常線上版本：
+
+```bash
+npx wrangler deploy --config wrangler.jsonc --dry-run
+npx wrangler deploy --config wrangler.openai.jsonc --dry-run
+```
+
+Worker secrets 保留在平台；訪客驗證使用 Resend 與 `auth.kainnne.com` 寄件子網域，私人 Bridge 使用自己的 SMTP。訪客 session 不授予管理／Codex 權限，兩者不能混用。
+
+## 已知限制
+
+- WikiNB／GEO 沒有每日自動掃描、改寫或發布排程。
+- Bridge 依賴 Mac；`productionUrl` 的 Tailscale placeholder 尚未配置，不宣稱遠端私人管理可用。
+- 私人文章閱讀及邀請碼管理依賴 Mac Bridge；訪客持碼的 Gemini 教學在雲端運作，不需 Mac。
+- Gemini／OpenAI 生成自然度、實際 OTP 與各裝置觸控仍需按具體改動驗收；單純 health、HTTP 200、規則測試不替代這些驗收。
+- OpenAI health 顯示可用不是帳戶餘額證明；不自動擴增 US$10 累計預算。
+- 新增筆記需維護 `wiki/index.md`；遇到教材權利、既有修改重疊或驗證失敗，保留可審閱結果並明確報告待辦。
+
+## 本輪私人服務發布驗證
+
+2026-10-08 已將 584 題與 10 單元匯入私人 D1，584 筆問題所有原始欄位與本機來源逐欄比對一致，單元題號共 797 筆。使用者明確同意 Cloudflare D1 私人儲存及 Google Gemini 每題教學處理。Gemini 私人功能版本：`917552ae-6717-46af-bf86-8ad84b85837e`。OpenAI 本輪未重新部署。
+
+全套既有測試與新增私人權限 SQLite 測試通過；手機介面以模擬 session/API 檢查標題不可點、教學閘門、換單元、先答後講評及安全渲染。實際管理者 OTP、訪客 OTP 與真實模型教學仍待本人使用驗收，不把模擬通過寫成完整真人端到端驗收。

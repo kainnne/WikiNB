@@ -1,4 +1,6 @@
 import { findDiscoveryTopic } from './discovery-topics.js';
+import { handlePrivateStudy, privateStudyRate } from './private-study.js';
+import { generatePrivateStudy } from './private-study-model.js';
 import { selectWikiExcerpt, canonicalizeWikiLinks } from './wiki-excerpts.js';
 import { buildVisitorSystemPrompt, visitorIntent, shouldOfferContact } from './visitor-policy.js';
 import {
@@ -946,6 +948,7 @@ async function chat(request, env) {
 // Shared read-only context builders; exporting them does not change Gemini routes.
 export { loadWikiPages, buildRelevantCorpus, retrievalQuestion, requestsExpandedDetail };
 
+
 export default {
   async fetch(request, env, ctx) {
     const cors = corsHeaders(request, env);
@@ -957,7 +960,9 @@ export default {
     const url = new URL(request.url);
     let response;
     try {
-      if (request.method === 'GET' && url.pathname === '/api/guest-ai/health') {
+      if (url.pathname.startsWith('/api/private-study/')) {
+        response = await handlePrivateStudy(request, env, { guestSession, consumeRate: privateStudyRate, generate: (...args) => generatePrivateStudy(...args, { dailyUsage, dailyTokenLimit }) });
+      } else if (request.method === 'GET' && url.pathname === '/api/guest-ai/health') {
         response = json({
           ok: true,
           service: 'Kainnne x Gemini',

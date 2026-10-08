@@ -75,6 +75,8 @@ for (const locale of ['zh-TW', 'en']) {
 // Retrieval helpers are shared with OpenAI; expose only the private token helper for tests.
 const workerSource = await readFile(new URL('../worker/index.js', import.meta.url), 'utf8');
 const testModule = workerSource
+  .replace("'./private-study.js'", JSON.stringify(new URL('../worker/private-study.js', import.meta.url).href))
+  .replace("'./private-study-model.js'", JSON.stringify(new URL('../worker/private-study-model.js', import.meta.url).href))
   .replace("'./chat-policy.js'", JSON.stringify(new URL('../worker/chat-policy.js', import.meta.url).href))
   .replace("'./discovery-topics.js'", JSON.stringify(new URL('../worker/discovery-topics.js', import.meta.url).href))
   .replace("'./wiki-excerpts.js'", JSON.stringify(new URL('../worker/wiki-excerpts.js', import.meta.url).href))

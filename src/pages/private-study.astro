@@ -1,0 +1,98 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import catalog from '../../config/private-study-catalog.json';
+const units = Array.from({ length: 10 }, (_, i) => `U${String(i + 1).padStart(2, '0')}`);
+---
+<BaseLayout title="Azure AI-901" description="私人學習入口" visitorNav={true}>
+  <main class="glass-card mx-auto my-8 max-w-3xl p-5 sm:p-8">
+    <h1 class="text-2xl font-bold text-berry-800">Azure AI-901</h1>
+    <p class="mt-3 text-sm text-berry-700/80" data-i18n="study.accessHint">邀請碼開通 AI 學習；每碼限一人，生成一小時後失效。原文只有本人登入能讀，不提供教材下載。</p>
+    <p id="study-status" role="status" class="my-4 text-sm text-berry-700"></p>
+    <form id="study-email-form" class="space-y-3" hidden>
+      <label class="block"><span data-i18n="gemini.name">名稱</span><input id="study-name" class="search-input mt-1" required minlength="2" maxlength="60" autocomplete="name" /></label>
+      <label class="block"><span data-i18n="gemini.email">電子信箱</span><input id="study-email" class="search-input mt-1" type="email" required autocomplete="email" /></label>
+      <button class="btn-primary" type="submit" data-i18n="gemini.sendCode">寄送驗證碼</button>
+    </form>
+    <form id="study-otp-form" class="space-y-3" hidden>
+      <label class="block"><span data-i18n="gemini.code">6 位數驗證碼</span><input id="study-otp" class="search-input mt-1" required pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" /></label>
+      <button class="btn-primary" type="submit" data-i18n="gemini.verify">驗證</button>
+    </form>
+    <form id="study-invite-form" class="space-y-3" hidden>
+      <label class="block"><span data-i18n="study.inviteCode">六碼英數邀請碼</span><input id="study-invite" class="search-input mt-1 uppercase" required pattern="[A-Za-z0-9]{6}" maxlength="6" autocomplete="off" /></label>
+      <button class="btn-primary" type="submit" data-i18n="study.unlock">開通 AI 學習</button>
+    </form>
+    <section id="study-workspace" hidden>
+      <div class="flex flex-wrap items-center gap-3">
+        <label><span data-i18n="study.unit">單元</span> <select id="study-unit" class="rounded-lg border border-pink-200 p-2">{units.map(unit => <option>{unit}</option>)}</select></label>
+        <button id="study-start" type="button" class="btn-ghost" data-i18n="study.start">開始／接續</button>
+        <button id="study-next" type="button" class="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed" disabled data-i18n="study.next">下一題</button>
+      </div>
+      <div id="study-output" class="prose prose-sm my-5 max-w-none text-berry-800" aria-live="polite"></div>
+      <form id="study-answer-form" class="space-y-3">
+        <label class="block"><span data-i18n="study.answer">答案（多項以頓號分隔）</span><input id="study-answer" class="search-input mt-1" maxlength="1200" required /></label>
+        <label class="block"><span data-i18n="study.reason">理由／想追問的觀念</span><textarea id="study-message" class="search-input mt-1" maxlength="1200" rows="3"></textarea></label>
+        <div class="flex gap-3"><button class="btn-primary" type="submit" data-i18n="study.submit">作答與講評</button><button id="study-ask" type="button" class="btn-ghost" data-i18n="study.ask">解釋這個觀念</button></div>
+      </form>
+      <p class="mt-4 text-xs text-berry-700/70" data-i18n="study.source">教材與題目：曾慶良主任（阿亮老師）。非 Microsoft 官方題庫。</p>
+    </section>
+    <article id="private-article-body" class="prose max-w-none" hidden></article>
+    <p id="private-article-title" class="font-semibold" hidden></p>
+  </main>
+  <script id="private-catalog-data" type="application/json" set:html={JSON.stringify(catalog).replace(/</g, '\\u003c')} />
+</BaseLayout>
+<script>
+  import { getGuestAiSession, requestGuestAiCode, verifyGuestAiCode, setGuestAiSession, studyAccess, redeemStudyInvite, askPrivateStudy } from '../scripts/guest-gemini-client.js';
+  import { fetchPrivateDocument } from '../scripts/bridge-client.js';
+  import { isLoggedIn } from '../scripts/bridge-client.js';
+  import DOMPurify from 'dompurify';
+  import { renderMarkdownWithMath } from '../scripts/markdown-math.js';
+  import { t } from '../scripts/i18n.js';
+  const el = (id: string) => document.getElementById(id)!;
+  const value = (id: string) => (el(id) as HTMLInputElement).value.trim();
+  let expiresAt = 0, busy = false, completed = false, questionId = '';
+  const show = (id: string, on: boolean) => { el(id).hidden = !on; };
+  const status = (text: string) => { el('study-status').textContent = text; };
+  function controls(disabled: boolean) { document.querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement | HTMLSelectElement>('main input, main button, main textarea, main select').forEach(control => { control.disabled = disabled; }); }
+  async function run(task: () => Promise<void>) {
+    if (busy) return; busy = true; controls(true);
+    try { await task(); } catch (error: any) { if (error.status === 403) lock(); if (error.status === 401) { lock(); show('study-otp-form', false); } status(error.message || t('study.error')); }
+    finally { busy = false; controls(false); (el('study-next') as HTMLButtonElement).disabled = !questionId || completed || !el('study-output').dataset.answered; el('study-answer-form').querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement>('input, button, textarea').forEach(control => { control.disabled = !questionId || completed; }); }
+  }
+  function lock() { show('study-workspace', false); show('study-invite-form', Boolean(getGuestAiSession())); show('study-email-form', !getGuestAiSession()); el('study-output').replaceChildren(); questionId = ''; status(t('study.expired')); }
+  async function init() {
+    const slug = new URLSearchParams(location.search).get('article');
+    if (slug) {
+      const titles = JSON.parse(el('private-catalog-data').textContent || '[]');
+      const item = titles.find((item: any) => item.slug === slug);
+      el('private-article-title').textContent = item?.title || t('study.private'); show('private-article-title', true);
+      try { const data = await fetchPrivateDocument(slug); el('private-article-body').innerHTML = DOMPurify.sanitize(renderMarkdownWithMath(data.markdown)); show('private-article-body', true); status(''); }
+      catch { status(t('study.ownerOnly')); }
+      return;
+    }
+    if (!getGuestAiSession()) { show('study-email-form', true); status(t('study.verifyFirst')); return; }
+    const access = await studyAccess(); expiresAt = Number(access.expiresAt || 0);
+    show('study-workspace', access.access); show('study-invite-form', !access.access);
+    status(access.access ? `${t('study.expires')} ${new Date(expiresAt).toLocaleString()}` : t('study.inviteRequired'));
+  }
+  el('study-email-form').addEventListener('submit', event => { event.preventDefault(); run(async () => { await requestGuestAiCode({ name: value('study-name'), email: value('study-email') }); show('study-email-form', false); show('study-otp-form', true); status(t('gemini.codeSent')); }); });
+  el('study-otp-form').addEventListener('submit', event => { event.preventDefault(); run(async () => { const data = await verifyGuestAiCode({ email: value('study-email'), code: value('study-otp') }); setGuestAiSession(data); show('study-otp-form', false); await init(); }); });
+  el('study-invite-form').addEventListener('submit', event => { event.preventDefault(); run(async () => { const data = await redeemStudyInvite(value('study-invite')); (el('study-invite') as HTMLInputElement).value = ''; expiresAt = data.expiresAt; await init(); }); });
+  async function chat(action: string) {
+    if (expiresAt <= Date.now()) { lock(); return; }
+    const data = await askPrivateStudy({ unit: value('study-unit'), action, questionId, answer: value('study-answer'), message: value('study-message') });
+    if (expiresAt <= Date.now()) { lock(); return; }
+    el('study-output').innerHTML = DOMPurify.sanitize(renderMarkdownWithMath(data.answer)); questionId = data.questionId || ''; completed = Boolean(data.completed);
+    el('study-output').dataset.answered = data.hasAnswered ? 'yes' : '';
+    if (action === 'next' || action === 'start') { (el('study-answer') as HTMLInputElement).value = ''; (el('study-message') as HTMLInputElement).value = ''; }
+  }
+  el('study-unit').addEventListener('change', () => { questionId = ''; completed = false; (el('study-answer') as HTMLInputElement).value = ''; (el('study-message') as HTMLTextAreaElement).value = ''; el('study-output').replaceChildren(); el('study-output').dataset.answered = ''; controls(false); (el('study-next') as HTMLButtonElement).disabled = true; el('study-answer-form').querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement>('input, button, textarea').forEach(control => { control.disabled = true; }); });
+  el('study-start').addEventListener('click', () => run(() => chat('start')));
+  el('study-next').addEventListener('click', () => run(() => chat('next')));
+  el('study-ask').addEventListener('click', () => run(() => chat('ask')));
+  el('study-answer-form').addEventListener('submit', event => { event.preventDefault(); run(() => chat('answer')); });
+  setInterval(() => {
+    if (expiresAt && Date.now() >= expiresAt && !el('study-workspace').hidden) lock();
+    if (!el('private-article-body').hidden && !isLoggedIn()) { el('private-article-body').replaceChildren(); show('private-article-body', false); status(t('study.ownerOnly')); }
+  }, 1000);
+  run(init);
+</script>

@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PublicDreamBackdrop from '../components/PublicDreamBackdrop.astro';
 import SearchBar from '../components/SearchBar.astro';
+import PrivateStudyCatalog from '../components/PrivateStudyCatalog.astro';
 import { getAllWikiPages, getSearchIndex, getWikiDiskTree } from '../lib/wiki';
 
 const pages = getAllWikiPages();
@@ -51,6 +52,7 @@ const base = import.meta.env.BASE_URL;
       class="wiki-scroll public-search-results glass-card mx-auto mt-6 max-w-3xl overflow-hidden"
     ></div>
     <div id="search-empty" class="glass-card mx-auto mt-6 hidden max-w-3xl p-8 text-center text-berry-700/80"></div>
+    <PrivateStudyCatalog />
   </div>
 
   <script>

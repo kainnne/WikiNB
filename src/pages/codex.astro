@@ -55,6 +55,14 @@ const base = import.meta.env.BASE_URL;
         </label>
       </div>
 
+      <div class="codex-study-presets">
+        <button id="codex-azure-study" type="button" class="btn-ghost text-sm">Azure AI-901：開始學習</button>
+        <details class="my-2 text-sm"><summary data-i18n="study.manage">私人學習邀請</summary>
+          <button id="study-create-invite" type="button" class="btn-ghost mt-2" data-i18n="study.create">產生一小時邀請碼</button>
+          <button id="study-revoke-invite" type="button" class="btn-ghost mt-2" hidden data-i18n="study.revoke">撤銷這個邀請</button>
+          <p id="study-invite-result" class="my-2 select-text" role="status"></p>
+        </details>
+      </div>
       <div id="codex-tips" class="codex-tips"></div>
 
       <div id="codex-output" class="codex-output"></div>
@@ -76,6 +84,7 @@ const base = import.meta.env.BASE_URL;
 </BaseLayout>
 
 <script>
+  import { AZURE_AI_901_START_PROMPT } from '../scripts/study-presets.js';
   import { renderMarkdownWithMath } from '../scripts/markdown-math.js';
   import {
     isLoggedIn,
@@ -83,6 +92,8 @@ const base = import.meta.env.BASE_URL;
     codexChatStream,
     fetchCodexModels,
     stopCodex,
+    createStudyInvite,
+    revokeStudyInvite,
   } from '../scripts/bridge-client.js';
 
   const gate = document.getElementById('codex-gate');
@@ -99,6 +110,33 @@ const base = import.meta.env.BASE_URL;
   const fsToggle = document.getElementById('codex-fs-toggle');
   const fsIcon = fsToggle?.querySelector('.codex-fs-icon');
   const scrollLatestBtn = document.getElementById('codex-scroll-latest');
+  const azureStudyBtn = document.getElementById('codex-azure-study');
+
+  function prepareAzureStudy() {
+    if (running || !(input instanceof HTMLInputElement)) return;
+    input.value = AZURE_AI_901_START_PROMPT;
+    input.focus();
+  }
+  azureStudyBtn?.addEventListener('click', prepareAzureStudy);
+  let inviteId = '';
+  const createInviteBtn = document.getElementById('study-create-invite') as HTMLButtonElement;
+  const revokeInviteBtn = document.getElementById('study-revoke-invite') as HTMLButtonElement;
+  const inviteResult = document.getElementById('study-invite-result')!;
+  createInviteBtn?.addEventListener('click', async () => {
+    createInviteBtn.disabled = true;
+    try {
+      const data = await createStudyInvite(); inviteId = data.id;
+      inviteResult.textContent = `${data.code} · ${new Date(data.expiresAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`;
+      revokeInviteBtn.hidden = false;
+    } catch (error: any) { inviteResult.textContent = error.message; }
+    finally { createInviteBtn.disabled = false; }
+  });
+  revokeInviteBtn?.addEventListener('click', async () => {
+    revokeInviteBtn.disabled = true;
+    try { await revokeStudyInvite(inviteId); inviteResult.textContent = '邀請已撤銷'; revokeInviteBtn.hidden = true; }
+    catch (error: any) { inviteResult.textContent = error.message; }
+    finally { revokeInviteBtn.disabled = false; }
+  });
 
   let abortController = null;
   let running = false;
@@ -209,6 +247,7 @@ const base = import.meta.env.BASE_URL;
       stopBtn.textContent = '停止';
     }
     input?.toggleAttribute('disabled', isRunning);
+    azureStudyBtn?.toggleAttribute('disabled', isRunning);
     modelSelect?.toggleAttribute('disabled', isRunning);
     effortSelect?.toggleAttribute('disabled', isRunning);
   }
@@ -265,6 +304,7 @@ const base = import.meta.env.BASE_URL;
     await loadModels();
     appendLine('Codex 已連線。可選擇模型後送出；執行中可按停止。', 'system');
     if (!mobileChat) input?.focus();
+    if (new URLSearchParams(window.location.search).get('study') === 'azure-ai-901') prepareAzureStudy();
   }
 
   stopBtn?.addEventListener('click', async (e) => {

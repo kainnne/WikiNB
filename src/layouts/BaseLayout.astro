@@ -24,7 +24,7 @@ const shareImage = new URL(`${base}brand/kain-cubed-share.jpg`, Astro.site).href
 const brandImage = 'https://kainnne.com/brand/kainnne-mark.png';
 const pageUrl = new URL(Astro.url.pathname, 'https://wikinb.kainnne.com').href;
 const bridgeJson = JSON.stringify({
-  url: bridgeConfig.bridge.url,
+  url: import.meta.env.PUBLIC_BRIDGE_URL || bridgeConfig.bridge.url,
   productionUrl: bridgeConfig.bridge.productionUrl,
   guestAiUrl: bridgeConfig.bridge.guestAiUrl,
 });

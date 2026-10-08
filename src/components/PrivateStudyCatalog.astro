@@ -1,0 +1,26 @@
+---
+import catalog from '../../config/private-study-catalog.json';
+---
+<details class="glass-card mx-auto mt-6 max-w-3xl p-5" id="private-study-catalog">
+  <summary class="cursor-pointer font-semibold text-berry-800" data-i18n="study.privateTitles">私人文章</summary>
+  <ul class="mt-3 space-y-2">
+    {catalog.map(item => <li><button type="button" class="private-article text-left text-sm text-berry-700 disabled:cursor-not-allowed disabled:opacity-60" disabled data-private-slug={item.slug}>{item.title} <span data-i18n="study.private">（私人）</span></button></li>)}
+  </ul>
+</details>
+<script>
+  import { isLoggedIn, checkPrivateOwner } from '../scripts/bridge-client.js';
+  if (isLoggedIn()) checkPrivateOwner().then(data => {
+    if (!data.owner) return;
+    document.querySelectorAll<HTMLButtonElement>('[data-private-slug]').forEach(button => {
+      button.disabled = false;
+      button.addEventListener('click', () => { window.location.href = `/private-study/?article=${encodeURIComponent(button.dataset.privateSlug || '')}`; });
+    });
+  }).catch(() => {});
+  const input = document.querySelector<HTMLInputElement>('input[name="q"]');
+  input?.addEventListener('input', () => {
+    const query = input.value.normalize('NFKC').toLowerCase().trim();
+    document.querySelectorAll<HTMLElement>('#private-study-catalog li').forEach(item => {
+      item.hidden = Boolean(query) && !item.textContent?.normalize('NFKC').toLowerCase().includes(query);
+    });
+  });
+</script>

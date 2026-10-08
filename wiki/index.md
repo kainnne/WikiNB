@@ -60,6 +60,8 @@
 
 ## 學習中
 
+- [Azure AI-901 私人學習](/private-study/) — 原文限管理者登入；訪客以限時邀請進行 AI 教學，私人文章標題可在搜尋頁查看
+
 - [[Learning/suno-studio-album-production]] — 從歌曲與 prompt、生成版本判斷，學到 Suno Studio 2.0 編輯、stem、混音、專輯一致性、輸出與權利紀錄的完整文章系列
 - [[Learning/ai-first-frontend-foundations]] — 為 AI-first 前端學習者設計的 10 單元完整文章系列，涵蓋介面結構、視覺系統、資料、框架、Agent 協作與發布驗收
 - [[Learning/kuse-ai-practical-course]] — Kaine 的 Kuse AI 實作課：從顧問、執行、Project 到 prompt、修正與資安責任

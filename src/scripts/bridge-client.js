@@ -74,6 +74,11 @@ export async function checkHealth() {
   }
 }
 
+export function createStudyInvite() { return bridgeFetch('/api/private-study/invite', { method: 'POST', body: '{}' }); }
+export function revokeStudyInvite(id) { return bridgeFetch('/api/private-study/revoke', { method: 'POST', body: JSON.stringify({ id }) }); }
+export function fetchPrivateDocument(slug) { return bridgeFetch(`/api/private-study/document?slug=${encodeURIComponent(slug)}`); }
+export function checkPrivateOwner() { return bridgeFetch('/api/private-study/owner'); }
+
 export async function sendLoginCode(username, password) {
   return bridgeFetch('/api/auth/send-code', {
     method: 'POST',

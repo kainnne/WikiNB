@@ -1,0 +1,282 @@
+[
+  {
+    "slug": "Learning/azure-ai-901/question-index",
+    "title": "Azure AI-901｜題號與跨單元索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/01-topic",
+    "title": "Azure AI-901｜AI 工作負載"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/02-topic",
+    "title": "Azure AI-901｜Content Understanding"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/03-topic",
+    "title": "Azure AI-901｜Foundry Agent 與 SDK"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/04-topic",
+    "title": "Azure AI-901｜Foundry 五大區"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/05-topic",
+    "title": "Azure AI-901｜Language 文字分析"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/06-topic",
+    "title": "Azure AI-901｜Language 與 NLP"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/07-topic",
+    "title": "Azure AI-901｜RAG 與整合應用"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/08-topic",
+    "title": "Azure AI-901｜Speech 語音"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/09-topic",
+    "title": "Azure AI-901｜Vision 多模態與生圖"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/10-topic",
+    "title": "Azure AI-901｜Vision 與多模態"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/11-topic",
+    "title": "Azure AI-901｜判題技巧"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/12-topic",
+    "title": "Azure AI-901｜生成式 AI 基礎"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/13-topic",
+    "title": "Azure AI-901｜生成式 AI 與模型部署"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/14-topic",
+    "title": "Azure AI-901｜考試資訊"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/15-topic",
+    "title": "Azure AI-901｜語音與 Speech"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/16-topic",
+    "title": "Azure AI-901｜負責任 AI"
+  },
+  {
+    "slug": "Learning/azure-ai-901/topics/overview",
+    "title": "Azure AI-901｜依原網站主題分類"
+  },
+  {
+    "slug": "Learning/azure-ai-901/tutor-prompt",
+    "title": "Azure AI-901：預設逐題教學提示"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u01/book-page-index",
+    "title": "U01｜先把 AI 地圖看清楚：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u01/book-text",
+    "title": "U01｜先把 AI 地圖看清楚：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u01/overview",
+    "title": "U01｜先把 AI 地圖看清楚：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u01/practice",
+    "title": "U01｜先把 AI 地圖看清楚：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u01/review",
+    "title": "U01｜先把 AI 地圖看清楚：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u02/book-page-index",
+    "title": "U02｜AI 也要講道理：負責任 AI 六原則：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u02/book-text",
+    "title": "U02｜AI 也要講道理：負責任 AI 六原則：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u02/overview",
+    "title": "U02｜AI 也要講道理：負責任 AI 六原則：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u02/practice",
+    "title": "U02｜AI 也要講道理：負責任 AI 六原則：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u02/review",
+    "title": "U02｜AI 也要講道理：負責任 AI 六原則：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u03/book-page-index",
+    "title": "U03｜模型、部署、端點三件事分清楚：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u03/book-text",
+    "title": "U03｜模型、部署、端點三件事分清楚：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u03/overview",
+    "title": "U03｜模型、部署、端點三件事分清楚：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u03/practice",
+    "title": "U03｜模型、部署、端點三件事分清楚：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u03/review",
+    "title": "U03｜模型、部署、端點三件事分清楚：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u04/book-page-index",
+    "title": "U04｜做出你的第一個 AI Agent：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u04/book-text",
+    "title": "U04｜做出你的第一個 AI Agent：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u04/overview",
+    "title": "U04｜做出你的第一個 AI Agent：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u04/practice",
+    "title": "U04｜做出你的第一個 AI Agent：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u04/review",
+    "title": "U04｜做出你的第一個 AI Agent：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u05/book-page-index",
+    "title": "U05｜讓 AI 讀懂客戶在說什麼：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u05/book-text",
+    "title": "U05｜讓 AI 讀懂客戶在說什麼：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u05/overview",
+    "title": "U05｜讓 AI 讀懂客戶在說什麼：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u05/practice",
+    "title": "U05｜讓 AI 讀懂客戶在說什麼：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u05/review",
+    "title": "U05｜讓 AI 讀懂客戶在說什麼：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u06/book-page-index",
+    "title": "U06｜讓 AI 聽得懂也說得出：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u06/book-text",
+    "title": "U06｜讓 AI 聽得懂也說得出：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u06/overview",
+    "title": "U06｜讓 AI 聽得懂也說得出：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u06/practice",
+    "title": "U06｜讓 AI 聽得懂也說得出：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u06/review",
+    "title": "U06｜讓 AI 聽得懂也說得出：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u07/book-page-index",
+    "title": "U07｜一張圖丟給 AI：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u07/book-text",
+    "title": "U07｜一張圖丟給 AI：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u07/overview",
+    "title": "U07｜一張圖丟給 AI：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u07/practice",
+    "title": "U07｜一張圖丟給 AI：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u07/review",
+    "title": "U07｜一張圖丟給 AI：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u08/book-page-index",
+    "title": "U08｜把文件、照片、錄音、影片變成 JSON：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u08/book-text",
+    "title": "U08｜把文件、照片、錄音、影片變成 JSON：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u08/overview",
+    "title": "U08｜把文件、照片、錄音、影片變成 JSON：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u08/practice",
+    "title": "U08｜把文件、照片、錄音、影片變成 JSON：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u08/review",
+    "title": "U08｜把文件、照片、錄音、影片變成 JSON：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u09/book-page-index",
+    "title": "U09｜讓 AI 只講你的資料：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u09/book-text",
+    "title": "U09｜讓 AI 只講你的資料：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u09/overview",
+    "title": "U09｜讓 AI 只講你的資料：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u09/practice",
+    "title": "U09｜讓 AI 只講你的資料：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u09/review",
+    "title": "U09｜讓 AI 只講你的資料：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u10/book-page-index",
+    "title": "U10｜考前總複習與模擬考：教材頁碼索引"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u10/book-text",
+    "title": "U10｜考前總複習與模擬考：教材逐頁文字"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u10/overview",
+    "title": "U10｜考前總複習與模擬考：單元導覽"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u10/practice",
+    "title": "U10｜考前總複習與模擬考：練習題（不含答案）"
+  },
+  {
+    "slug": "Learning/azure-ai-901/u10/review",
+    "title": "U10｜考前總複習與模擬考：來源答案與判題線索"
+  },
+  {
+    "slug": "Learning/azure-ai-901",
+    "title": "Azure AI-901：依序學習與完整題庫"
+  }
+]

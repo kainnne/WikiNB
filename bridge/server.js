@@ -9,6 +9,8 @@ import dotenv from 'dotenv';
 import express from 'express';
 import nodemailer from 'nodemailer';
 import { buildCodexChatPrompt } from './codex-prompt.js';
+import { isPrivateMarkdown } from '../src/lib/content-visibility.js';
+import { registerPrivateStudy } from './private-study.js';
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -279,6 +281,13 @@ app.get('/api/health', (_req, res) => {
     wikiPages,
     authEmails: AUTH_EMAILS.length,
   });
+});
+
+registerPrivateStudy(app, authMiddleware, {
+  sourceRoot: process.env.PRIVATE_STUDY_WIKI_DIR || '',
+  catalog: JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, 'config/private-study-catalog.json'), 'utf8')),
+  apiUrl: JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, 'config/sites.json'), 'utf8')).bridge.guestAiUrl,
+  adminSecret: process.env.PRIVATE_STUDY_ADMIN_SECRET || '',
 });
 
 app.post('/api/auth/send-code', async (req, res) => {
@@ -1049,6 +1058,7 @@ function buildWikiTree(dir = wikiRoot(), prefix = '') {
 /** 儲存筆記到 wiki/：md 原文不動；標題／簡述／關鍵字寫入 _meta.json */
 async function handleWikiUpload(req, res) {
   const { filename, content, folder, title, description, keywords, tags, autoSync } = req.body || {};
+  if (isPrivateMarkdown(content)) return res.status(400).json({ error: '私人文章不能上傳至公開 Wiki，請存入私人資料區' });
   if (!content || !String(content).trim()) {
     res.status(400).json({ error: '請提供筆記內容' });
     return;
@@ -1425,6 +1435,7 @@ function uniqueOldMdBackupName(stem) {
 app.post('/api/wiki/replace', authMiddleware, async (req, res) => {
   const slug = normalizeWikiSlug(req.body?.slug || req.body?.path);
   const content = String(req.body?.content ?? '');
+  if (isPrivateMarkdown(content)) return res.status(400).json({ error: '私人文章不能覆蓋公開 Wiki，請存入私人資料區' });
   if (!slug || !isSiteWikiMarkdown(`${slug}.md`)) {
     res.status(400).json({ error: '筆記路徑無效' });
     return;
@@ -1555,6 +1566,7 @@ app.post('/api/codex/chat', authMiddleware, async (req, res) => {
     history,
     projectRoot: PROJECT_ROOT,
     wikiFiles: collectWikiMdFiles(),
+    azureStudyRoot: process.env.AZURE_STUDY_BANK_DIR || '',
   });
 
   const authHeader = req.headers.authorization || '';
