@@ -307,6 +307,20 @@ const related = allPages
     padding: 1rem 1rem 1.5rem;
   }
 
+  .wiki-page .wiki-reader.is-fullscreen .wiki-reader-titlebar {
+    flex: 0 0 auto;
+  }
+
+  /* The fixed reader must escape main's normal layer below the site navigation. */
+  body.public-wiki-page.wiki-fs-active main {
+    z-index: 200;
+  }
+
+  body.wiki-fs-active .wiki-page {
+    animation: none;
+    transform: none;
+  }
+
   @media (min-width: 640px) {
     .wiki-page .wiki-reader.is-fullscreen .wiki-reader-scroll {
       padding: 1.25rem 1.5rem 2rem;
