@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-10-09
+> 最後更新：2026-10-19
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -14,7 +14,7 @@
 - [[Projects/Products/kainnne-lumareader]] — 本機優先 Markdown 閱讀器
 - [[Projects/Knowledge/wikinb]] — 個人知識、公開網站與 AI 問答系統
 - [[Projects/Workflow/kainnne-geo-automation]] — 搜尋與 AI 可發現性稽核流程
-- [[Systems/codexrules-agent-system]] — CodexRules、agents CLI 與可審閱的排程邊界
+- [[Systems/codexrules-agent-system]] — Claude／Codex 共用規則、agents CLI、任務分工與交接證據
 
 ## 與我合作
 
@@ -43,12 +43,14 @@
 ### 創作與遊戲
 
 - [[Projects/Creative/visual-novel-production-system]] — 視覺小說模組化製作 SOP
+- [[Projects/Creative/video-production-workflow]] — 從定稿、分鏡到配音、字幕、混音與成片檢查
 
 ## 技術文件
 
 - [[Technical/technical-documentation]] — 各專案的架構、資料流、測試、部署與公開邊界
 - [[Technical/kainnne-lumareader/02_architecture_and_release_20260824]] — LumaReader 的本機權限、編輯安全與跨平台發行方法
 - [[Technical/kainnne-lumareader/03_macos_launchservices_incident_20260902]] — LumaReader 檔案關聯操作後的 macOS 登入死機、排查與復原紀錄
+- [[Technical/kainnne-lumareader/04_embedding_contract_20261019]] — 原版閱讀器的嵌入分工、儲存確認、文字註記與相容契約
 
 ## 關於我
 
@@ -66,6 +68,7 @@
 
 - [[Learning/suno-studio-album-production]] — 從歌曲與 prompt、生成版本判斷，學到 Suno Studio 2.0 編輯、stem、混音、專輯一致性、輸出與權利紀錄的完整文章系列
 - [[Learning/ai-first-frontend-foundations]] — 為 AI-first 前端學習者設計的 10 單元完整文章系列，涵蓋介面結構、視覺系統、資料、框架、Agent 協作與發布驗收
+- [[Learning/ai-first-frontend-foundations/08-agent-task-design]] — 把設計回饋變成局部修改範圍，以四格建議問題、長標題與放大還原流程驗收
 - [[Learning/kuse-ai-practical-course]] — Kaine 的 Kuse AI 實作課：從顧問、執行、Project 到 prompt、修正與資安責任
 - [[Learning/llm-research-course]] — 從文字表示與 LLM 生態，逐步學到評估、實驗設計與模型路線選擇
 - [[Learning/ai-document-workflow-workshop]] — AI 文件與 Agent 工作流實作
@@ -73,6 +76,7 @@
 
 ## 系統與方法
 
+- [[Systems/ai-document-delivery]] — 保留定稿與圖表來源，配對檢查可編輯文件與 PDF 的實際成品
 - [[Systems/safe-system-operations-with-agents]] — 保留 Agent 自主性，同時用風險分區、單步交易與熔斷條件降低主力機死機風險
 - [[Systems/knowledge-persona-agent]] — 如何用角色、風格、RAG、回答政策、記憶與權限邊界建立數位分身、AI 客服與其他知識型 Agent
 - [[Systems/wikinb-and-codexrules]] — WikiNB、CodexRules 與專案資料的分工
