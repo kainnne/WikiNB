@@ -151,7 +151,12 @@ import '@fontsource/iansui/latin-400.css';
 
 <script>
   import { askOpenAI, checkOpenAI, safeAnswer } from '../scripts/openai-chat.js';
-  import { renderMarkdownWithMath } from '../scripts/markdown-math.js';
+  import { K_MARK_DATA_URI } from '../scripts/k-mark.js';
+  // Markdown + KaTeX is only needed for answers; load it in parallel instead of blocking first paint.
+  let renderMarkdownWithMath = null;
+  const markdownReady = import('../scripts/markdown-math.js').then((mod) => {
+    renderMarkdownWithMath = mod.renderMarkdownWithMath;
+  });
   import { t, getLocale } from '../scripts/i18n.js';
   import { drawDiscoveryTopics, discoveryQuestion } from '../../worker/discovery-topics.js';
   import { GEMINI_TOPICS, GEMINI_INITIAL_TOPICS, GEMINI_FOLLOWUPS, prepareVisitorRequest } from '../scripts/gemini-onboarding.js';
@@ -331,7 +336,13 @@ import '@fontsource/iansui/latin-400.css';
       // CommonMark 不會解析 **粗體**後面緊接中文字母的情況。
       // 先轉成安全清理器允許的 strong，支援 Gemini 常見的中英混排輸出。
       .replace(/\*\*([^*\n]+?)\*\*(?=[\p{L}\p{N}])/gu, '<strong>$1</strong>');
-    template.innerHTML = renderMarkdownWithMath(normalized);
+    if (renderMarkdownWithMath) {
+      template.innerHTML = renderMarkdownWithMath(normalized);
+    } else {
+      const paragraph = document.createElement('p');
+      paragraph.textContent = normalized;
+      template.content.append(paragraph);
+    }
     template.content
       .querySelectorAll('script, style, iframe, object, embed, form, input, button, textarea, select')
       .forEach((node) => node.remove());
@@ -405,7 +416,7 @@ import '@fontsource/iansui/latin-400.css';
       avatar.className = 'gemini-welcome-avatar';
       avatar.setAttribute('aria-hidden', 'true');
       const mark = document.createElement('img');
-      mark.src = '/brand/kainnne-k-mark.png';
+      mark.src = K_MARK_DATA_URI;
       mark.alt = '';
       mark.decoding = 'async';
       avatar.append(mark);
@@ -681,6 +692,7 @@ import '@fontsource/iansui/latin-400.css';
         : verified
         ? await askGuestGemini({ message: requestMessage, history, originalMessage: message })
         : await askGuestGeminiAnonymous({ message: requestMessage, history, originalMessage: message });
+      await markdownReady.catch(() => {});
       responseTimer.stop();
       appendMessage(result.answer, 'assistant');
       if (isOpenAI) showOpenAIState(result.incomplete ? 'openai.incomplete' : '');
