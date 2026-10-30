@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-10-19
+> 最後更新：2026-10-30
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -75,6 +75,8 @@
 - [[Learning/python-foundations-practice]] — Python 基礎迭代練習
 
 ## 系統與方法
+
+- [[Systems/ai-knowledge-map]] — AI 知識分類與閱讀地圖，整合既有課程與三篇新增方法文章
 
 - [[Systems/ai-document-delivery]] — 保留定稿與圖表來源，配對檢查可編輯文件與 PDF 的實際成品
 - [[Systems/safe-system-operations-with-agents]] — 保留 Agent 自主性，同時用風險分區、單步交易與熔斷條件降低主力機死機風險
