@@ -5,6 +5,7 @@ type: note
 status: active
 tags: [AI, 知識管理, 閱讀地圖]
 date: 2026-10-30
+updated: 2026-11-02
 ---
 
 # AI 知識分類與閱讀地圖
@@ -22,7 +23,7 @@ date: 2026-10-30
 | 檢索與資料 | 如何找到來源、保存狀態並回答問題 | [[Learning/ai-systems-engineering/n11-retrieval-and-rag]]、[[Learning/ai-systems-engineering/b06-data-and-state]]、[[Systems/knowledge-persona-agent]] |
 | Agent、Tool、MCP、Skills | 工作規則與執行能力如何分工 | [[Systems/skills-and-tool-boundaries]]、[[Learning/ai-systems-engineering/n02-tool-loop]]、[[Learning/ai-systems-engineering/n03-tool-contract-and-mcp]] |
 | CLI 與桌面工作 | 如何在專案中持續執行並控制範圍 | [[Systems/codexrules-agent-system]]、[[Learning/ai-systems-engineering/n09-hermes-and-cli]]、[[Systems/safe-system-operations-with-agents]] |
-| API、Schema 與自動化 | 如何讓資料與動作有可驗證契約 | [[Learning/ai-systems-engineering/b04-http-json-api]]、[[Learning/ai-systems-engineering/n04-workflow-and-parallelism]]、[[Learning/ai-systems-engineering/n08-persistent-agent]] |
+| API、Schema 與自動化 | 如何讓資料與動作有可驗證契約 | [[Systems/structured-output-validation]]、[[Learning/ai-systems-engineering/b04-http-json-api]]、[[Learning/ai-systems-engineering/n04-workflow-and-parallelism]]、[[Learning/ai-systems-engineering/n08-persistent-agent]] |
 | Git、Docker 與部署 | 如何保存版本、啟動服務與驗收交付 | [[Learning/ai-systems-engineering/b03-environment-and-git]]、[[Learning/ai-systems-engineering/n10-api-and-container]]、[[Learning/ai-systems-engineering/p04-deployment-and-gpu]] |
 | 評估、資安與隱私 | 如何判斷結果及權限是否正確 | [[Learning/ai-systems-engineering/n13-evaluation-and-traces]]、[[Learning/ai-systems-engineering/n06-identity-and-approval]]、[[Learning/ai-systems-engineering/p07-security-and-operations]] |
 | AI 影音與音樂 | 如何從生成素材走到可交付作品 | [[Projects/Creative/video-production-workflow]]、[[Learning/suno-studio-album-production]] |
@@ -40,7 +41,9 @@ date: 2026-10-30
 
 2026-10-30 新增三篇完整文章：Skills、工具與 MCP 的分工，AI 文稿的風格控制與事實驗收，Context 設計與長任務的證據管理。既有課程保持原位，不建立另一份同義內容庫。
 
-後續優先補強三項專題。第一是 Schema 驗證與業務規則的差別，用完整輸入、錯誤案例及修正結果說明。第二是多模態讀取的失敗案例，分開圖表讀值、圖片定位與語音辨識。第三是排程寫入的可靠性，以去重、限額、斷線與重跑測試建立完整實作文章。這些是待補主題，不當成已完成內容。
+2026-11-02 補上 [[Systems/structured-output-validation]]，用合成活動資料、JSON Schema 與失敗案例，區分欄位契約、來源核對及執行條件。
+
+後續優先補強多模態讀取的失敗案例，分開圖表讀值、圖片定位與語音辨識。另一項是排程寫入的可靠性，以去重、限額、斷線與重跑測試建立完整實作文章。這兩項仍是待補主題。
 
 ## 維護方式
 
