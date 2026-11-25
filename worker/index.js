@@ -9,6 +9,7 @@ import {
   outOfScopeMessage,
   prefersEnglish,
 } from './chat-policy.js';
+import { logAi, openaiAnswer, siteDayLimit, siteTokensToday, traceId } from './llm.js';
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
@@ -774,6 +775,8 @@ async function chat(request, env) {
   if (message.length > 1200) return json({ error: '問題太長，請縮短到 1,200 字以內' }, 400);
 
   const requestIdentity = anonymous ? await sha256(clientIp(request)) : session.tokenHash;
+  const trace = traceId();
+  const started = Date.now();
   const burst = await consumeRate(env, `chat:${requestIdentity}`, 1, 4 * 1000);
   if (!burst.ok) return json({ error: '請稍等幾秒再送出下一個問題' }, 429);
 
@@ -783,6 +786,18 @@ async function chat(request, env) {
   const usage = await dailyUsage(env, usageIdentity);
   if (usage.tokenCount >= tokenLimit) {
     return json({ error: '今天的訪客 AI 共享額度已達上限，請明天再來' }, 429);
+  }
+  // Site-wide daily ceiling for the paid key: stop for everyone and tell the owner once a day.
+  const siteTokens = await siteTokensToday(env);
+  if (siteTokens >= siteDayLimit(env)) {
+    const alertOnce = await consumeRate(env, `ai-site-alert:${taipeiDay()}`, 1, 24 * 60 * 60 * 1000);
+    if (alertOnce.ok && env.OWNER_EMAIL) {
+      await sendTextEmail(env, env.OWNER_EMAIL, 'Kain³e AI 今日用量已達上限，已暫停', [
+        `今天（台北時間）Kain³e AI 全站已用 ${siteTokens.toLocaleString()} token，達到上限 ${siteDayLimit(env).toLocaleString()}。`,
+        '所有訪客的 AI 回答已暫停，明天會自動恢復。若是正常使用，可調高 Worker 變數 AI_SITE_DAY_TOKENS 後重新部署。',
+      ].join('\n')).catch(() => {});
+    }
+    return json({ error: `Kain³e AI 今天的使用量已達上限，已暫停回答，明天會自動恢復。（追溯碼 ${trace}）`, trace }, 503);
   }
 
   let chatTurnsUsed = 1;
@@ -841,70 +856,106 @@ async function chat(request, env) {
     }, 502);
   }
 
-  const model = env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-  let response;
-  try {
-    response = await fetchGeminiWithRetry(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': env.GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: systemPrompt(corpus, expandedDetailRequested, message),
-            },
-          ],
+  const who = (await sha256(String(usageIdentity))).slice(0, 16);
+  const instructions = systemPrompt(corpus, expandedDetailRequested, message);
+  let answer = '';
+  let finishReason = '';
+  let consumedTokens = 0;
+  // Main path: OpenAI with the kainnne.com key. Any failure falls back to Gemini below, so visitors still get an answer.
+  const ai = env.OPENAI_API_KEY ? await openaiAnswer(env, { instructions, history, message }) : null;
+  if (ai) {
+    await logAi(env, { trace, who, provider: 'openai', model: ai.model, ...ai.usage, ms: Date.now() - started, status: ai.status, detail: ai.detail });
+  }
+  if (ai?.ok) {
+    answer = ai.answer;
+    finishReason = ai.incomplete ? 'MAX_TOKENS' : '';
+    consumedTokens = Math.max(1, ai.usage.input + ai.usage.output);
+  } else {
+    if (!env.GEMINI_API_KEY) {
+      return json({ error: `Kain³e AI 暫時無法回應，請稍後再試。（追溯碼 ${trace}）`, trace }, 502);
+    }
+    const model = env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    let response;
+    try {
+      response = await fetchGeminiWithRetry(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': env.GEMINI_API_KEY,
         },
-        contents: [
-          ...cleanHistory(history),
-          { role: 'user', parts: [{ text: message }] },
-        ],
-        generationConfig: {
-          thinkingConfig: {
-            thinkingLevel: 'minimal',
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [
+              {
+                text: systemPrompt(corpus, expandedDetailRequested, message),
+              },
+            ],
           },
-        },
-      }),
-    });
-  } catch (error) {
-    console.error('Gemini network failure after retry', error);
-    return json({
-      error:
-        'Kain³e AI 暫時無法回應，系統已自動重試。請等待約 10 秒後再送一次。',
-    }, 502);
-  }
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    console.error('Gemini error', response.status, data?.error?.message || '');
-    if (response.status === 429) {
-      return json(
-        {
-          error:
-            'Kain³e AI 目前已達流量或額度限制。為避免重複消耗請求，系統不會自動重試；請稍後再試。',
-        },
-        429,
-      );
+          contents: [
+            ...cleanHistory(history),
+            { role: 'user', parts: [{ text: message }] },
+          ],
+          generationConfig: {
+            thinkingConfig: {
+              thinkingLevel: 'minimal',
+            },
+          },
+        }),
+      });
+    } catch (error) {
+      console.error('Gemini network failure after retry', error);
+      return json({
+        error:
+          'Kain³e AI 暫時無法回應，系統已自動重試。請等待約 10 秒後再送一次。',
+      }, 502);
     }
-    if (response.status === 400 || response.status === 403) {
-      return json({ error: 'AI 服務設定目前無法使用，已停止這次請求' }, 502);
-    }
-    return json({
-      error:
-        'Kain³e AI 暫時無法回應，系統已自動重試。請等待約 10 秒後再送一次。',
-    }, 502);
-  }
 
-  const finishReason = data.candidates?.[0]?.finishReason || '';
-  let answer = (data.candidates?.[0]?.content?.parts || [])
-    .map((part) => part.text || '')
-    .join('')
-    .trim();
-  if (!answer) return json({ error: 'Kain³e AI 沒有產生回答，請換個方式再問一次' }, 502);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error('Gemini error', response.status, data?.error?.message || '');
+      if (response.status === 429) {
+        return json(
+          {
+            error:
+              'Kain³e AI 目前已達流量或額度限制。為避免重複消耗請求，系統不會自動重試；請稍後再試。',
+          },
+          429,
+        );
+      }
+      if (response.status === 400 || response.status === 403) {
+        return json({ error: 'AI 服務設定目前無法使用，已停止這次請求' }, 502);
+      }
+      return json({
+        error:
+          'Kain³e AI 暫時無法回應，系統已自動重試。請等待約 10 秒後再送一次。',
+      }, 502);
+    }
+
+    finishReason = data.candidates?.[0]?.finishReason || '';
+    answer = (data.candidates?.[0]?.content?.parts || [])
+      .map((part) => part.text || '')
+      .join('')
+      .trim();
+    const metadata = data.usageMetadata || {};
+    const historyChars = history
+      .slice(-4)
+      .reduce((sum, turn) => sum + String(turn?.content || '').length, 0);
+    const estimatedInputTokens = Math.ceil((message.length + historyChars) / 3);
+    const reportedTotalTokens = Number(metadata.totalTokenCount || 0);
+    const reportedTokenParts =
+      Number(metadata.promptTokenCount || 0) +
+      Number(metadata.candidatesTokenCount || 0) +
+      Number(metadata.thoughtsTokenCount || 0);
+    const estimatedTotalTokens = estimatedInputTokens + Math.ceil(answer.length / 2);
+    consumedTokens = Math.max(
+      1,
+      reportedTotalTokens || reportedTokenParts || estimatedTotalTokens,
+    );
+
+    await logAi(env, { trace, who, provider: 'gemini', model, input: Number(data.usageMetadata?.promptTokenCount || 0), output: Number(data.usageMetadata?.candidatesTokenCount || 0) + Number(data.usageMetadata?.thoughtsTokenCount || 0), ms: Date.now() - started, status: answer ? 'ok' : 'empty', detail: ai ? 'fallback:' + ai.status : '' });
+  }
+  if (!answer) return json({ error: `Kain³e AI 沒有產生回答，請換個方式再問一次（追溯碼 ${trace}）`, trace }, 502);
   answer = canonicalizeWikiLinks(answer, corpus);
   if (finishReason === 'MAX_TOKENS') {
     answer += '\n\n> 回答已達單次輸出上限；若內容不完整，請指定要接續的部分。';
@@ -912,22 +963,6 @@ async function chat(request, env) {
   if (shouldOfferContact(message, history)) {
     answer = ensureCollaborationContact(answer, english);
   }
-
-  const metadata = data.usageMetadata || {};
-  const historyChars = history
-    .slice(-4)
-    .reduce((sum, turn) => sum + String(turn?.content || '').length, 0);
-  const estimatedInputTokens = Math.ceil((message.length + historyChars) / 3);
-  const reportedTotalTokens = Number(metadata.totalTokenCount || 0);
-  const reportedTokenParts =
-    Number(metadata.promptTokenCount || 0) +
-    Number(metadata.candidatesTokenCount || 0) +
-    Number(metadata.thoughtsTokenCount || 0);
-  const estimatedTotalTokens = estimatedInputTokens + Math.ceil(answer.length / 2);
-  const consumedTokens = Math.max(
-    1,
-    reportedTotalTokens || reportedTokenParts || estimatedTotalTokens,
-  );
 
   await recordDailyUsage(env, usageIdentity, usage.day, consumedTokens);
 
@@ -942,6 +977,7 @@ async function chat(request, env) {
     chatTurnsUsed,
     chatTurnLimit: null,
     requiresVerification: anonymous,
+    trace,
   });
 }
 
@@ -965,9 +1001,10 @@ export default {
       } else if (request.method === 'GET' && url.pathname === '/api/guest-ai/health') {
         response = json({
           ok: true,
-          service: 'Kainnne x Gemini',
-          model: env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
-          configured: Boolean(env.GEMINI_API_KEY && env.RESEND_API_KEY && env.TOKEN_SECRET),
+          service: env.OPENAI_API_KEY ? 'Kainnne x OpenAI' : 'Kainnne x Gemini',
+          model: env.OPENAI_API_KEY ? (env.OPENAI_MODEL || 'gpt-5.4-mini') : (env.GEMINI_MODEL || 'gemini-3.1-flash-lite'),
+          fallback: env.OPENAI_API_KEY && env.GEMINI_API_KEY ? (env.GEMINI_MODEL || 'gemini-3.1-flash-lite') : null,
+          configured: Boolean((env.OPENAI_API_KEY || env.GEMINI_API_KEY) && env.RESEND_API_KEY && env.TOKEN_SECRET),
         });
       } else if (request.method === 'POST' && url.pathname === '/api/guest-ai/request-code') {
         response = await requestOtp(request, env);

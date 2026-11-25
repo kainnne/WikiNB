@@ -1,9 +1,23 @@
+import { logAi, openaiAnswer, traceId } from './llm.js';
+
 export async function generatePrivateStudy(env, email, instruction, message, { dailyUsage, dailyTokenLimit }) {
   const usage = await dailyUsage(env, email);
   const reserve = new TextEncoder().encode(instruction + message).length + 1500;
   if (reserve > dailyTokenLimit(env)) return { error: '今天的 AI 額度已達上限，請明天再來', status: 429 };
   const reserved = await env.DB.prepare(`INSERT INTO daily_usage(email, usage_day, count, token_count) VALUES(?, ?, 1, ?) ON CONFLICT(email, usage_day) DO UPDATE SET count = count + 1, token_count = token_count + excluded.token_count WHERE token_count + excluded.token_count <= ? RETURNING token_count`).bind(email, usage.day, reserve, dailyTokenLimit(env)).first();
   if (!reserved) return { error: '今天的 AI 額度已達上限，請明天再來', status: 429 };
+  // kainnne.com OpenAI key first; Gemini below stays as the fallback.
+  if (env.OPENAI_API_KEY) {
+    const trace = traceId(), started = Date.now();
+    const ai = await openaiAnswer(env, { instructions: instruction, message, maxOutput: 1600, cacheKey: 'kaine-private-study' });
+    await logAi(env, { trace, who: 'private-study', provider: 'openai', model: ai.model, ...ai.usage, ms: Date.now() - started, status: ai.status, detail: ai.detail });
+    if (ai.ok) {
+      const used = Math.max(1, ai.usage.input + ai.usage.output);
+      await env.DB.prepare('UPDATE daily_usage SET token_count = MAX(0, token_count - ? + ?) WHERE email = ? AND usage_day = ?').bind(reserve, used, email, usage.day).run();
+      return { answer: ai.answer };
+    }
+    if (!env.GEMINI_API_KEY) return { error: `私人 AI 教學暫時無法回應（追溯碼 ${trace}）`, status: 502 };
+  }
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(env.GEMINI_MODEL || 'gemini-3.1-flash-lite')}:generateContent`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY }, signal: AbortSignal.timeout(45000),

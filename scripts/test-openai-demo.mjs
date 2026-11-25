@@ -72,7 +72,7 @@ try {
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.match(body.answer, /Kaine/); assert.match(body.answer, /ryanzhu@kainnne.com/);
-  assert.equal(apiCalls, 1); assert.equal(captured.model, 'gpt-5.6-luna');
+  assert.equal(apiCalls, 1); assert.equal(captured.model, 'gpt-5.4-mini');
   assert.equal(captured.store, false); assert.equal(captured.tools, undefined);
   assert.equal(captured.instructions, buildVisitorSystemPrompt(captured.instructions.split('公開筆記：\n')[1].split('\n\n回答前確認：')[0], '請介紹 Kaine', false));
   assert.equal(charge().charged_microusd, allowanceCost(1000, 100));

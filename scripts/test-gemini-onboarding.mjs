@@ -82,6 +82,7 @@ const testModule = workerSource
   .replace("'./discovery-topics.js'", JSON.stringify(new URL('../worker/discovery-topics.js', import.meta.url).href))
   .replace("'./wiki-excerpts.js'", JSON.stringify(new URL('../worker/wiki-excerpts.js', import.meta.url).href))
   .replace("'./visitor-policy.js'", JSON.stringify(new URL('../worker/visitor-policy.js', import.meta.url).href))
+  .replace("'./llm.js'", JSON.stringify(new URL('../worker/llm.js', import.meta.url).href))
   + '\nexport { issueGuestToken };';
 const { buildRelevantCorpus, retrievalQuestion, issueGuestToken } = await import(`data:text/javascript;base64,${Buffer.from(testModule).toString('base64')}`);
 const firstDraw = drawDiscoveryTopics([], () => 0.4);
@@ -226,6 +227,53 @@ try {
   assert.equal((await workerHandler.fetch(signedRequest(), verifiedEnv, {})).status, 429, 'Burst protection remains active');
   assert.equal((await workerHandler.fetch(signedRequest('chat', 'POST', 'invalid'), verifiedEnv, {})).status, 401);
   assert.equal(modelRequests.length, callsBeforeChecks, 'Quota, authentication and session refresh never call the model');
+
+  // OpenAI (kainnne.com key) is the main path with the same tuned instructions; any failure falls back to Gemini.
+  const openaiRequests = [];
+  const aiLogs = [];
+  let openaiFails = false;
+  let siteTokens = 0;
+  const openaiEnv = {
+    GEMINI_API_KEY: 'test-only-key', OPENAI_API_KEY: 'test-only-openai',
+    DB: { prepare(sql) { return {
+      bind(...values) { this.values = values; return this; },
+      async first() { return sql.includes('SUM(input + output)') ? { n: siteTokens } : null; },
+      async run() { if (sql.includes('INSERT INTO ai_logs')) aiLogs.push(this.values); return { success: true }; },
+    }; } },
+  };
+  globalThis.fetch = async (url, options) => {
+    if (String(url).startsWith('https://api.openai.com/')) {
+      openaiRequests.push(JSON.parse(options.body));
+      if (openaiFails) return Response.json({ error: { code: 'server_error' } }, { status: 500 });
+      return Response.json({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'OpenAI 測試回答' }] }], usage: { input_tokens: 300, output_tokens: 50, input_tokens_details: { cached_tokens: 0 } } });
+    }
+    assert.match(String(url), /^https:\/\/generativelanguage.googleapis.com\//);
+    modelRequests.push(JSON.parse(options.body));
+    return Response.json({ candidates: [{ content: { parts: [{ text: '備援回答' }] }, finishReason: 'STOP' }], usageMetadata: { totalTokenCount: 40 } });
+  };
+  const geminiBefore = modelRequests.length;
+  const viaOpenAI = await (await workerHandler.fetch(request('我是人資，Kaine 可以如何協助？'), openaiEnv, {})).json();
+  assert.match(viaOpenAI.answer, /OpenAI 測試回答/);
+  assert.match(viaOpenAI.answer, /ryanzhu@kainnne\.com/, 'The contact rule still applies to OpenAI answers');
+  assert.match(viaOpenAI.trace, /^KAI-[A-Z2-9]{6}$/);
+  assert.equal(openaiRequests.length, 1);
+  assert.equal(modelRequests.length, geminiBefore, 'No Gemini call when OpenAI answers');
+  assert.equal(openaiRequests[0].model, 'gpt-5.4-mini');
+  assert.equal(openaiRequests[0].store, false);
+  assert.equal(openaiRequests[0].reasoning.effort, 'low');
+  assert.ok(openaiRequests[0].instructions.includes(visitorGuidance('人資')), 'OpenAI receives the same tuned instructions');
+  assert.ok(openaiRequests[0].instructions.includes('節省免費 API 額度是必要限制'), 'Tuned prompt text is unchanged');
+  assert.equal(aiLogs.length, 1, 'Every answer is logged with its trace');
+  openaiFails = true;
+  const fallback = await (await workerHandler.fetch(request('我是人資，Kaine 可以如何協助？'), openaiEnv, {})).json();
+  assert.match(fallback.answer, /備援回答/);
+  assert.equal(modelRequests.length, geminiBefore + 1, 'Gemini answers when OpenAI fails');
+  siteTokens = 2000000;
+  const openaiBefore = openaiRequests.length;
+  const paused = await workerHandler.fetch(request('我是人資，Kaine 可以如何協助？'), openaiEnv, {});
+  assert.equal(paused.status, 503);
+  assert.match((await paused.json()).error, /KAI-/);
+  assert.equal(openaiRequests.length, openaiBefore, 'The site-wide daily ceiling stops model calls');
 
 } finally {
   globalThis.fetch = originalFetch;

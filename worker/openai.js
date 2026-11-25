@@ -3,8 +3,8 @@ import { buildVisitorSystemPrompt, visitorIntent, shouldOfferContact } from './v
 import { isKaineScopeQuestion, prefersEnglish, ensureCollaborationContact } from './chat-policy.js';
 import { canonicalizeWikiLinks } from './wiki-excerpts.js';
 
-export const MODEL = 'gpt-5.6-luna';
-export const MAX_OUTPUT_TOKENS = 4096;
+export const MODEL = 'gpt-5.4-mini';
+export const MAX_OUTPUT_TOKENS = 1600;
 const MAX_BODY_BYTES = 32000;
 const encoder = new TextEncoder();
 
@@ -28,10 +28,10 @@ export function budgetLimit(env) {
   return Number.isSafeInteger(configured) && configured > 0 ? Math.min(configured, 10000000) : 10000000;
 }
 
-// USD per million tokens == micro-USD per token. Use the highest input rate
-// (including cache writes) as a conservative allowance; do not claim this is a bill.
+// USD per million tokens == micro-USD per token (gpt-5.4-mini standard rates: input 0.75, output 4.50).
+// All input is charged at the full input rate as a conservative allowance; do not claim this is a bill.
 export function allowanceCost(inputTokens, outputTokens) {
-  return Math.ceil(Math.max(0, inputTokens) * 0.25 + Math.max(0, outputTokens) * 1.2);
+  return Math.ceil(Math.max(0, inputTokens) * 0.75 + Math.max(0, outputTokens) * 4.5);
 }
 
 export function reservationFor(payload) {
