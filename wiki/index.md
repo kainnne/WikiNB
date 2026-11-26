@@ -1,6 +1,6 @@
 # Kainnne 知識庫索引
 
-> 最後更新：2026-11-23
+> 最後更新：2026-11-27
 
 這裡整理我的作品、知識系統、學習紀錄與工作方法。專案頁優先呈現成果、功能、限制與下一步；實作細節仍以各專案 repository 為準。
 
@@ -42,6 +42,7 @@
 
 ### 創作與遊戲
 
+- [[Projects/Creative/aurelodia]] — Aurelodia（原名音樂城堡）：每首歌是一座島的 3D 音樂探索遊戲；網頁版可玩，完整版與節奏對戰開發中，含世界與音樂的對應、探索、對戰規則與版本狀態四篇
 - [[Projects/Creative/visual-novel-production-system]] — 視覺小說模組化製作 SOP
 - [[Projects/Creative/video-production-workflow]] — 從定稿、分鏡到配音、字幕、混音與成片檢查
 
